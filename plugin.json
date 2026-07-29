@@ -1,0 +1,59 @@
+{
+    "version": "5.0.5",
+    "name": "Feedback",
+    "marketplaceName": {
+        "de": "Kunden-Feedback",
+        "en": "Customer feedback"
+    },
+    "description": "Fork of the official PlentyONE feedback plugin with server-rendered initial reviews and server-side Product review structured data.",
+    "namespace": "Feedback",
+    "author": "PlentyONE GmbH",
+    "type": "general",
+    "require": {
+        "IO": ">=5.0.62",
+        "Ceres": ">=5.0.62"
+    },
+    "platform": {
+        "php": ">=7.3 <8.1"
+    },
+    "isClosedSource": false,
+    "serviceProvider": "Feedback\\Providers\\FeedbackServiceProvider",
+    "runOnBuild": [],
+    "license": "AGPL-3.0",
+    "price": 0.0,
+    "shortDescription": {
+        "de": "Kunden-Feedback mit serverseitig gerenderten Rezensionen und Schema.org-Bewertungsdaten.",
+        "en": "Customer feedback with server-rendered reviews and Schema.org rating data."
+    },
+    "authorIcon": "icon_author_xs.png",
+    "pluginIcon": "icon_plugin_xs.png",
+    "email": "sales@plentyone.com",
+    "phone": "+49 561 98 681 100",
+    "categories": [
+        "3527"
+    ],
+    "keywords": [
+        "feedback",
+        "feedbacks",
+        "customer feedback",
+        "rating",
+        "ratings",
+        "widget",
+        "shopbuilder",
+        "shop builder",
+        "review",
+        "reviews",
+        "customer experience"
+    ],
+    "containers": [],
+    "dataProviders": [
+        {
+            "key": "Feedback\\DataProviders\\FeedbackCategoryRatings",
+            "name": "Feedback category ratings",
+            "description": "Feedback category ratings",
+            "defaultLayoutContainer": "Ceres::CategoryItem.BeforePrices"
+        }
+    ],
+    "dependencies": {},
+    "javaScriptFiles": []
+}

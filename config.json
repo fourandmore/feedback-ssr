@@ -1,0 +1,96 @@
+{
+    "formatVersion": 1,
+    "menu": {
+        "Config.FeedbackSettingsTab": {
+            "label": "Config.FeedbackSettingsTab",
+            "formFields": {
+                "autoreleaseFeedbacks": {
+                    "type": "selectBox",
+                    "required": false,
+                    "label": "Config.releaseFeedbacks",
+                    "options": {
+                        "defaultValue": 0,
+                        "selectBoxValues":[
+                            {
+                                "value": 0,
+                                "caption": "Config.doNotRelease"
+                            },
+                            {
+                                "value": 1,
+                                "caption": "Config.releaseAuthenticated"
+                            },
+                            {
+                                "value": 2,
+                                "caption": "Config.releaseAll"
+                            }
+                        ]
+                    }
+                },
+                "numberOfFeedbacks": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 1,
+                    "label": "Config.numberOfFeedbacks"
+                },
+
+                "allowFeedbacksOnlyIfPurchased": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.allowFeedbacksOnlyIfPurchased",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "allowGuestFeedbacks": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.allowGuestFeedbacks",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "showEmptyRatingsInCategoryView": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.showEmptyRatingsInCategoryViewLabel",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "showRatingCountInCategoryView": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.showRatingCountInCategoryViewLabel",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "showEmptyRatingsInOrderConfirmationView": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.showEmptyRatingsInOrderConfirmationViewLabel",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "showRatingFacet": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.showRatingFacetLabel",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                },
+                "showRatingSorting": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.showRatingSortingLabel",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                }
+            }
+        }
+    }
+}
+
