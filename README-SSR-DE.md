@@ -1,145 +1,69 @@
-# Kunden Feedback Four & More – Version 5.0.13
+# Feedback Product Offer GEO F&M 5.0.15
 
-## Neu: verständlicher Leerzustand
+Diese Version erweitert das offizielle Kunden-Feedback-Plugin für Four & More um:
 
-Bei Artikeln ohne veröffentlichte Bewertungen zeigt das Widget nun:
+- serverseitig sichtbare Produktbewertungen
+- serverseitiges Product-/Offer-Schema
+- AggregateRating und einzelne Review-Objekte
+- verständlichen Leerzustand bei Artikeln ohne Bewertungen
+- serverseitiges FAQPage-Schema aus der Artikel-/Varianteneigenschaft **ID 151**
+- optionales separates ShopBuilder-Widget **„FAQ serverseitig + Schema“**
 
-- **Kundenrezensionen (0)** statt leerer Klammern
-- den Hinweis **„Für diesen Artikel wurden noch keine Kundenrezensionen verfasst.“**
-- weiterhin das Formular zum Verfassen der ersten Bewertung
+## FAQ-Schema aus Eigenschaft 151
 
-Leere Sterne- und Bewertungsverteilungsanzeigen werden bei null Rezensionen ausgeblendet. Der Leerzustand wird bei aktiviertem SSR bereits im initialen HTML ausgegeben.
+Im ShopBuilder-Hauptwidget **„Feedback Product Offer GEO F&M“** stehen zwei neue Einstellungen zur Verfügung:
 
----
+- **FAQPage aus Artikeleigenschaft serverseitig ausgeben**
+- **Eigenschafts-ID für FAQ-Schema** (Standard: `151`)
 
-# Kunden Feedback Four & More 5.0.12 – Product/Offer unabhängig von Review-SSR
-
-## Änderungen in Version 5.0.12
-
-- Die Ausgabe von `Product` und `Offer` ist nicht mehr an die Einstellung **„Bewertungen serverseitig ausgeben“** gekoppelt.
-- Ist **„Product- und Offer-Schema serverseitig ausgeben“** aktiviert, wird das Produktschema auch dann erzeugt, wenn sichtbare Bewertungen nicht serverseitig gerendert werden.
-- Artikel ohne Bewertungen erhalten weiterhin ein vollständiges `Product`-/`Offer`-Schema, jedoch keine leeren `AggregateRating`- oder `Review`-Felder.
-- Bei vorhandenen Bewertungen ergänzt das Schema weiterhin `AggregateRating` und einzelne `Review`-Objekte – unabhängig davon, ob der sichtbare Review-SSR-Block aktiviert ist.
-- Die ShopBuilder-Vorschau bleibt geschützt: In der Editor-Vorschau werden weder Artikeldaten noch Schema-Serviceaufrufe ausgeführt.
-- Die Tooltips der beiden ShopBuilder-Einstellungen wurden so angepasst, dass ihre unabhängige Funktion eindeutig beschrieben wird.
-
-## Version 5.0.11 – Hydration-Hotfix
-
-### Änderungen in Version 5.0.11
-
-- Der SSR-Bewertungsblock wird nicht mehr beim Mounten der Vue-Komponente entfernt.
-- Die clientseitige Ansicht wird erst nach einem expliziten `feedback:client-ready`-Signal eingeblendet.
-- Das Signal wird erst nach erfolgreich geladenen Bewertungszahlen und Rezensionen ausgelöst.
-- Der leere Doppelblock `Kundenrezensionen ()` kann den SSR-Inhalt nicht mehr ersetzen.
-- Bei AJAX-Fehlern bleibt der vollständige serverseitige Bewertungsblock sichtbar.
-- Filter, Formular und Nachladen bleiben nach erfolgreicher Hydrierung verfügbar.
-- Product-, Offer-, AggregateRating- und Review-Schema sowie Bestandslogik bleiben unverändert.
-
-Diese Version behebt die beim Bereitstellen gemeldeten Compilerfehler in `FeedbackService.php` und `ProductSchemaBuilder.php`:
-
-- keine direkte Verwendung von `new` im Plugin-Code,
-- keine Verwendung von `is_scalar()`,
-- keine dynamischen Objekteigenschaften wie `$object->{$name}`,
-- `ProductSchemaBuilder` wird per Dependency Injection in `FeedbackService` eingebunden,
-- der Schema-Builder verarbeitet das normalisierte Artikeldokument ausschließlich als Array.
-
-
-## Version 5.0.7 – ShopBuilder-Preview-Fix
-
-- SSR- und Product-Schema-Abfragen werden im ShopBuilder-Editor nicht ausgeführt.
-- Das Widget zeigt im Editor eine statische, zuverlässige Vorschau.
-- Fehlende `item.documents[0].data`-Werte werden im Frontend mit sicheren Standardwerten abgefangen.
-- Alte ShopBuilder-Inhalte ohne die neuen Einstellungen bleiben kompatibel.
-- Verhindert, dass ein Twig-Fehler die Widget-Vorschau leert oder eine Artikeldetailansicht auf einen Fallback-Inhalt zurückfällt.
-
-# Kunden-Feedback 5.0.6 – SSR-, Product- und Offer-Erweiterung
-
-Diese Variante basiert auf dem offiziellen PlentyONE-Plugin **Kunden-Feedback 5.0.4** und erweitert die bisherige SSR-Version 5.0.5.
-
-## Ergänzungen
-
-- Die erste Bewertungsseite wird direkt im initialen HTML der Artikelseite ausgegeben.
-- Die Anzahl richtet sich nach der Widget-Einstellung **„Anzahl der Bewertungen pro Seite“** und ist serverseitig auf maximal 10 begrenzt.
-- Das Plugin erzeugt serverseitig ein vollständiges `Product`-Objekt mit verschachteltem `Offer`.
-- Preis, Währung, SKU, Produktname, Bilder, Hersteller, GTIN und Verfügbarkeit werden – soweit vorhanden – aus der aktuell serverseitig geladenen PlentyONE-Variante übernommen.
-- Die öffentliche Produkt-URL wird ohne ShopBuilder-Vorschauparameter als `url` und Basis der `@id` verwendet.
-- Bei vorhandenen Bewertungen werden `AggregateRating` und die anfänglich sichtbaren `Review`-Objekte in dasselbe `Product`-Schema integriert.
-- Artikel ohne Bewertungen erhalten weiterhin `Product` und `Offer`, aber keine leeren oder erfundenen Rating-Felder.
-- Das vorhandene clientseitige Bewertungsschema wird unterdrückt, sobald das serverseitige Schema vorhanden ist.
-- AJAX, Bewertungsformular, Moderation, Kommentare, Filter und „Mehr laden“ bleiben bestehen.
-
-## Neue Widget-Einstellungen
-
-Die Einstellungen befinden sich im ShopBuilder direkt im Widget **„Artikelbewertung“**:
-
-- **Bewertungen serverseitig ausgeben**  
-  Aktiviert ausschließlich die sichtbare initiale HTML-Ausgabe der ersten Bewertungsseite.
-- **Product- und Offer-Schema serverseitig ausgeben**  
-  Sollte aktiviert bleiben, wenn dieses Plugin das vollständige Produktschema liefern soll.
-- **Verkäufername im Offer-Schema**  
-  Standardwert: `Four & More GmbH`.
-- **Anzahl der Bewertungen pro Seite**  
-  Empfohlen: 5 bis 10.
-
-## Installation
-
-Diese ZIP ist ein **Drop-in-Fork mit demselben Plugin-Namen und Namespace `Feedback`**. Das originale Marketplace-Plugin darf deshalb nicht gleichzeitig im selben Plugin-Set installiert sein.
-
-1. Plugin-Set kopieren und als Test-Set verwenden.
-2. Originales Plugin **„Kunden-Feedback“** im Test-Set entfernen bzw. deaktivieren.
-3. Diesen Fork als Git-/Custom-Plugin mit dem Ordnernamen `Feedback` hinzufügen.
-4. Plugin-Set bereitstellen.
-5. Im ShopBuilder **Inhalte neu generieren**, damit die neuen Widget-Einstellungen geladen werden.
-6. Das Widget **„Artikelbewertung“** öffnen und die oben genannten Einstellungen kontrollieren.
-7. ShopBuilder-Inhalt speichern und veröffentlichen.
-
-## Kontrolle
-
-Im unverarbeiteten Seitenquelltext sollten bei vorhandenen Rezensionen echte Bewertungstexte vorkommen. Zusätzlich muss dieses Element vorhanden sein:
+Ist die Funktion aktiviert, liest das Plugin serverseitig den HTML-Inhalt der Eigenschaft 151 aus dem aktuellen Artikel-/Variantendokument. Unterstützt wird die vorhandene FAQ-Struktur mit:
 
 ```html
-<script id="feedback-product-jsonld" type="application/ld+json">
+<section class="faq-section">
+  <details class="faq-item">
+    <summary>Frage</summary>
+    <div class="faq-answer"><p>Antwort</p></div>
+  </details>
+</section>
 ```
 
-Das enthaltene JSON-LD sollte mindestens diese Struktur besitzen:
+Aus den sichtbaren Fragen und Antworten wird direkt im initialen HTML erzeugt:
+
+```html
+<script id="feedback-faq-property-jsonld-151" type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": []
+}
+</script>
+```
+
+Die Eigenschaft selbst bleibt für die sichtbare FAQ-Ausgabe zuständig. Das Plugin erzeugt daraus nur das serverseitige Schema und gibt keinen zweiten sichtbaren FAQ-Bereich aus.
+
+## Einstellungen
+
+Empfohlen im Hauptwidget:
+
+- **Bewertungen serverseitig ausgeben:** aktiviert
+- **Product- und Offer-Schema serverseitig ausgeben:** aktiviert
+- **FAQPage aus Artikeleigenschaft serverseitig ausgeben:** aktiviert
+- **Eigenschafts-ID für FAQ-Schema:** `151`
+
+## Migration vom alten FAQ-Code-Widget
+
+Wenn das FAQ-Schema bisher durch ein JavaScript-Code-Widget mit `automatic-faq-schema` erzeugt wurde, sollte dieses alte Code-Widget entfernt werden. Andernfalls können zwei FAQPage-Datensätze entstehen.
+
+## Prüfung
+
+Nach der Bereitstellung im Seitenquelltext suchen nach:
 
 ```text
-Product
-└── offers: Offer
+feedback-faq-property-jsonld-151
 ```
 
-Bei vorhandenen freigegebenen Bewertungen zusätzlich:
+Außerdem sollten `feedback-product-jsonld` und die sichtbaren Bewertungstexte weiterhin im ursprünglichen Seitenquelltext vorhanden sein.
 
-```text
-Product
-├── offers: Offer
-├── aggregateRating: AggregateRating
-└── review: Review[]
-```
+## Technischer Name
 
-Bei Artikeln ohne Bewertungen dürfen `aggregateRating` und `review` nicht ausgegeben werden.
-
-## Konflikt mit anderem Product-Schema
-
-Pro Artikelseite sollte möglichst nur ein konsistentes vollständiges `Product`-Objekt ausgegeben werden. Wenn ein anderes Plugin bereits ein vollständiges Product-/Offer-Schema erzeugt, darf nicht parallel ein widersprüchlicher Datensatz mit anderem Preis, anderer SKU oder anderer Verfügbarkeit aktiv sein. In diesem Fall muss die Schema-Strategie im Test-Plugin-Set gezielt geprüft werden.
-
-## Technischer Hinweis
-
-Das Schema beschreibt die beim initialen Serveraufruf ausgewählte Variante. Nach einem rein clientseitigen Variantenwechsel kann sich der sichtbare Preis ändern, ohne dass der ursprüngliche Server-Response neu geladen wird. Variantenspezifische URLs bzw. ein vollständiger Seitenaufruf bleiben daher für die zuverlässigste Auszeichnung sinnvoll.
-
-Die PHP- und JSON-Dateien sowie der Schema-Builder wurden lokal statisch getestet. Ein abschließender Build im konkreten PlentyONE-Test-Plugin-Set ist erforderlich, da die PlentyONE-Repositories und der ShopBuilder-Compiler nur dort verfügbar sind.
-
-
-## Änderungen in Version 5.0.10
-
-- Die sichtbare Plugin-Bezeichnung lautet jetzt **Kunden Feedback Four & More**.
-- Der interne Plugin-Schlüssel und Namespace bleiben aus Kompatibilitätsgründen `Feedback`.
-- Die JSON-LD-Ausgabe verwendet im ShopBuilder-Widget `<script2>` statt `<script>`. Dadurch wird das Product-/Offer-/Review-Schema im Frontend als unsichtbares `<script type="application/ld+json">` ausgegeben und nicht mehr als sichtbarer Text dargestellt.
-- Die Ermittlung von Bestand und `availability` wurde nicht verändert.
-
-
-## Änderung in Version 5.0.10
-
-### Leerer Bewertungsbereich entfernt
-
-Bei aktiviertem serverseitigem Rendering bleibt der serverseitig ausgegebene Bewertungsbereich sichtbar, bis die Vue-Komponente echte Bewertungsdaten geladen hat. Erst danach wird auf die interaktive Ansicht mit Filter, Formular und Nachladefunktion umgeschaltet. Dadurch wird kein zusätzlicher leerer Bereich mit „Kundenrezensionen ()“ mehr angezeigt.
+Der interne Plugin-Name und Namespace bleiben aus Kompatibilitätsgründen `Feedback`. Sichtbar heißt das Plugin und das Hauptwidget **„Feedback Product Offer GEO F&M“**.

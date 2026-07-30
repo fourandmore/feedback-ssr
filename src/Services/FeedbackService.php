@@ -37,6 +37,8 @@ class FeedbackService
     private $localizationRepository;
     /** @var ProductSchemaBuilder $productSchemaBuilder */
     private $productSchemaBuilder;
+    /** @var FaqPropertySchemaBuilder $faqPropertySchemaBuilder */
+    private $faqPropertySchemaBuilder;
 
     const GUEST_ID = 0;
     const RELEASE_LEVEL_NONE = 0;
@@ -50,7 +52,8 @@ class FeedbackService
         FeedbackAverageRepositoryContract $feedbackAverageRepository,
         AccountService $accountService,
         LocalizationRepositoryContract $localizationRepository,
-        ProductSchemaBuilder $productSchemaBuilder
+        ProductSchemaBuilder $productSchemaBuilder,
+        FaqPropertySchemaBuilder $faqPropertySchemaBuilder
     )
     {
         $this->request = $request;
@@ -60,6 +63,7 @@ class FeedbackService
         $this->accountService = $accountService;
         $this->localizationRepository = $localizationRepository;
         $this->productSchemaBuilder = $productSchemaBuilder;
+        $this->faqPropertySchemaBuilder = $faqPropertySchemaBuilder;
     }
 
     /**
@@ -503,6 +507,22 @@ class FeedbackService
         }
 
         return $initialData;
+    }
+
+    /**
+     * Build a server-rendered FAQPage schema from an item property.
+     *
+     * @param mixed $itemData
+     * @param int $propertyId
+     * @return array
+     */
+    public function getFaqDataFromProperty($itemData = [], $propertyId = 151)
+    {
+        return $this->faqPropertySchemaBuilder->build(
+            $itemData,
+            (int)$propertyId,
+            (string)$this->localizationRepository->getLanguage()
+        );
     }
 
     /**

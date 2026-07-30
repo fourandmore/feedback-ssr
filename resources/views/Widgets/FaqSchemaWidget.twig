@@ -1,0 +1,96 @@
+{% import "Ceres::Widgets.Helper.WidgetHelper" as WidgetHelper %}
+
+{% set customClass = widget.settings.customClass.mobile %}
+{% set spacingSettings = widget.settings.spacing %}
+{% set inlinePadding = WidgetHelper.getInlineSpacings(spacingSettings, spacingSettings.customPadding.mobile, "") %}
+{% set inlineMargin = WidgetHelper.getInlineSpacings(spacingSettings, "", spacingSettings.customMargin.mobile) %}
+{% set spacingPadding = WidgetHelper.getSpacingClasses(spacingSettings, spacingSettings.customPadding.mobile, "") %}
+{% set spacingMargin = WidgetHelper.getSpacingClasses(spacingSettings, "", spacingSettings.customMargin.mobile) %}
+
+{% set faqEntities = [] %}
+{% for entry in options.entries %}
+    {% set answerText = entry.answer
+        | striptags
+        | replace({"\r": " ", "\n": " ", "\t": " "})
+        | trim %}
+
+    {% if entry.question|trim is not empty and answerText is not empty %}
+        {% set faqEntities = faqEntities | merge([{
+            "@type": "Question",
+            "name": entry.question|trim,
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": answerText
+            }
+        }]) %}
+    {% endif %}
+{% endfor %}
+
+{% if options.renderVisibleFaq and options.entries|length > 0 %}
+    <section aria-labelledby="{{ options.anchorId }}"
+             class="faq-section widget widget-faq-schema-ssr{% if customClass|length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin|length > 0 %} {{ spacingMargin }}{% endif %}"
+             {% if inlineMargin|length > 0 %} style="{{ inlineMargin }}"{% endif %}>
+        <div class="widget-inner {{ spacingPadding }}"
+             {% if inlinePadding|length > 0 %} style="{{ inlinePadding }}"{% endif %}>
+            <div class="faq-section__header">
+                {% if options.eyebrow is not empty %}
+                    <span class="faq-section__eyebrow">{{ options.eyebrow }}</span>
+                {% endif %}
+
+                {% if options.headline is not empty %}
+                    <h2 id="{{ options.anchorId }}" class="faq-section__title">
+                        {{ options.headline }}
+                    </h2>
+                {% endif %}
+            </div>
+
+            <div class="faq-section__body faq-grid">
+                {% for entry in options.entries %}
+                    {% if entry.question|trim is not empty and entry.answer|striptags|trim is not empty %}
+                        <details class="faq-item">
+                            <summary>{{ entry.question }}</summary>
+                            <div class="faq-answer">
+                                {{ entry.answer|raw }}
+                            </div>
+                        </details>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+{% if options.renderSchema and faqEntities|length > 0 %}
+    {% set faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqEntities
+    } %}
+    <script2 id="feedback-faq-jsonld-{{ options.anchorId }}" type="application/ld+json">{{ faqSchema|json_encode|raw }}</script2>
+
+    {# Remove the legacy DOM-generated block if the old code widget is still active. #}
+    <script2>
+    (function () {
+        function removeLegacyFaqSchema() {
+            var legacy = document.getElementById('automatic-faq-schema');
+            if (legacy && legacy.parentNode) {
+                legacy.parentNode.removeChild(legacy);
+            }
+        }
+
+        removeLegacyFaqSchema();
+
+        if (typeof MutationObserver !== 'undefined') {
+            var observer = new MutationObserver(removeLegacyFaqSchema);
+            observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+
+            window.setTimeout(function () {
+                observer.disconnect();
+            }, 5000);
+        }
+    })();
+    </script2>
+{% endif %}

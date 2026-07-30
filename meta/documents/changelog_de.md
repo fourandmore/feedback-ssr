@@ -1,3 +1,18 @@
+# 5.0.15
+
+- Sichtbare Plugin-Bezeichnung und Hauptwidget in **„Feedback Product Offer GEO F&M“** umbenannt.
+- Serverseitiges FAQPage-Schema kann direkt aus einer Artikel-/Varianteneigenschaft erzeugt werden.
+- Standard-Eigenschaft für vorhandene FAQ-HTML-Inhalte ist **ID 151**.
+- Das Eigenschaftsschema ist unabhängig von Review-SSR und Product-/Offer-Schema schaltbar.
+- Neue ShopBuilder-Einstellungen für Aktivierung und Eigenschafts-ID ergänzt.
+
+# 5.0.14
+
+- Neues ShopBuilder-Widget „FAQ serverseitig + Schema“.
+- Sichtbares FAQ und FAQPage-JSON-LD werden aus denselben Fragen und Antworten erzeugt.
+- FAQPage wird bereits im initialen Server-HTML ausgegeben.
+- Kompatibilitätsbereinigung für den alten Block `automatic-faq-schema`.
+
 ## 5.0.13
 
 - Bei Artikeln ohne Bewertungen wird die Überschrift sofort als „Kundenrezensionen (0)“ ausgegeben.

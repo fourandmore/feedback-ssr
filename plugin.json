@@ -1,11 +1,11 @@
 {
-    "version": "5.0.13",
+    "version": "5.0.15",
     "name": "Feedback",
     "marketplaceName": {
-        "de": "Kunden Feedback Four & More",
-        "en": "Kunden Feedback Four & More"
+        "de": "Feedback Product Offer GEO F&M",
+        "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Fork of the official PlentyONE feedback plugin for Four & More with independently configurable server-rendered reviews and complete server-side Product/Offer/Review JSON-LD schema.",
+    "description": "Four & More fork of the official PlentyONE feedback plugin with server-rendered reviews, Product/Offer/Review JSON-LD and server-rendered FAQPage schema from item property 151.",
     "namespace": "Feedback",
     "author": "PlentyONE GmbH",
     "type": "general",
@@ -22,8 +22,8 @@
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Kunden Feedback Four & More mit SSR sowie vollständigem Product-, Offer- und Review-Schema.",
-        "en": "Kunden Feedback Four & More with SSR and complete Product, Offer and Review schema."
+        "de": "Feedback Product Offer GEO F&M mit SSR sowie Product-, Offer-, Review- und FAQPage-Schema aus Eigenschaft 151.",
+        "en": "Feedback Product Offer GEO F&M with SSR and Product, Offer, Review and FAQPage schema from property 151."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",

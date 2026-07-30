@@ -1,3 +1,18 @@
+# 5.0.15
+
+- Renamed the visible plugin and main widget to **“Feedback Product Offer GEO F&M”**.
+- FAQPage JSON-LD can now be rendered server-side from an item or variation property.
+- The default property containing existing FAQ HTML is **ID 151**.
+- Property FAQ schema can be configured independently of review SSR and Product/Offer schema.
+- Added ShopBuilder settings for activation and property ID.
+
+# 5.0.14
+
+- Added the ShopBuilder widget “Server-rendered FAQ + schema”.
+- Visible FAQ content and FAQPage JSON-LD are generated from the same questions and answers.
+- FAQPage is included in the initial server HTML.
+- Compatibility cleanup for the legacy `automatic-faq-schema` block.
+
 ## 5.0.13
 
 - Items without reviews now immediately display “Item reviews (0)”.

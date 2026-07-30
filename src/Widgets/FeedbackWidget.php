@@ -20,7 +20,7 @@ class FeedbackWidget extends BaseWidget
     public function getData()
     {
         return WidgetDataFactory::make("Feedback::FeedbackWidget")
-            ->withLabel("Widget.feedbackLabel")
+            ->withLabel("Widget.feedbackGeoLabel")
             ->withPreviewImageUrl("/images/feedback.svg")
             ->withType(WidgetTypes::ITEM)
             ->withCategory(WidgetCategories::ITEM)
@@ -68,6 +68,17 @@ class FeedbackWidget extends BaseWidget
             ->withName('Widget.schemaSellerName')
             ->withTooltip('Widget.schemaSellerNameTooltip');
 
+        $settings->createSetting('faqPropertySchema', CheckboxSettingFactory::class)
+            ->withDefaultValue(true)
+            ->withName('Widget.faqPropertySchema')
+            ->withTooltip('Widget.faqPropertySchemaTooltip');
+
+        $settings->createSetting('faqPropertyId')
+            ->withType('number')
+            ->withDefaultValue(151)
+            ->withName('Widget.faqPropertyId')
+            ->withTooltip('Widget.faqPropertyIdTooltip');
+
         return $settings->toArray();
     }
 
@@ -92,6 +103,11 @@ class FeedbackWidget extends BaseWidget
             'schemaSellerName',
             'Four & More GmbH'
         );
+        $faqPropertySchema = $this->toBool(
+            $this->getMobileSetting($widgetSettings, 'faqPropertySchema', true)
+        );
+        $faqPropertyId = (int)$this->getMobileSetting($widgetSettings, 'faqPropertyId', 151);
+        $faqPropertyId = max(1, $faqPropertyId);
 
         return [
             "options" => [
@@ -102,7 +118,9 @@ class FeedbackWidget extends BaseWidget
                 // an empty preview when the generated Twig throws an exception.
                 "serverSideRendering" => !$isPreview && $serverSideRendering,
                 "productOfferSchema" => !$isPreview && $productOfferSchema,
-                "schemaSellerName" => trim($schemaSellerName)
+                "schemaSellerName" => trim($schemaSellerName),
+                "faqPropertySchema" => !$isPreview && $faqPropertySchema,
+                "faqPropertyId" => $faqPropertyId
             ]
         ];
     }

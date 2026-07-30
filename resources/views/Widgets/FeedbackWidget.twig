@@ -40,20 +40,29 @@
     {{ Twig.set("options", options | json_encode) }}
     {{ Twig.set("options", "options | merge(configOptions)") }}
 
-    {% if options.serverSideRendering or options.productOfferSchema %}
-        {# Product/Offer schema and visible review SSR are independently configurable. #}
+    {% if options.serverSideRendering or options.productOfferSchema or options.faqPropertySchema %}
+        {# Product/Offer schema, visible review SSR and property FAQ schema are independently configurable. #}
         {# Defaults prevent a missing item context from invalidating the content. #}
         {{ Twig.set("feedbackItemData", "item.documents[0].data | default({})") }}
         {{ Twig.set("feedbackItemId", "feedbackItemData.item.id | default(-1)") }}
         {{ Twig.set("feedbackVariationId", "feedbackItemData.variation.id | default(-1)") }}
-        {{ Twig.set("feedbackInitialData", Twig.call("feedbackServices.feedback.getInitialData", [
-            Twig.var("feedbackItemId"),
-            Twig.var("feedbackVariationId"),
-            options.feedbacksPerPage,
-            Twig.var("feedbackItemData"),
-            options.productOfferSchema,
-            options.schemaSellerName
-        ])) }}
+        {% if options.serverSideRendering or options.productOfferSchema %}
+            {{ Twig.set("feedbackInitialData", Twig.call("feedbackServices.feedback.getInitialData", [
+                Twig.var("feedbackItemId"),
+                Twig.var("feedbackVariationId"),
+                options.feedbacksPerPage,
+                Twig.var("feedbackItemData"),
+                options.productOfferSchema,
+                options.schemaSellerName
+            ])) }}
+        {% endif %}
+
+        {% if options.faqPropertySchema %}
+            {{ Twig.set("feedbackFaqPropertyData", Twig.call("feedbackServices.feedback.getFaqDataFromProperty", [
+                Twig.var("feedbackItemData"),
+                options.faqPropertyId
+            ])) }}
+        {% endif %}
     {% endif %}
 
     <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('Feedback::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
@@ -287,6 +296,12 @@
     {% if options.serverSideRendering or options.productOfferSchema %}
         {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
             <script2 id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script2>
+        {{ Twig.endif() }}
+    {% endif %}
+
+    {% if options.faqPropertySchema %}
+        {{ Twig.if("feedbackFaqPropertyData.jsonLd is not empty") }}
+            <script2 id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script2>
         {{ Twig.endif() }}
     {% endif %}
 {% endif %}
