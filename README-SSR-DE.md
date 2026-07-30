@@ -1,4 +1,4 @@
-# Kunden-Feedback 5.0.8 – PlentyONE-Compiler-Fix
+# Kunden Feedback Four & More 5.0.9 – JSON-LD-Hotfix
 
 Diese Version behebt die beim Bereitstellen gemeldeten Compilerfehler in `FeedbackService.php` und `ProductSchemaBuilder.php`:
 
@@ -93,3 +93,11 @@ Pro Artikelseite sollte möglichst nur ein konsistentes vollständiges `Product`
 Das Schema beschreibt die beim initialen Serveraufruf ausgewählte Variante. Nach einem rein clientseitigen Variantenwechsel kann sich der sichtbare Preis ändern, ohne dass der ursprüngliche Server-Response neu geladen wird. Variantenspezifische URLs bzw. ein vollständiger Seitenaufruf bleiben daher für die zuverlässigste Auszeichnung sinnvoll.
 
 Die PHP- und JSON-Dateien sowie der Schema-Builder wurden lokal statisch getestet. Ein abschließender Build im konkreten PlentyONE-Test-Plugin-Set ist erforderlich, da die PlentyONE-Repositories und der ShopBuilder-Compiler nur dort verfügbar sind.
+
+
+## Änderungen in Version 5.0.9
+
+- Die sichtbare Plugin-Bezeichnung lautet jetzt **Kunden Feedback Four & More**.
+- Der interne Plugin-Schlüssel und Namespace bleiben aus Kompatibilitätsgründen `Feedback`.
+- Die JSON-LD-Ausgabe verwendet im ShopBuilder-Widget `<script2>` statt `<script>`. Dadurch wird das Product-/Offer-/Review-Schema im Frontend als unsichtbares `<script type="application/ld+json">` ausgegeben und nicht mehr als sichtbarer Text dargestellt.
+- Die Ermittlung von Bestand und `availability` wurde nicht verändert.

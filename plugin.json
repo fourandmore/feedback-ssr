@@ -1,11 +1,11 @@
 {
-    "version": "5.0.8",
+    "version": "5.0.9",
     "name": "Feedback",
     "marketplaceName": {
-        "de": "Kunden-Feedback",
-        "en": "Customer feedback"
+        "de": "Kunden Feedback Four & More",
+        "en": "Kunden Feedback Four & More"
     },
-    "description": "Fork of the official PlentyONE feedback plugin with preview-safe server-rendered initial reviews and a complete server-side Product/Offer/Review JSON-LD schema.",
+    "description": "Fork of the official PlentyONE feedback plugin for Four & More with preview-safe server-rendered initial reviews and a complete server-side Product/Offer/Review JSON-LD schema.",
     "namespace": "Feedback",
     "author": "PlentyONE GmbH",
     "type": "general",
@@ -22,8 +22,8 @@
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Kunden-Feedback mit SSR sowie vollständigem Product-, Offer- und Review-Schema.",
-        "en": "Customer feedback with SSR and complete Product, Offer and Review schema."
+        "de": "Kunden Feedback Four & More mit SSR sowie vollständigem Product-, Offer- und Review-Schema.",
+        "en": "Kunden Feedback Four & More with SSR and complete Product, Offer and Review schema."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",

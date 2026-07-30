@@ -1,3 +1,11 @@
+## v5.0.9 (2026-07-30)
+
+### Changed
+
+- Changed the visible plugin name to “Kunden Feedback Four & More”.
+- JSON-LD is emitted via `<script2>` in the ShopBuilder widget so the schema is no longer displayed as visible text.
+- Stock and availability logic remain unchanged.
+
 ## v5.0.8 (2026-07-30)
 
 - PlentyONE compiler compatibility: replaced direct object creation with dependency injection.

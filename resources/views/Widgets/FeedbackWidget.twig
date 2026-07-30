@@ -73,7 +73,7 @@
 
     {% if options.serverSideRendering %}
         {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
-            <script id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script>
+            <script2 id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script2>
         {{ Twig.endif() }}
     {% endif %}
 {% endif %}
