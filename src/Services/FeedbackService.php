@@ -516,12 +516,13 @@ class FeedbackService
      * @param int $propertyId
      * @return array
      */
-    public function getFaqDataFromProperty($itemData = [], $propertyId = 151)
+    public function getFaqDataFromProperty($itemData = [], $propertyId = 151, $variationId = -1)
     {
         return $this->faqPropertySchemaBuilder->build(
             $itemData,
             (int)$propertyId,
-            (string)$this->localizationRepository->getLanguage()
+            (string)$this->localizationRepository->getLanguage(),
+            (int)$variationId
         );
     }
 

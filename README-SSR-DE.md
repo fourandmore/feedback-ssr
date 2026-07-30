@@ -1,69 +1,30 @@
-# Feedback Product Offer GEO F&M 5.0.15
+# Feedback Product Offer GEO F&M – Version 5.0.16
 
-Diese Version erweitert das offizielle Kunden-Feedback-Plugin für Four & More um:
+## Hotfix für FAQ-Eigenschaft 151
 
-- serverseitig sichtbare Produktbewertungen
-- serverseitiges Product-/Offer-Schema
-- AggregateRating und einzelne Review-Objekte
-- verständlichen Leerzustand bei Artikeln ohne Bewertungen
-- serverseitiges FAQPage-Schema aus der Artikel-/Varianteneigenschaft **ID 151**
-- optionales separates ShopBuilder-Widget **„FAQ serverseitig + Schema“**
+Version 5.0.15 konnte das FAQ-Schema nur erzeugen, wenn die Eigenschaft 151 bereits im ShopBuilder-Artikeldokument unter `properties` enthalten war. Auf manchen Artikeldetailseiten wird die sichtbare Eigenschaft jedoch durch ein separates Widget geladen und fehlt deshalb im Datenobjekt des Feedback-Widgets.
 
-## FAQ-Schema aus Eigenschaft 151
+Version 5.0.16 ergänzt einen serverseitigen Repository-Fallback:
 
-Im ShopBuilder-Hauptwidget **„Feedback Product Offer GEO F&M“** stehen zwei neue Einstellungen zur Verfügung:
+- Eigenschaft 151 wird weiterhin zuerst aus `item.documents[0].data.properties` gelesen.
+- Fehlt sie dort, wird sie direkt über die aktuelle Varianten-ID geladen.
+- Bei vererbten Eigenschaften wird zusätzlich die Hauptvariante geprüft.
+- Sprachabhängige Textwerte werden über `valueTexts` oder das PlentyONE-Text-Repository geladen.
+- Das FAQ wird nicht doppelt sichtbar ausgegeben; erzeugt wird nur das serverseitige `FAQPage`-JSON-LD.
+- Product-, Offer-, Review- und Bewertungsfunktionen bleiben unverändert.
 
-- **FAQPage aus Artikeleigenschaft serverseitig ausgeben**
-- **Eigenschafts-ID für FAQ-Schema** (Standard: `151`)
+## Nach der Installation
 
-Ist die Funktion aktiviert, liest das Plugin serverseitig den HTML-Inhalt der Eigenschaft 151 aus dem aktuellen Artikel-/Variantendokument. Unterstützt wird die vorhandene FAQ-Struktur mit:
+1. Git-Plugin aktualisieren und Plugin-Set neu bereitstellen.
+2. ShopBuilder-Inhalte neu generieren.
+3. Im Widget „Feedback Product Offer GEO F&M“ prüfen:
+   - FAQPage aus Artikeleigenschaft serverseitig ausgeben: aktiviert
+   - Eigenschafts-ID: 151
+4. Im Seitenquelltext nach `feedback-faq-property-jsonld-151` suchen.
+5. In der Browserkonsole prüfen:
 
-```html
-<section class="faq-section">
-  <details class="faq-item">
-    <summary>Frage</summary>
-    <div class="faq-answer"><p>Antwort</p></div>
-  </details>
-</section>
+```javascript
+document.getElementById('feedback-faq-property-jsonld-151')
 ```
 
-Aus den sichtbaren Fragen und Antworten wird direkt im initialen HTML erzeugt:
-
-```html
-<script id="feedback-faq-property-jsonld-151" type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": []
-}
-</script>
-```
-
-Die Eigenschaft selbst bleibt für die sichtbare FAQ-Ausgabe zuständig. Das Plugin erzeugt daraus nur das serverseitige Schema und gibt keinen zweiten sichtbaren FAQ-Bereich aus.
-
-## Einstellungen
-
-Empfohlen im Hauptwidget:
-
-- **Bewertungen serverseitig ausgeben:** aktiviert
-- **Product- und Offer-Schema serverseitig ausgeben:** aktiviert
-- **FAQPage aus Artikeleigenschaft serverseitig ausgeben:** aktiviert
-- **Eigenschafts-ID für FAQ-Schema:** `151`
-
-## Migration vom alten FAQ-Code-Widget
-
-Wenn das FAQ-Schema bisher durch ein JavaScript-Code-Widget mit `automatic-faq-schema` erzeugt wurde, sollte dieses alte Code-Widget entfernt werden. Andernfalls können zwei FAQPage-Datensätze entstehen.
-
-## Prüfung
-
-Nach der Bereitstellung im Seitenquelltext suchen nach:
-
-```text
-feedback-faq-property-jsonld-151
-```
-
-Außerdem sollten `feedback-product-jsonld` und die sichtbaren Bewertungstexte weiterhin im ursprünglichen Seitenquelltext vorhanden sein.
-
-## Technischer Name
-
-Der interne Plugin-Name und Namespace bleiben aus Kompatibilitätsgründen `Feedback`. Sichtbar heißt das Plugin und das Hauptwidget **„Feedback Product Offer GEO F&M“**.
+Das Ergebnis muss ein `<script type="application/ld+json">`-Element sein und darf nicht mehr `null` ergeben.

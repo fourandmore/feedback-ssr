@@ -60,7 +60,8 @@
         {% if options.faqPropertySchema %}
             {{ Twig.set("feedbackFaqPropertyData", Twig.call("feedbackServices.feedback.getFaqDataFromProperty", [
                 Twig.var("feedbackItemData"),
-                options.faqPropertyId
+                options.faqPropertyId,
+                Twig.var("feedbackVariationId")
             ])) }}
         {% endif %}
     {% endif %}

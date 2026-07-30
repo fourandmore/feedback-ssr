@@ -2,19 +2,35 @@
 
 namespace Feedback\Services;
 
+use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
+use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;
+
 /**
  * Extracts a visible FAQ HTML block from a plentyShop item property and builds
  * a Schema.org FAQPage object from the same questions and answers.
  */
 class FaqPropertySchemaBuilder
 {
+    /** @var VariationPropertyValueRepositoryContract */
+    private $variationPropertyValueRepository;
+
+    /** @var VariationPropertyValueTextRepositoryContract */
+    private $variationPropertyValueTextRepository;
+
+    public function __construct(
+        VariationPropertyValueRepositoryContract $variationPropertyValueRepository,
+        VariationPropertyValueTextRepositoryContract $variationPropertyValueTextRepository
+    ) {
+        $this->variationPropertyValueRepository = $variationPropertyValueRepository;
+        $this->variationPropertyValueTextRepository = $variationPropertyValueTextRepository;
+    }
     /**
      * @param mixed $itemData
      * @param int $propertyId
      * @param string $language
      * @return array
      */
-    public function build($itemData, $propertyId = 151, $language = 'de')
+    public function build($itemData, $propertyId = 151, $language = 'de', $variationId = -1)
     {
         $data = $this->toArray($itemData);
         $propertyId = (int)$propertyId;
@@ -26,11 +42,28 @@ class FaqPropertySchemaBuilder
             'jsonLd' => null
         ];
 
-        if (empty($data) || $propertyId <= 0) {
+        if ($propertyId <= 0) {
             return $result;
         }
 
         $html = $this->findPropertyHtml($data, $propertyId, (string)$language);
+
+        if ($html === '') {
+            $variationIds = $this->resolveVariationIds($data, (int)$variationId);
+
+            foreach ($variationIds as $resolvedVariationId) {
+                $html = $this->findPropertyHtmlByVariationId(
+                    $resolvedVariationId,
+                    $propertyId,
+                    (string)$language
+                );
+
+                if ($html !== '') {
+                    break;
+                }
+            }
+        }
+
         if ($html === '') {
             return $result;
         }
@@ -61,6 +94,158 @@ class FaqPropertySchemaBuilder
         ];
 
         return $result;
+    }
+
+    /**
+     * Resolve the current and main variation ids from the plentyShop item document.
+     * The main variation is included because properties can be inherited from it.
+     *
+     * @param array $data
+     * @param int $variationId
+     * @return array
+     */
+    private function resolveVariationIds(array $data, $variationId = -1)
+    {
+        $candidates = [];
+
+        if ((int)$variationId > 0) {
+            $candidates[] = (int)$variationId;
+        }
+
+        if (isset($data['variation']) && is_array($data['variation'])) {
+            if (isset($data['variation']['id'])) {
+                $candidates[] = $data['variation']['id'];
+            }
+            if (isset($data['variation']['variationId'])) {
+                $candidates[] = $data['variation']['variationId'];
+            }
+        }
+
+        if (isset($data['variationId'])) {
+            $candidates[] = $data['variationId'];
+        }
+
+        if (isset($data['item']) && is_array($data['item'])) {
+            if (isset($data['item']['mainVariationId'])) {
+                $candidates[] = $data['item']['mainVariationId'];
+            }
+        }
+
+        $result = [];
+        foreach ($candidates as $candidate) {
+            if (!is_numeric($candidate) || (int)$candidate <= 0) {
+                continue;
+            }
+
+            $candidate = (int)$candidate;
+            if (!in_array($candidate, $result, true)) {
+                $result[] = $candidate;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Load a text property directly from the variation property repositories.
+     * This is the fallback for ShopBuilder item documents that do not contain
+     * the properties result field.
+     *
+     * @param int $variationId
+     * @param int $propertyId
+     * @param string $language
+     * @return string
+     */
+    private function findPropertyHtmlByVariationId($variationId, $propertyId, $language)
+    {
+        $relations = [];
+
+        try {
+            $relations = $this->variationPropertyValueRepository->findByVariationId((int)$variationId);
+        } catch (\Exception $exception) {
+            return '';
+        }
+
+        $relations = $this->toArray($relations);
+        if (empty($relations)) {
+            return '';
+        }
+
+        foreach ($relations as $relation) {
+            $relation = $this->toArray($relation);
+            if (empty($relation) || $this->resolvePropertyId($relation) !== (int)$propertyId) {
+                continue;
+            }
+
+            $candidates = [];
+            foreach (['valueTexts', 'texts', 'names', 'value', 'rawValue'] as $key) {
+                if (array_key_exists($key, $relation)) {
+                    $this->collectTextCandidates(
+                        $relation[$key],
+                        strtolower(trim((string)$language)),
+                        $candidates,
+                        0,
+                        false
+                    );
+                }
+            }
+
+            $best = $this->selectBestCandidate($candidates);
+            if ($best !== '') {
+                return $this->decodeHtml($best);
+            }
+
+            $relationId = isset($relation['id']) ? (int)$relation['id'] : 0;
+            if ($relationId <= 0) {
+                continue;
+            }
+
+            $languageCandidates = array_unique([
+                strtolower(trim((string)$language)),
+                substr(strtolower(trim((string)$language)), 0, 2),
+                'de'
+            ]);
+
+            foreach ($languageCandidates as $languageCandidate) {
+                if ($languageCandidate === '') {
+                    continue;
+                }
+
+                try {
+                    $textModel = $this->variationPropertyValueTextRepository->show(
+                        $relationId,
+                        $languageCandidate
+                    );
+                } catch (\Exception $exception) {
+                    $textModel = null;
+                }
+
+                $textData = $this->toArray($textModel);
+                if (empty($textData) || !isset($textData['value'])) {
+                    continue;
+                }
+
+                $html = $this->decodeHtml((string)$textData['value']);
+                if ($this->isFaqHtml($html)) {
+                    return $html;
+                }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param string $html
+     * @return bool
+     */
+    private function isFaqHtml($html)
+    {
+        $html = $this->decodeHtml($html);
+
+        return $html !== ''
+            && stripos($html, '<details') !== false
+            && stripos($html, '<summary') !== false;
     }
 
     /**

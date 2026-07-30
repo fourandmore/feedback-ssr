@@ -1,11 +1,11 @@
 {
-    "version": "5.0.15",
+    "version": "5.0.16",
     "name": "Feedback",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Four & More fork of the official PlentyONE feedback plugin with server-rendered reviews, Product/Offer/Review JSON-LD and server-rendered FAQPage schema from item property 151.",
+    "description": "Four & More fork of the official PlentyONE feedback plugin with server-rendered reviews, Product/Offer/Review JSON-LD and server-rendered FAQPage schema from item property 151 with direct variation-property repository fallback.",
     "namespace": "Feedback",
     "author": "PlentyONE GmbH",
     "type": "general",
