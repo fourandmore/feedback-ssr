@@ -8,6 +8,10 @@ Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweite
 - `Product`- und `Offer`-JSON-LD,
 - `AggregateRating` und einzelne `Review`-Objekte,
 - serverseitiges `FAQPage`-Schema aus Artikeleigenschaften,
+- strukturierte Artikelzustände und Kategorien,
+- artikelspezifische Versanddaten und eine konfigurierbare Rückgaberichtlinie,
+- optionales `VideoObject` bei vollständig gepflegten Videodaten,
+- bereinigte anonyme Autorenbezeichnungen,
 - verständliche Leerzustände bei Artikeln ohne Bewertungen.
 
 ## Voraussetzungen

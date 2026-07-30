@@ -13,12 +13,18 @@ $itemData = [
         'id' => 51000,
         'manufacturer' => [
             'externalName' => 'Mephisto'
+        ],
+        'condition' => [
+            'names' => [
+                'name' => 'Neu'
+            ]
         ]
     ],
     'variation' => [
         'id' => 13046,
         'number' => '51000-600',
-        'model' => 'IR-600'
+        'model' => 'IR-600',
+        'defaultShippingCosts' => 6.90
     ],
     'filter' => [
         'isSalable' => true
@@ -56,13 +62,34 @@ $reviews = [[
     ]
 ]];
 
+$schemaOptions = [
+    'schemaShippingPolicy' => true,
+    'schemaShippingCountries' => 'DE',
+    'schemaHandlingTimeMin' => 0,
+    'schemaHandlingTimeMax' => 1,
+    'schemaTransitTimeMin' => 1,
+    'schemaTransitTimeMax' => 3,
+    'schemaReturnPolicy' => true,
+    'schemaReturnCountries' => 'DE',
+    'schemaReturnDays' => 14,
+    'schemaReturnPolicyUrl' => 'https://www.example.test/widerrufsrecht/',
+    'schemaVideoObject' => true,
+    'schemaVideoName' => 'Mephisto Infrarotheizung im Überblick',
+    'schemaVideoEmbedUrl' => 'https://www.youtube.com/embed/AbCdEf12345',
+    'schemaVideoThumbnailUrl' => '',
+    'schemaVideoUploadDate' => '2026-07-01',
+    'schemaVideoDescription' => 'Funktionen und Montage der Infrarotheizung.',
+    'schemaVideoDuration' => 'PT1M30S'
+];
+
 $builder = new ProductSchemaBuilder();
 $schema = $builder->build(
     $itemData,
-    'https://www.example.test/infrarotheizung_51000_13046',
+    'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13046',
     $counts,
     $reviews,
-    'Four & More GmbH'
+    'Four & More GmbH',
+    $schemaOptions
 );
 
 $assertions = [
@@ -70,13 +97,23 @@ $assertions = [
     $schema['name'] === 'Mephisto Infrarotheizung 600 W',
     $schema['sku'] === '51000-600',
     $schema['brand']['name'] === 'Mephisto',
+    $schema['category'] === 'Infrarotheizungen',
     $schema['offers']['price'] === '129.90',
     $schema['offers']['priceCurrency'] === 'EUR',
     $schema['offers']['availability'] === 'https://schema.org/InStock',
+    $schema['offers']['itemCondition'] === 'https://schema.org/NewCondition',
     $schema['offers']['seller']['name'] === 'Four & More GmbH',
+    $schema['offers']['seller']['hasMerchantReturnPolicy']['merchantReturnDays'] === 14,
+    $schema['offers']['seller']['hasMerchantReturnPolicy']['returnFees'] === 'https://schema.org/ReturnFeesCustomerResponsibility',
+    $schema['offers']['shippingDetails']['shippingRate']['value'] === 6.9,
+    $schema['offers']['shippingDetails']['shippingRate']['currency'] === 'EUR',
+    $schema['offers']['shippingDetails']['shippingDestination']['addressCountry'] === 'DE',
     $schema['aggregateRating']['reviewCount'] === 12,
     count($schema['review']) === 1,
-    $schema['gtin13'] === '4012345678901'
+    $schema['gtin13'] === '4012345678901',
+    $schema['subjectOf']['@type'] === 'VideoObject',
+    $schema['subjectOf']['thumbnailUrl'] === 'https://i.ytimg.com/vi/AbCdEf12345/hqdefault.jpg',
+    $schema['subjectOf']['duration'] === 'PT1M30S'
 ];
 
 foreach ($assertions as $index => $passed) {
@@ -86,21 +123,21 @@ foreach ($assertions as $index => $passed) {
     }
 }
 
-
-
-$withoutReviews = $builder->build(
+$withoutReviewsOrVideo = $builder->build(
     $itemData,
-    'https://www.example.test/infrarotheizung_51000_13046',
+    'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13046',
     ['averageValue' => 0, 'ratingsCountTotal' => 0],
     [],
-    'Four & More GmbH'
+    'Four & More GmbH',
+    array_merge($schemaOptions, ['schemaVideoObject' => false])
 );
 
-if (!is_array($withoutReviews)
-    || !isset($withoutReviews['offers'])
-    || isset($withoutReviews['aggregateRating'])
-    || isset($withoutReviews['review'])) {
-    fwrite(STDERR, 'Product/Offer without reviews failed.' . PHP_EOL);
+if (!is_array($withoutReviewsOrVideo)
+    || !isset($withoutReviewsOrVideo['offers'])
+    || isset($withoutReviewsOrVideo['aggregateRating'])
+    || isset($withoutReviewsOrVideo['review'])
+    || isset($withoutReviewsOrVideo['subjectOf'])) {
+    fwrite(STDERR, 'Product/Offer without reviews or video failed.' . PHP_EOL);
     exit(1);
 }
 

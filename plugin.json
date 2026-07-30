@@ -1,11 +1,11 @@
 {
-    "version": "5.0.19",
+    "version": "5.0.20",
     "name": "Feedback",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, Offer-, Review- und FAQPage-JSON-LD.",
+    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, Offer-, Review-, FAQPage-, Versand-, Rückgabe- und optionale VideoObject-JSON-LD-Daten.",
     "namespace": "Feedback",
     "author": "Four & More GmbH",
     "type": "general",
@@ -22,8 +22,8 @@
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Feedback Product Offer GEO F&M von Four & More GmbH mit SSR sowie Product-, Offer-, Review- und FAQPage-Schema.",
-        "en": "Feedback Product Offer GEO F&M by Four & More GmbH with SSR and Product, Offer, Review and FAQPage schema."
+        "de": "Feedback Product Offer GEO F&M mit SSR sowie Product-, Offer-, Review-, FAQPage-, Versand- und Rückgabe-Schema.",
+        "en": "Feedback Product Offer GEO F&M with SSR and Product, Offer, Review, FAQPage, shipping and return schema."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",

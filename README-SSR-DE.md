@@ -1,6 +1,51 @@
-# Feedback Product Offer GEO F&M – Version 5.0.19
+# Feedback Product Offer GEO F&M – Version 5.0.20
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Erweiterte strukturierte Produktdaten
+
+Version 5.0.20 ergänzt das bestehende serverseitige Product-/Offer-/Review-/FAQPage-Markup um:
+
+- `Product.category`: bevorzugt aus der Standardkategorie, ansonsten aus dem aktiven Kategoriepfad der kanonischen Produkt-URL,
+- `Offer.itemCondition`: Zuordnung der PlentyONE-Artikelzustände zu `NewCondition`, `RefurbishedCondition`, `UsedCondition` oder `DamagedCondition`,
+- `Offer.shippingDetails`: artikelspezifische `OfferShippingDetails` aus `variation.defaultShippingCosts`,
+- `Organization.hasMerchantReturnPolicy`: konfigurierbare allgemeine Rückgaberichtlinie am Verkäufer des Offers,
+- optional `Product.subjectOf` mit einem vollständigen `VideoObject`,
+- Bereinigung der Platzhalter-Autoren `Unbekannt`, `Unknown`, `Gast` und vergleichbarer Werte zu `Anonymer Käufer` bzw. `Anonymous buyer`.
+
+Das Video-Markup ist standardmäßig deaktiviert. Es wird nur ausgegeben, wenn Embed-URL, Thumbnail und Upload-Datum vollständig vorhanden sind. Bei YouTube kann das Thumbnail aus der Embed-URL abgeleitet werden.
+
+## ShopBuilder-Einstellungen
+
+Im Widget **Feedback Product Offer GEO F&M** stehen neue Einstellungen zur Verfügung:
+
+- Versanddaten aktivieren, Lieferländer sowie Bearbeitungs- und Transportzeit,
+- Rückgaberichtlinie aktivieren, Länder, Rückgabefrist und öffentliche Richtlinien-URL,
+- VideoObject aktivieren sowie Titel, Embed-URL, Thumbnail, Upload-Datum, Beschreibung und Dauer.
+
+Die Versandkosten selbst werden nicht im Widget fest eingetragen. Das Plugin verwendet ausschließlich die für die aktuelle Variante bereitgestellten `variation.defaultShippingCosts`. Fehlt dieser Wert, wird kein `shippingDetails`-Objekt ausgegeben.
+
+**Wichtig:** Werden Paket- und Speditionsartikel über unterschiedliche ShopBuilder-Inhalte ausgespielt, müssen Lieferzeiten und Länder passend je Inhalt eingestellt werden. Das optionale VideoObject darf nur in einem Inhalt aktiviert werden, dessen Videodaten tatsächlich für alle damit ausgespielten Artikel gelten.
+
+## Prüfung nach der Installation
+
+Nach Aktualisierung, Bereitstellung und Neugenerierung der ShopBuilder-Inhalte im Product-JSON-LD prüfen:
+
+```javascript
+const product = [...document.querySelectorAll('script[type="application/ld+json"]')]
+  .map(el => { try { return JSON.parse(el.textContent); } catch (e) { return null; } })
+  .find(data => data?.['@type'] === 'Product');
+
+({
+  category: product?.category,
+  itemCondition: product?.offers?.itemCondition,
+  shippingDetails: product?.offers?.shippingDetails,
+  returnPolicy: product?.offers?.seller?.hasMerchantReturnPolicy,
+  videoObject: product?.subjectOf
+});
+```
+
+---
 
 ## Korrektur der serverseitigen FAQPage-Ausgabe
 

@@ -387,6 +387,7 @@ class FeedbackService
      * @param mixed $itemData
      * @param bool $includeProductOfferSchema
      * @param string $sellerName
+     * @param array $schemaOptions
      * @return array
      */
     public function getInitialData(
@@ -395,13 +396,15 @@ class FeedbackService
         $itemsPerPage = 10,
         $itemData = [],
         $includeProductOfferSchema = true,
-        $sellerName = ''
+        $sellerName = '',
+        $schemaOptions = []
     )
     {
         $itemId = (int)$itemId;
         $variationId = (int)$variationId;
         $itemsPerPage = max(1, min(10, (int)$itemsPerPage));
         $includeProductOfferSchema = filter_var($includeProductOfferSchema, FILTER_VALIDATE_BOOLEAN);
+        $schemaOptions = is_array($schemaOptions) ? $schemaOptions : [];
 
         $countsData = $this->getCounts($itemId);
         $counts = isset($countsData['counts']) ? $countsData['counts'] : [];
@@ -486,7 +489,8 @@ class FeedbackService
                 $this->getCanonicalProductUrl(),
                 $counts,
                 $schemaReviews,
-                (string)$sellerName
+                (string)$sellerName,
+                $schemaOptions
             );
         } elseif (!empty($schemaReviews)) {
             // Backwards-compatible review-only schema if Product/Offer output
@@ -623,18 +627,43 @@ class FeedbackService
             $sourceId = isset($relation->feedbackRelationSourceId) ? (int)$relation->feedbackRelationSourceId : 0;
             $label = isset($relation->sourceRelationLabel) ? trim((string)$relation->sourceRelationLabel) : '';
 
-            if (($relationType === 'user' || $relationType === 'contact') && $sourceId > 0 && $label !== '') {
+            if (($relationType === 'user' || $relationType === 'contact')
+                && $sourceId > 0
+                && $label !== ''
+                && !$this->isUnknownAuthorLabel($label)) {
                 return $label;
             }
         }
 
         $authorName = isset($feedback->authorName) ? trim((string)$feedback->authorName) : '';
-        if ($authorName !== '') {
+        if ($authorName !== '' && !$this->isUnknownAuthorLabel($authorName)) {
             return $authorName;
         }
 
         $language = strtolower((string)$this->localizationRepository->getLanguage());
-        return strpos($language, 'de') === 0 ? 'Unbekannt' : 'Unknown';
+        return strpos($language, 'de') === 0 ? 'Anonymer Käufer' : 'Anonymous buyer';
+    }
+
+    /**
+     * Treat generic placeholder labels as missing author data so neither the
+     * visible SSR review nor Review JSON-LD publishes a fake person named
+     * “Unbekannt” or “Unknown”.
+     *
+     * @param string $label
+     * @return bool
+     */
+    private function isUnknownAuthorLabel($label)
+    {
+        $label = strtolower(trim((string)$label));
+
+        return in_array($label, [
+            'unbekannt',
+            'unknown',
+            'anonym',
+            'anonymous',
+            'gast',
+            'guest'
+        ], true);
     }
 
     /**

@@ -1,3 +1,13 @@
+# 5.0.20
+
+- Placeholder authors such as “Unknown”, “Unbekannt” and “Guest” are rendered as “Anonymous buyer” or “Anonymer Käufer” in visible SSR reviews and Review JSON-LD.
+- `Product.category` is derived from the PlentyONE default category or the canonical category path.
+- `Offer.itemCondition` is derived from the PlentyONE item condition.
+- Product-specific `OfferShippingDetails` are generated from `variation.defaultShippingCosts` and configurable destinations and delivery times.
+- A standard `MerchantReturnPolicy` is attached to the Offer seller `Organization`.
+- An optional `VideoObject` can be attached through `Product.subjectOf` when complete video data is configured.
+- Added ShopBuilder settings for shipping, returns and video markup.
+
 # 5.0.19
 
 - FAQPage JSON-LD from the item property and the manual FAQ widget is emitted as a real `<script type="application/ld+json">` element in the server HTML.
