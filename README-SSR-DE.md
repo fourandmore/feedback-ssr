@@ -1,4 +1,4 @@
-# Feedback Product Offer GEO F&M – Version 5.0.17
+# Feedback Product Offer GEO F&M – Version 5.0.18
 
 **Entwickelt und gepflegt von Four & More GmbH.**
 
@@ -31,3 +31,8 @@ document.getElementById('feedback-faq-property-jsonld-151')
 ```
 
 Das Ergebnis muss ein `<script type="application/ld+json">`-Element sein und darf nicht mehr `null` ergeben.
+
+
+## FAQ-Eigenschaft 151 – Diagnose und Fallbacks
+
+Version 5.0.18 liest Property-Modelle explizit per `toArray()`, durchsucht das komplette Item-Dokument rekursiv, unterstützt zusätzliche Sprachcodes und kann die Varianten-ID aus der Produkt-URL ermitteln. Zusätzlich wird ein unsichtbares Diagnoseelement `feedback-faq-property-status-151` ausgegeben.

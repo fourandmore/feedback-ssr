@@ -518,12 +518,40 @@ class FeedbackService
      */
     public function getFaqDataFromProperty($itemData = [], $propertyId = 151, $variationId = -1)
     {
+        $resolvedVariationId = (int)$variationId;
+        if ($resolvedVariationId <= 0) {
+            $resolvedVariationId = $this->getVariationIdFromRequestPath();
+        }
+
         return $this->faqPropertySchemaBuilder->build(
             $itemData,
             (int)$propertyId,
             (string)$this->localizationRepository->getLanguage(),
-            (int)$variationId
+            $resolvedVariationId
         );
+    }
+
+    /**
+     * Resolve the variation id from plentyShop item URLs ending in _<variationId>.
+     * This fallback is used if the ShopBuilder item document does not expose it.
+     *
+     * @return int
+     */
+    private function getVariationIdFromRequestPath()
+    {
+        $requestUri = (string)$this->request->getRequestUri();
+        $path = parse_url($requestUri, PHP_URL_PATH);
+
+        if (!is_string($path) || $path === '') {
+            return -1;
+        }
+
+        $matches = [];
+        if (preg_match('/_(\d+)\/?$/', $path, $matches) !== 1 || empty($matches[1])) {
+            return -1;
+        }
+
+        return (int)$matches[1];
     }
 
     /**

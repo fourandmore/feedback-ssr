@@ -301,6 +301,10 @@
     {% endif %}
 
     {% if options.faqPropertySchema %}
+        <meta id="feedback-faq-property-status-{{ options.faqPropertyId }}"
+              data-status="{{ Twig.print("feedbackFaqPropertyData.status | default('not-found')") }}"
+              data-source="{{ Twig.print("feedbackFaqPropertyData.source | default('')") }}"
+              data-variation-id="{{ Twig.print("feedbackFaqPropertyData.resolvedVariationId | default(feedbackVariationId)") }}">
         {{ Twig.if("feedbackFaqPropertyData.jsonLd is not empty") }}
             <script2 id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script2>
         {{ Twig.endif() }}

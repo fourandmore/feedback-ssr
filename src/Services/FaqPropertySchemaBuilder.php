@@ -4,6 +4,8 @@ namespace Feedback\Services;
 
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;
+use Plenty\Modules\Item\VariationProperty\Models\VariationPropertyValue;
+use Plenty\Modules\Item\VariationProperty\Models\VariationPropertyValueText;
 
 /**
  * Extracts a visible FAQ HTML block from a plentyShop item property and builds
@@ -39,7 +41,10 @@ class FaqPropertySchemaBuilder
             'propertyId' => $propertyId,
             'html' => '',
             'entries' => [],
-            'jsonLd' => null
+            'jsonLd' => null,
+            'status' => 'not-found',
+            'source' => '',
+            'resolvedVariationId' => 0
         ];
 
         if ($propertyId <= 0) {
@@ -47,6 +52,9 @@ class FaqPropertySchemaBuilder
         }
 
         $html = $this->findPropertyHtml($data, $propertyId, (string)$language);
+        if ($html !== '') {
+            $result['source'] = 'item-document';
+        }
 
         if ($html === '') {
             $variationIds = $this->resolveVariationIds($data, (int)$variationId);
@@ -59,6 +67,8 @@ class FaqPropertySchemaBuilder
                 );
 
                 if ($html !== '') {
+                    $result['source'] = 'variation-repository';
+                    $result['resolvedVariationId'] = (int)$resolvedVariationId;
                     break;
                 }
             }
@@ -87,6 +97,7 @@ class FaqPropertySchemaBuilder
 
         $result['html'] = $html;
         $result['entries'] = $entries;
+        $result['status'] = 'found';
         $result['jsonLd'] = [
             '@context' => 'https://schema.org',
             '@type' => 'FAQPage',
@@ -200,10 +211,18 @@ class FaqPropertySchemaBuilder
                 continue;
             }
 
+            $normalizedLanguage = strtolower(trim((string)$language));
+            $shortLanguage = substr($normalizedLanguage, 0, 2);
             $languageCandidates = array_unique([
-                strtolower(trim((string)$language)),
-                substr(strtolower(trim((string)$language)), 0, 2),
-                'de'
+                $normalizedLanguage,
+                str_replace('-', '_', $normalizedLanguage),
+                str_replace('_', '-', $normalizedLanguage),
+                $shortLanguage,
+                $shortLanguage . '_DE',
+                $shortLanguage . '-DE',
+                'de',
+                'de_DE',
+                'de-DE'
             ]);
 
             foreach ($languageCandidates as $languageCandidate) {
@@ -256,6 +275,14 @@ class FaqPropertySchemaBuilder
      */
     private function findPropertyHtml(array $data, $propertyId, $language)
     {
+        // plentyShop result fields can nest properties differently depending on
+        // the active Ceres/IO version and the widgets used on the item page.
+        // Scan the complete item document first before using known paths.
+        $recursiveMatch = $this->findPropertyHtmlRecursive($data, (int)$propertyId, (string)$language, 0);
+        if ($recursiveMatch !== '') {
+            return $recursiveMatch;
+        }
+
         $propertyCollections = [];
 
         if (isset($data['properties'])) {
@@ -321,6 +348,66 @@ class FaqPropertySchemaBuilder
                 if ($best !== '') {
                     return $this->decodeHtml($best);
                 }
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Recursively find a property entry in an item document.
+     *
+     * @param mixed $node
+     * @param int $propertyId
+     * @param string $language
+     * @param int $depth
+     * @return string
+     */
+    private function findPropertyHtmlRecursive($node, $propertyId, $language, $depth)
+    {
+        if ((int)$depth > 9 || $node === null) {
+            return '';
+        }
+
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return '';
+        }
+
+        if ($this->resolvePropertyId($node) === (int)$propertyId) {
+            $candidates = [];
+            foreach (['valueTexts', 'texts', 'text', 'value', 'values', 'propertyValue', 'rawValue', 'names'] as $key) {
+                if (array_key_exists($key, $node)) {
+                    $this->collectTextCandidates(
+                        $node[$key],
+                        strtolower(trim((string)$language)),
+                        $candidates,
+                        0,
+                        false
+                    );
+                }
+            }
+
+            $best = $this->selectBestCandidate($candidates);
+            if ($best !== '') {
+                return $this->decodeHtml($best);
+            }
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+
+            $found = $this->findPropertyHtmlRecursive(
+                $child,
+                (int)$propertyId,
+                (string)$language,
+                (int)$depth + 1
+            );
+
+            if ($found !== '') {
+                return $found;
             }
         }
 
@@ -611,8 +698,13 @@ class FaqPropertySchemaBuilder
             return '';
         }
 
-        if (strpos($html, '<') === false && strpos($html, '&lt;') !== false) {
+        $decodePass = 0;
+        while (strpos($html, '<') === false
+            && (strpos($html, '&lt;') !== false || strpos($html, '&amp;lt;') !== false)
+            && $decodePass < 3
+        ) {
             $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $decodePass++;
         }
 
         return $html;
@@ -642,6 +734,11 @@ class FaqPropertySchemaBuilder
     {
         if (is_array($value)) {
             return $value;
+        }
+
+        if ($value instanceof VariationPropertyValue || $value instanceof VariationPropertyValueText) {
+            $modelData = $value->toArray();
+            return is_array($modelData) ? $modelData : [];
         }
 
         if (is_object($value)) {

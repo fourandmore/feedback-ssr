@@ -1,4 +1,6 @@
-# 5.0.17
+# 5.0.18
+
+- FAQ-Eigenschaft 151: rekursive Item-Dokument-Suche, Modell-Normalisierung, URL-Varianten-Fallback und Diagnose-Meta ergänzt.
 
 - Projekt-, Entwickler- und Maintainerangaben auf **Four & More GmbH** aktualisiert.
 - Kontaktangaben in den Plugin-Metadaten aktualisiert.

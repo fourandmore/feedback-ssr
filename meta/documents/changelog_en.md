@@ -1,4 +1,6 @@
-# 5.0.17
+# 5.0.18
+
+- FAQ property 151: added recursive item document scan, model normalization, URL variation fallback and diagnostic meta tag.
 
 - Updated project, developer and maintainer metadata to **Four & More GmbH**.
 - Updated contact information in plugin metadata.
