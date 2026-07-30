@@ -35,6 +35,8 @@ class FeedbackService
     private $accountService;
     /** @var LocalizationRepositoryContract $localizationRepository */
     private $localizationRepository;
+    /** @var ProductSchemaBuilder $productSchemaBuilder */
+    private $productSchemaBuilder;
 
     const GUEST_ID = 0;
     const RELEASE_LEVEL_NONE = 0;
@@ -47,7 +49,8 @@ class FeedbackService
         FeedbackRepositoryContract $feedbackRepository,
         FeedbackAverageRepositoryContract $feedbackAverageRepository,
         AccountService $accountService,
-        LocalizationRepositoryContract $localizationRepository
+        LocalizationRepositoryContract $localizationRepository,
+        ProductSchemaBuilder $productSchemaBuilder
     )
     {
         $this->request = $request;
@@ -56,6 +59,7 @@ class FeedbackService
         $this->feedbackAverageRepository = $feedbackAverageRepository;
         $this->accountService = $accountService;
         $this->localizationRepository = $localizationRepository;
+        $this->productSchemaBuilder = $productSchemaBuilder;
     }
 
     /**
@@ -473,8 +477,7 @@ class FeedbackService
         }
 
         if ($includeProductOfferSchema) {
-            $schemaBuilder = new ProductSchemaBuilder();
-            $initialData['jsonLd'] = $schemaBuilder->build(
+            $initialData['jsonLd'] = $this->productSchemaBuilder->build(
                 $itemData,
                 $this->getCanonicalProductUrl(),
                 $counts,

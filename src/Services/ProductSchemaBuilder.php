@@ -324,7 +324,7 @@ class ProductSchemaBuilder
     {
         foreach ($paths as $path) {
             $value = $this->value($data, $path, '');
-            if (is_scalar($value)) {
+            if (!is_array($value) && !is_object($value) && $value !== null) {
                 $value = trim((string)$value);
                 if ($value !== '') {
                     return $value;
@@ -349,11 +349,6 @@ class ProductSchemaBuilder
         foreach ($segments as $segment) {
             if (is_array($current) && array_key_exists($segment, $current)) {
                 $current = $current[$segment];
-                continue;
-            }
-
-            if (is_object($current) && (isset($current->{$segment}) || property_exists($current, $segment))) {
-                $current = $current->{$segment};
                 continue;
             }
 
@@ -392,7 +387,7 @@ class ProductSchemaBuilder
      */
     private function cleanText($value)
     {
-        if (!is_scalar($value)) {
+        if (is_array($value) || is_object($value) || $value === null) {
             return '';
         }
 

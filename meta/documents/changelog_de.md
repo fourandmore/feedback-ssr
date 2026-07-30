@@ -1,3 +1,9 @@
+## v5.0.8 (2026-07-30)
+
+- PlentyONE-Compiler-Kompatibilität: direkte Objekterzeugung durch Dependency Injection ersetzt.
+- Nicht erlaubte Funktion `is_scalar()` entfernt.
+- Dynamische Objektzugriffe im Product-Schema-Builder entfernt; Verarbeitung erfolgt vollständig über Arrays.
+
 # Release Notes für Feedback
 
 

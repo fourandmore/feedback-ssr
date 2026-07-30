@@ -1,3 +1,13 @@
+# Kunden-Feedback 5.0.8 – PlentyONE-Compiler-Fix
+
+Diese Version behebt die beim Bereitstellen gemeldeten Compilerfehler in `FeedbackService.php` und `ProductSchemaBuilder.php`:
+
+- keine direkte Verwendung von `new` im Plugin-Code,
+- keine Verwendung von `is_scalar()`,
+- keine dynamischen Objekteigenschaften wie `$object->{$name}`,
+- `ProductSchemaBuilder` wird per Dependency Injection in `FeedbackService` eingebunden,
+- der Schema-Builder verarbeitet das normalisierte Artikeldokument ausschließlich als Array.
+
 
 ## Version 5.0.7 – ShopBuilder-Preview-Fix
 
