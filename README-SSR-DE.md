@@ -1,7 +1,48 @@
-# Feedback Product Offer GEO F&M – Version 5.0.18
+# Feedback Product Offer GEO F&M – Version 5.0.19
 
 **Entwickelt und gepflegt von Four & More GmbH.**
 
+## Korrektur der serverseitigen FAQPage-Ausgabe
+
+Version 5.0.19 gibt die beiden FAQPage-JSON-LD-Varianten direkt als standardkonformes HTML aus:
+
+```html
+<script type="application/ld+json">…</script>
+```
+
+Geändert wurden ausschließlich:
+
+- das FAQPage-Schema aus der Artikel-/Varianteneigenschaft, standardmäßig Eigenschaft **151**,
+- das JSON-LD des separaten manuellen FAQ-ShopBuilder-Widgets.
+
+Das funktionierende Product-/Offer-/Review-Schema wurde **nicht verändert** und verwendet weiterhin seinen bisherigen Ausgabeweg.
+
+Die FAQ-Eigenschaft, der Parser, die Repository-Fallbacks und der Diagnose-Marker aus Version 5.0.18 bleiben unverändert.
+
+## Prüfung nach der Installation
+
+1. Plugin-Set bereitstellen und ShopBuilder-Inhalte neu generieren.
+2. Artikeldetailseite öffnen und mit `Strg + U` den unveränderten Seitenquelltext anzeigen.
+3. Nach `feedback-faq-property-jsonld-151` suchen.
+4. Der Block muss mit einem echten `<script` beginnen und darf nicht mehr als `<script2` ausgegeben werden.
+
+Konsolenprüfung:
+
+```javascript
+const faq = document.getElementById('feedback-faq-property-jsonld-151');
+({
+  vorhanden: Boolean(faq),
+  tagName: faq?.tagName,
+  type: faq?.getAttribute('type'),
+  schema: faq ? JSON.parse(faq.textContent) : null
+});
+```
+
+Erwartet werden `vorhanden: true`, `tagName: "SCRIPT"` und `type: "application/ld+json"`.
+
+---
+
+## Historie der FAQ-Eigenschaftsunterstützung
 
 ## Hotfix für FAQ-Eigenschaft 151
 

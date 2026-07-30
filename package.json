@@ -1,7 +1,7 @@
 {
   "name": "four-more-feedback-product-offer-geo",
   "license": "AGPL-3.0",
-  "version": "5.0.18",
+  "version": "5.0.19",
   "engines": {
     "node": "16"
   },

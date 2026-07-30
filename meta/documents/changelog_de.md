@@ -1,3 +1,9 @@
+# 5.0.19
+
+- FAQPage-JSON-LD aus Eigenschaft und manuellem FAQ-Widget wird im Server-HTML als echtes `<script type="application/ld+json">` ausgegeben.
+- Die bisherige nicht standardkonforme FAQ-Ausgabe über `<script2>` wurde entfernt.
+- Product-, Offer-, Review- und Bewertungslogik bleiben unverändert.
+
 # 5.0.18
 
 - FAQ-Eigenschaft 151: rekursive Item-Dokument-Suche, Modell-Normalisierung, URL-Varianten-Fallback und Diagnose-Meta ergänzt.

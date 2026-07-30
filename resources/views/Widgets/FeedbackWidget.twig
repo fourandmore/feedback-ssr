@@ -306,7 +306,7 @@
               data-source="{{ Twig.print("feedbackFaqPropertyData.source | default('')") }}"
               data-variation-id="{{ Twig.print("feedbackFaqPropertyData.resolvedVariationId | default(feedbackVariationId)") }}">
         {{ Twig.if("feedbackFaqPropertyData.jsonLd is not empty") }}
-            <script2 id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script2>
+            <script id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script>
         {{ Twig.endif() }}
     {% endif %}
 {% endif %}

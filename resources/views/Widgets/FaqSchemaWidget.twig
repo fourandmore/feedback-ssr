@@ -66,7 +66,7 @@
         "@type": "FAQPage",
         "mainEntity": faqEntities
     } %}
-    <script2 id="feedback-faq-jsonld-{{ options.anchorId }}" type="application/ld+json">{{ faqSchema|json_encode|raw }}</script2>
+    <script id="feedback-faq-jsonld-{{ options.anchorId }}" type="application/ld+json">{{ faqSchema|json_encode|raw }}</script>
 
     {# Remove the legacy DOM-generated block if the old code widget is still active. #}
     <script2>

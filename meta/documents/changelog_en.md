@@ -1,3 +1,9 @@
+# 5.0.19
+
+- FAQPage JSON-LD from the item property and the manual FAQ widget is emitted as a real `<script type="application/ld+json">` element in the server HTML.
+- Removed the previous non-standard FAQ output via `<script2>`.
+- Product, Offer, Review and rating logic remain unchanged.
+
 # 5.0.18
 
 - FAQ property 151: added recursive item document scan, model normalization, URL variation fallback and diagnostic meta tag.
