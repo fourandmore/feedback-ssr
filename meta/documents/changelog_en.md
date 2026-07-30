@@ -1,3 +1,11 @@
+# 5.0.17
+
+- Updated project, developer and maintainer metadata to **Four & More GmbH**.
+- Updated contact information in plugin metadata.
+- Removed obsolete CODEOWNERS and repository references.
+- Updated README and package metadata to **Feedback Product Offer GEO F&M**.
+- Preserved original copyright and license notices and added the Four & More GmbH modification notice.
+
 # 5.0.15
 
 - Renamed the visible plugin and main widget to **“Feedback Product Offer GEO F&M”**.

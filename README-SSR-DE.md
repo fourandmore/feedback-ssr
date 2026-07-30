@@ -1,4 +1,7 @@
-# Feedback Product Offer GEO F&M – Version 5.0.16
+# Feedback Product Offer GEO F&M – Version 5.0.17
+
+**Entwickelt und gepflegt von Four & More GmbH.**
+
 
 ## Hotfix für FAQ-Eigenschaft 151
 

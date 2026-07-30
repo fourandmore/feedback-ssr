@@ -1,23 +1,21 @@
-PlentyONE Feedback Plugin
+Feedback Product Offer GEO F&M
 
-Copyright © 2019-2025 PlentyONE GmbH
+Original work: Copyright © 2019-2025 PlentyONE GmbH
+Modifications and extensions: Copyright © 2026 Four & More GmbH
 
-According to our dual licensing model, this program can be used either
-under the terms of the GNU Affero General Public License, version 3,
-or under a proprietary license.
+This modified version is distributed under the terms of the GNU Affero
+General Public License, version 3. Any separate proprietary licensing
+terms offered for the original upstream project are not granted by
+Four & More GmbH for this modified version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Affero General Public License for more details.
 
-"PlentyONE" is a registered trademark of PlentyONE GmbH.
-The licensing of the program under the AGPLv3 does not imply a
-trademark license. Therefore any rights, titles and interests in the
-above trademarks remain entirely with the trademark owners.
-
-
-
+"PlentyONE" is a registered trademark of PlentyONE GmbH. The licensing
+of this program under the AGPLv3 does not imply a trademark license.
+All rights in third-party trademarks remain with their respective owners.
 
 
                     GNU AFFERO GENERAL PUBLIC LICENSE

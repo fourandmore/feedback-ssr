@@ -1,29 +1,27 @@
-![PlentyONE Logo](https://cdn01.plentymarkets.com/avw8j9fg70hi/frontend/plentyShop_LTS/PlentyONE_Logo_Black_RGB.svg)
+# Feedback Product Offer GEO F&M
 
-# Feedback Plugin
+Entwickelt und gepflegt von **Four & More GmbH** für plentyShop LTS.
 
-This is the **Feedback** plugin developed by PlentyONE. It provides the feedback widget for the ShopBuilder.
+Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweitert es um:
 
-## Requirements
+- serverseitig gerenderte Kundenrezensionen,
+- `Product`- und `Offer`-JSON-LD,
+- `AggregateRating` und einzelne `Review`-Objekte,
+- serverseitiges `FAQPage`-Schema aus Artikeleigenschaften,
+- verständliche Leerzustände bei Artikeln ohne Bewertungen.
 
-This is a plugin for [PlentyONE](https://www.plentyone.com). The plugin [IO](https://github.com/plentymarkets/plugin-io) is required to run the **Feedback** plugin. The **plentyShop LTS** ShopBuilder is required to integrate the feedback functionality. 
+## Voraussetzungen
 
-## Installing
+- plentyShop LTS / Ceres
+- IO
+- ein ShopBuilder-Inhalt für die Artikeldetailseite
 
-After purchasing the plugin, open the **Plugins » Plugin overview** menu and enter "Feedback" into the plugin search. Click on the feedback plugin and click **install** in the top left corner. After the installation is complete, add the plugin to the plugin set you want to use. After **deploying** the plugin set, the feedback widget becomes available in the ShopBuilder editor under item widgets.
+## Pflege und Support
 
-## Documentation
+**Four & More GmbH**  
+E-Mail: info@four-more.de  
+Telefon: +49 7260 849577
 
-For a detailed documentation of how to set up ShopBuilder widgets, please refer to the [PlentyONE manual](https://knowledge.plentymarkets.com/en/online-store/shop-builder) documentation.
+## Herkunft und Lizenz
 
-## Join our community
-
-Sign up today and become a member of our [forum](https://forum.plentymarkets.com/c/plugin-entwicklung). Discuss the latest trends in plugin development and share your ideas with our community.
-
-## Versioning
-
-Find information about the latest updates in our [Changelog](/meta/documents/changelog_en.md).
-
-## License
-
-This project is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE - see the [LICENSE](/LICENSE) file for details.
+Dieses Projekt ist eine modifizierte Fassung des ursprünglichen PlentyONE-Feedback-Plugins. Die ursprünglichen Urheber- und Markenhinweise sowie die Bedingungen der GNU Affero General Public License Version 3 bleiben erhalten. Änderungen und Erweiterungen ab Version 5.0.5 werden von Four & More GmbH gepflegt. Siehe [LICENSE.md](LICENSE.md).

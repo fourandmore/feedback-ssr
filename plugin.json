@@ -1,13 +1,13 @@
 {
-    "version": "5.0.16",
+    "version": "5.0.17",
     "name": "Feedback",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Four & More fork of the official PlentyONE feedback plugin with server-rendered reviews, Product/Offer/Review JSON-LD and server-rendered FAQPage schema from item property 151 with direct variation-property repository fallback.",
+    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, Offer-, Review- und FAQPage-JSON-LD.",
     "namespace": "Feedback",
-    "author": "PlentyONE GmbH",
+    "author": "Four & More GmbH",
     "type": "general",
     "require": {
         "IO": ">=5.0.62",
@@ -22,13 +22,13 @@
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Feedback Product Offer GEO F&M mit SSR sowie Product-, Offer-, Review- und FAQPage-Schema aus Eigenschaft 151.",
-        "en": "Feedback Product Offer GEO F&M with SSR and Product, Offer, Review and FAQPage schema from property 151."
+        "de": "Feedback Product Offer GEO F&M von Four & More GmbH mit SSR sowie Product-, Offer-, Review- und FAQPage-Schema.",
+        "en": "Feedback Product Offer GEO F&M by Four & More GmbH with SSR and Product, Offer, Review and FAQPage schema."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",
-    "email": "sales@plentyone.com",
-    "phone": "+49 561 98 681 100",
+    "email": "info@four-more.de",
+    "phone": "+49 7260 849577",
     "categories": [
         "3527"
     ],
