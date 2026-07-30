@@ -1,3 +1,9 @@
+## 5.0.10
+
+- Entfernt den leeren zweiten Bewertungsbereich „Kundenrezensionen ()“ bei aktiviertem SSR.
+- Der serverseitige Bewertungsblock bleibt sichtbar, bis die interaktive Vue-Komponente echte Daten geladen hat.
+- Filter, Bewertungsformular und Nachladefunktion bleiben erhalten.
+
 ## v5.0.9 (2026-07-30)
 
 ### Geändert

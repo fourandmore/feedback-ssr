@@ -1,4 +1,4 @@
-# Kunden Feedback Four & More 5.0.9 – JSON-LD-Hotfix
+# Kunden Feedback Four & More 5.0.10 – JSON-LD-Hotfix
 
 Diese Version behebt die beim Bereitstellen gemeldeten Compilerfehler in `FeedbackService.php` und `ProductSchemaBuilder.php`:
 
@@ -95,9 +95,16 @@ Das Schema beschreibt die beim initialen Serveraufruf ausgewählte Variante. Nac
 Die PHP- und JSON-Dateien sowie der Schema-Builder wurden lokal statisch getestet. Ein abschließender Build im konkreten PlentyONE-Test-Plugin-Set ist erforderlich, da die PlentyONE-Repositories und der ShopBuilder-Compiler nur dort verfügbar sind.
 
 
-## Änderungen in Version 5.0.9
+## Änderungen in Version 5.0.10
 
 - Die sichtbare Plugin-Bezeichnung lautet jetzt **Kunden Feedback Four & More**.
 - Der interne Plugin-Schlüssel und Namespace bleiben aus Kompatibilitätsgründen `Feedback`.
 - Die JSON-LD-Ausgabe verwendet im ShopBuilder-Widget `<script2>` statt `<script>`. Dadurch wird das Product-/Offer-/Review-Schema im Frontend als unsichtbares `<script type="application/ld+json">` ausgegeben und nicht mehr als sichtbarer Text dargestellt.
 - Die Ermittlung von Bestand und `availability` wurde nicht verändert.
+
+
+## Änderung in Version 5.0.10
+
+### Leerer Bewertungsbereich entfernt
+
+Bei aktiviertem serverseitigem Rendering bleibt der serverseitig ausgegebene Bewertungsbereich sichtbar, bis die Vue-Komponente echte Bewertungsdaten geladen hat. Erst danach wird auf die interaktive Ansicht mit Filter, Formular und Nachladefunktion umgeschaltet. Dadurch wird kein zusätzlicher leerer Bereich mit „Kundenrezensionen ()“ mehr angezeigt.

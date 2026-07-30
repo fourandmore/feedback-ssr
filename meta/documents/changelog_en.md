@@ -1,3 +1,9 @@
+## 5.0.10
+
+- Removes the empty second review section “Customer reviews ()” when SSR is enabled.
+- The server-rendered review block remains visible until the interactive Vue component has loaded real data.
+- Filters, review form and load-more functionality remain available.
+
 ## v5.0.9 (2026-07-30)
 
 ### Changed

@@ -55,7 +55,7 @@
         ])) }}
     {% endif %}
 
-    <div data-feedback class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+    <div data-feedback data-feedback-ssr-widget class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
             {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
         {% if options.serverSideRendering %}
             {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
@@ -64,14 +64,87 @@
             }) }}
         {% endif %}
 
-        <feedback-container class="widget-inner"
-                :options="{{ Twig.print('options | json_encode') }}"
-                classes="{{ spacingPadding }}"
-                styles="{{ inlinePadding }}">
-        </feedback-container>
+        <div{% if options.serverSideRendering %} data-feedback-client-shell style="display:none"{% endif %}>
+            <feedback-container class="widget-inner"
+                    :options="{{ Twig.print('options | json_encode') }}"
+                    classes="{{ spacingPadding }}"
+                    styles="{{ inlinePadding }}">
+            </feedback-container>
+        </div>
     </div>
 
     {% if options.serverSideRendering %}
+        <script2>
+        (function () {
+            function initializeFeedbackSwap() {
+                var widgets = document.querySelectorAll('[data-feedback-ssr-widget]');
+
+                for (var i = 0; i < widgets.length; i++) {
+                    var widget = widgets[i];
+
+                    if (widget.getAttribute('data-feedback-swap-initialized') === 'true') {
+                        continue;
+                    }
+
+                    var serverContent = widget.querySelector('[data-feedback-ssr]');
+                    var clientShell = widget.querySelector('[data-feedback-client-shell]');
+
+                    if (!clientShell) {
+                        continue;
+                    }
+
+                    widget.setAttribute('data-feedback-swap-initialized', 'true');
+
+                    (function (currentServerContent, currentClientShell) {
+                        var observer = null;
+
+                        function clientIsReady() {
+                            var count = currentClientShell.querySelector('.feedback-average-count');
+                            var loading = currentClientShell.querySelector('.loading-hint');
+
+                            if (!count || loading) {
+                                return false;
+                            }
+
+                            return /\(\s*\d+\s*\)/.test(count.textContent || '');
+                        }
+
+                        function swapToClient() {
+                            if (!clientIsReady()) {
+                                return;
+                            }
+
+                            currentClientShell.style.display = '';
+
+                            if (currentServerContent && currentServerContent.parentNode) {
+                                currentServerContent.parentNode.removeChild(currentServerContent);
+                            }
+
+                            if (observer) {
+                                observer.disconnect();
+                            }
+                        }
+
+                        observer = new MutationObserver(swapToClient);
+                        observer.observe(currentClientShell, {
+                            childList: true,
+                            subtree: true,
+                            characterData: true
+                        });
+
+                        swapToClient();
+                    })(serverContent, clientShell);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeFeedbackSwap);
+            } else {
+                initializeFeedbackSwap();
+            }
+        })();
+        </script2>
+
         {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
             <script2 id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script2>
         {{ Twig.endif() }}
