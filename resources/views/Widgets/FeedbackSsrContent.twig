@@ -1,56 +1,62 @@
-{% if initialData.feedbacks is not empty %}
+{% set ratingCount = initialData.counts.ratingsCountTotal | default(0) %}
 <section class="feedback-container feedback-ssr-content" data-feedback-ssr="true">
     <div class="title">
         {{ trans("Feedback::Feedback.customerReviews") }}
-        <small class="feedback-average-count">({{ initialData.counts.ratingsCountTotal }})</small>
+        <small class="feedback-average-count">({{ ratingCount }})</small>
     </div>
 
-    <div class="feedback-stars-average" aria-label="{{ initialData.counts.averageValue }} von 5 Sternen">
-        <div class="feedback-rating">
-            {% for i in 1..5 %}
-                <i class="fa fa-star {% if initialData.counts.averageValue >= i %}full{% else %}empty{% endif %}" aria-hidden="true"></i>
+    {% if ratingCount > 0 and initialData.feedbacks is not empty %}
+        <div class="feedback-stars-average" aria-label="{{ initialData.counts.averageValue }} von 5 Sternen">
+            <div class="feedback-rating">
+                {% for i in 1..5 %}
+                    <i class="fa fa-star {% if initialData.counts.averageValue >= i %}full{% else %}empty{% endif %}" aria-hidden="true"></i>
+                {% endfor %}
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="feedback-list">
+            {% for feedback in initialData.feedbacks %}
+                <article class="feedback clearfix" data-feedback-id="{{ feedback.id }}">
+                    <div class="feedback-comment">
+                        {% if feedback.title is not empty %}
+                            <p class="feedback-comment-title">{{ feedback.title }}</p>
+                        {% endif %}
+
+                        <div class="feedback-rating" aria-label="{{ feedback.ratingValue }} von 5 Sternen">
+                            {% for i in 1..5 %}
+                                <i class="fa fa-star {% if feedback.ratingValue >= i %}full{% else %}empty{% endif %}" aria-hidden="true"></i>
+                            {% endfor %}
+                        </div>
+
+                        {% if feedback.isPurchased %}
+                            <p class="feedback-attributes-list">
+                                <span class="feedback-verified-tag">{{ trans("Feedback::Feedback.verifiedPurchase") }}</span>
+                            </p>
+                        {% endif %}
+
+                        {% if feedback.message is not empty %}
+                            <p class="feedback-comment-text">{{ feedback.message }}</p>
+                        {% endif %}
+
+                        <p class="feedback-info">
+                            <span class="feedback-info-segment"><strong>{{ feedback.author }}</strong></span>
+                            {% if timestampVisibility and feedback.createdAt is not empty %}
+                                <span class="feedback-info-segment">
+                                    <i class="fa fa-calendar text-muted" aria-hidden="true"></i>
+                                    {{ feedback.createdAt | date("d.m.Y") }}
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </article>
             {% endfor %}
         </div>
-    </div>
-
-    <hr>
-
-    <div class="feedback-list">
-        {% for feedback in initialData.feedbacks %}
-            <article class="feedback clearfix" data-feedback-id="{{ feedback.id }}">
-                <div class="feedback-comment">
-                    {% if feedback.title is not empty %}
-                        <p class="feedback-comment-title">{{ feedback.title }}</p>
-                    {% endif %}
-
-                    <div class="feedback-rating" aria-label="{{ feedback.ratingValue }} von 5 Sternen">
-                        {% for i in 1..5 %}
-                            <i class="fa fa-star {% if feedback.ratingValue >= i %}full{% else %}empty{% endif %}" aria-hidden="true"></i>
-                        {% endfor %}
-                    </div>
-
-                    {% if feedback.isPurchased %}
-                        <p class="feedback-attributes-list">
-                            <span class="feedback-verified-tag">{{ trans("Feedback::Feedback.verifiedPurchase") }}</span>
-                        </p>
-                    {% endif %}
-
-                    {% if feedback.message is not empty %}
-                        <p class="feedback-comment-text">{{ feedback.message }}</p>
-                    {% endif %}
-
-                    <p class="feedback-info">
-                        <span class="feedback-info-segment"><strong>{{ feedback.author }}</strong></span>
-                        {% if timestampVisibility and feedback.createdAt is not empty %}
-                            <span class="feedback-info-segment">
-                                <i class="fa fa-calendar text-muted" aria-hidden="true"></i>
-                                {{ feedback.createdAt | date("d.m.Y") }}
-                            </span>
-                        {% endif %}
-                    </p>
-                </div>
-            </article>
-        {% endfor %}
-    </div>
+    {% else %}
+        <hr>
+        <p class="feedback-empty-state text-muted mb-0">
+            {{ trans("Feedback::Feedback.noReviews") }}
+        </p>
+    {% endif %}
 </section>
-{% endif %}

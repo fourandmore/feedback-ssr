@@ -1,3 +1,16 @@
+## 5.0.13
+
+- Items without reviews now immediately display “Item reviews (0)”.
+- A clear empty state is rendered server-side and in the interactive view.
+- Empty rating stars and distribution bars are hidden when the review count is zero; the review form remains available.
+
+## 5.0.12
+
+- `Product` and `Offer` are now output independently of visible server-side review rendering.
+- Items without reviews still receive complete product schema when Product/Offer output is enabled.
+- `AggregateRating` and individual `Review` objects are still added when reviews exist.
+- ShopBuilder tooltips now describe the independent settings.
+
 ## 5.0.11
 
 - Hydration hotfix: Keep server-rendered reviews visible until the Vue component has fully loaded real review data and emits an explicit ready event.

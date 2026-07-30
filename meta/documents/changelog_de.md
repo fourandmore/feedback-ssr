@@ -1,3 +1,16 @@
+## 5.0.13
+
+- Bei Artikeln ohne Bewertungen wird die Überschrift sofort als „Kundenrezensionen (0)“ ausgegeben.
+- Ein verständlicher Leerzustand „Für diesen Artikel wurden noch keine Kundenrezensionen verfasst.“ wird serverseitig und in der interaktiven Ansicht angezeigt.
+- Leere Sterne- und Verteilungsanzeigen werden bei null Bewertungen ausgeblendet; das Bewertungsformular bleibt nutzbar.
+
+## 5.0.12
+
+- `Product` und `Offer` werden nun unabhängig vom sichtbaren serverseitigen Rendern der Bewertungen ausgegeben.
+- Artikel ohne Bewertungen erhalten bei aktivierter Product-/Offer-Option weiterhin ein vollständiges Produktschema.
+- `AggregateRating` und einzelne `Review`-Objekte werden bei vorhandenen Bewertungen weiterhin ergänzt.
+- ShopBuilder-Tooltips wurden an die getrennte Konfiguration angepasst.
+
 ## 5.0.11
 
 - Hydration-Hotfix: Der SSR-Bewertungsblock bleibt sichtbar, bis die Vue-Komponente echte Bewertungsdaten vollständig geladen und ein explizites Bereit-Signal gesendet hat.

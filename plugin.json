@@ -1,11 +1,11 @@
 {
-    "version": "5.0.11",
+    "version": "5.0.13",
     "name": "Feedback",
     "marketplaceName": {
         "de": "Kunden Feedback Four & More",
         "en": "Kunden Feedback Four & More"
     },
-    "description": "Fork of the official PlentyONE feedback plugin for Four & More with preview-safe server-rendered initial reviews and a complete server-side Product/Offer/Review JSON-LD schema.",
+    "description": "Fork of the official PlentyONE feedback plugin for Four & More with independently configurable server-rendered reviews and complete server-side Product/Offer/Review JSON-LD schema.",
     "namespace": "Feedback",
     "author": "PlentyONE GmbH",
     "type": "general",

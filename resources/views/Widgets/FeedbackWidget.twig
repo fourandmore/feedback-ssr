@@ -40,7 +40,8 @@
     {{ Twig.set("options", options | json_encode) }}
     {{ Twig.set("options", "options | merge(configOptions)") }}
 
-    {% if options.serverSideRendering %}
+    {% if options.serverSideRendering or options.productOfferSchema %}
+        {# Product/Offer schema and visible review SSR are independently configurable. #}
         {# Defaults prevent a missing item context from invalidating the content. #}
         {{ Twig.set("feedbackItemData", "item.documents[0].data | default({})") }}
         {{ Twig.set("feedbackItemId", "feedbackItemData.item.id | default(-1)") }}
@@ -55,7 +56,7 @@
         ])) }}
     {% endif %}
 
-    <div data-feedback data-feedback-ssr-widget class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+    <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('Feedback::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
             {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
         {% if options.serverSideRendering %}
             {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
@@ -181,6 +182,109 @@
         })();
         </script2>
 
+    {% endif %}
+
+    <script2>
+    (function () {
+        function parseReviewCount(shell) {
+            var countElement = shell.querySelector('.feedback-average-count');
+            var text = countElement ? (countElement.textContent || '') : '';
+            var match = text.match(/\(\s*(\d+)\s*\)/);
+
+            if (match) {
+                return parseInt(match[1], 10);
+            }
+
+            if (countElement) {
+                countElement.textContent = ' (0)';
+            }
+
+            return 0;
+        }
+
+        function updateEmptyState(widget, shell) {
+            if (!shell) {
+                return;
+            }
+
+            var count = parseReviewCount(shell);
+            var isLoading = !!shell.querySelector('.loading-hint');
+            var stars = shell.querySelector('.feedback-stars-average');
+            var bars = shell.querySelector('.feedback-bars');
+            var message = shell.querySelector('.feedback-empty-state');
+            var row = shell.querySelector('.row.my-2');
+            var leftColumn = row ? row.querySelector('.col-sm-6') : null;
+
+            if (count === 0 && !isLoading) {
+                if (stars) {
+                    stars.style.display = 'none';
+                }
+
+                if (bars) {
+                    bars.style.display = 'none';
+                }
+
+                if (!message && leftColumn) {
+                    message = document.createElement('p');
+                    message.className = 'feedback-empty-state text-muted mb-0';
+                    message.textContent = widget.getAttribute('data-feedback-empty-state-text') ||
+                        'Für diesen Artikel wurden noch keine Kundenrezensionen verfasst.';
+                    leftColumn.insertBefore(message, leftColumn.firstChild);
+                }
+            } else if (count > 0) {
+                if (stars) {
+                    stars.style.display = '';
+                }
+
+                if (bars) {
+                    bars.style.display = '';
+                }
+
+                if (message && message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }
+        }
+
+        function initializeEmptyStates() {
+            var widgets = document.querySelectorAll('[data-feedback-ssr-widget]');
+
+            for (var i = 0; i < widgets.length; i++) {
+                var widget = widgets[i];
+
+                if (widget.getAttribute('data-feedback-empty-state-initialized') === 'true') {
+                    continue;
+                }
+
+                widget.setAttribute('data-feedback-empty-state-initialized', 'true');
+
+                (function (currentWidget) {
+                    var observer = new MutationObserver(function () {
+                        var shell = currentWidget.querySelector('[data-feedback-client-shell]') || currentWidget;
+                        updateEmptyState(currentWidget, shell);
+                    });
+
+                    observer.observe(currentWidget, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+
+                    var shell = currentWidget.querySelector('[data-feedback-client-shell]') || currentWidget;
+                    updateEmptyState(currentWidget, shell);
+                })(widget);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeEmptyStates);
+        } else {
+            initializeEmptyStates();
+        }
+    })();
+    </script2>
+
+    {% if options.serverSideRendering or options.productOfferSchema %}
         {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
             <script2 id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script2>
         {{ Twig.endif() }}

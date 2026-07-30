@@ -1,6 +1,31 @@
-# Kunden Feedback Four & More 5.0.11 – Hydration-Hotfix
+# Kunden Feedback Four & More – Version 5.0.13
 
-## Änderungen in Version 5.0.11
+## Neu: verständlicher Leerzustand
+
+Bei Artikeln ohne veröffentlichte Bewertungen zeigt das Widget nun:
+
+- **Kundenrezensionen (0)** statt leerer Klammern
+- den Hinweis **„Für diesen Artikel wurden noch keine Kundenrezensionen verfasst.“**
+- weiterhin das Formular zum Verfassen der ersten Bewertung
+
+Leere Sterne- und Bewertungsverteilungsanzeigen werden bei null Rezensionen ausgeblendet. Der Leerzustand wird bei aktiviertem SSR bereits im initialen HTML ausgegeben.
+
+---
+
+# Kunden Feedback Four & More 5.0.12 – Product/Offer unabhängig von Review-SSR
+
+## Änderungen in Version 5.0.12
+
+- Die Ausgabe von `Product` und `Offer` ist nicht mehr an die Einstellung **„Bewertungen serverseitig ausgeben“** gekoppelt.
+- Ist **„Product- und Offer-Schema serverseitig ausgeben“** aktiviert, wird das Produktschema auch dann erzeugt, wenn sichtbare Bewertungen nicht serverseitig gerendert werden.
+- Artikel ohne Bewertungen erhalten weiterhin ein vollständiges `Product`-/`Offer`-Schema, jedoch keine leeren `AggregateRating`- oder `Review`-Felder.
+- Bei vorhandenen Bewertungen ergänzt das Schema weiterhin `AggregateRating` und einzelne `Review`-Objekte – unabhängig davon, ob der sichtbare Review-SSR-Block aktiviert ist.
+- Die ShopBuilder-Vorschau bleibt geschützt: In der Editor-Vorschau werden weder Artikeldaten noch Schema-Serviceaufrufe ausgeführt.
+- Die Tooltips der beiden ShopBuilder-Einstellungen wurden so angepasst, dass ihre unabhängige Funktion eindeutig beschrieben wird.
+
+## Version 5.0.11 – Hydration-Hotfix
+
+### Änderungen in Version 5.0.11
 
 - Der SSR-Bewertungsblock wird nicht mehr beim Mounten der Vue-Komponente entfernt.
 - Die clientseitige Ansicht wird erst nach einem expliziten `feedback:client-ready`-Signal eingeblendet.
@@ -48,7 +73,7 @@ Diese Variante basiert auf dem offiziellen PlentyONE-Plugin **Kunden-Feedback 5.
 Die Einstellungen befinden sich im ShopBuilder direkt im Widget **„Artikelbewertung“**:
 
 - **Bewertungen serverseitig ausgeben**  
-  Aktiviert die initiale HTML-Ausgabe und das serverseitige Schema.
+  Aktiviert ausschließlich die sichtbare initiale HTML-Ausgabe der ersten Bewertungsseite.
 - **Product- und Offer-Schema serverseitig ausgeben**  
   Sollte aktiviert bleiben, wenn dieses Plugin das vollständige Produktschema liefern soll.
 - **Verkäufername im Offer-Schema**  
