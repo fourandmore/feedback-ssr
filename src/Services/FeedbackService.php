@@ -367,7 +367,8 @@ class FeedbackService
     }
 
     /**
-     * Get the first visible feedbacks for the initial server response.
+     * Get the first visible feedbacks and Product/Offer data for the initial
+     * server response.
      *
      * The returned data is deliberately independent of the authenticated user
      * so that it can safely be rendered in cached item pages.
@@ -375,13 +376,24 @@ class FeedbackService
      * @param int $itemId
      * @param int $variationId
      * @param int $itemsPerPage
+     * @param mixed $itemData
+     * @param bool $includeProductOfferSchema
+     * @param string $sellerName
      * @return array
      */
-    public function getInitialData($itemId = -1, $variationId = -1, $itemsPerPage = 10)
+    public function getInitialData(
+        $itemId = -1,
+        $variationId = -1,
+        $itemsPerPage = 10,
+        $itemData = [],
+        $includeProductOfferSchema = true,
+        $sellerName = ''
+    )
     {
         $itemId = (int)$itemId;
         $variationId = (int)$variationId;
         $itemsPerPage = max(1, min(10, (int)$itemsPerPage));
+        $includeProductOfferSchema = filter_var($includeProductOfferSchema, FILTER_VALIDATE_BOOLEAN);
 
         $countsData = $this->getCounts($itemId);
         $counts = isset($countsData['counts']) ? $countsData['counts'] : [];
@@ -398,63 +410,80 @@ class FeedbackService
             'jsonLd' => null
         ];
 
-        if ($itemId <= 0 || empty($counts) || (int)$counts['ratingsCountTotal'] <= 0) {
-            return $initialData;
-        }
-
-        $filters = [
-            'isVisible' => 1,
-            'itemId' => $itemId
-        ];
-
-        $feedbackPage = $this->listFeedbacks(1, $itemsPerPage, [], $filters);
-        $feedbacks = [];
         $schemaReviews = [];
+        $hasRatings = $itemId > 0
+            && !empty($counts)
+            && isset($counts['ratingsCountTotal'])
+            && (int)$counts['ratingsCountTotal'] > 0;
 
-        foreach ($feedbackPage->getResult() as $feedback) {
-            $normalized = $this->normalizeFeedbackForInitialResponse($feedback);
-
-            if ($normalized === null) {
-                continue;
-            }
-
-            $feedbacks[] = $normalized;
-
-            $review = [
-                '@type' => 'Review',
-                'author' => [
-                    '@type' => 'Person',
-                    'name' => $normalized['author']
-                ],
-                'reviewBody' => $normalized['message'],
-                'reviewRating' => [
-                    '@type' => 'Rating',
-                    'ratingValue' => $normalized['ratingValue'],
-                    'bestRating' => 5,
-                    'worstRating' => 1
-                ]
+        if ($hasRatings) {
+            $filters = [
+                'isVisible' => 1,
+                'itemId' => $itemId
             ];
 
-            if ($normalized['datePublished'] !== '') {
-                $review['datePublished'] = $normalized['datePublished'];
+            $feedbackPage = $this->listFeedbacks(1, $itemsPerPage, [], $filters);
+            $feedbacks = [];
+
+            foreach ($feedbackPage->getResult() as $feedback) {
+                $normalized = $this->normalizeFeedbackForInitialResponse($feedback);
+
+                if ($normalized === null) {
+                    continue;
+                }
+
+                $feedbacks[] = $normalized;
+
+                $review = [
+                    '@type' => 'Review',
+                    'author' => [
+                        '@type' => 'Person',
+                        'name' => $normalized['author']
+                    ],
+                    'reviewRating' => [
+                        '@type' => 'Rating',
+                        'ratingValue' => $normalized['ratingValue'],
+                        'bestRating' => 5,
+                        'worstRating' => 1
+                    ]
+                ];
+
+                if ($normalized['message'] !== '') {
+                    $review['reviewBody'] = $normalized['message'];
+                }
+
+                if ($normalized['datePublished'] !== '') {
+                    $review['datePublished'] = $normalized['datePublished'];
+                }
+
+                if ($normalized['title'] !== '') {
+                    $review['name'] = $normalized['title'];
+                }
+
+                $schemaReviews[] = $review;
             }
 
-            if ($normalized['title'] !== '') {
-                $review['name'] = $normalized['title'];
-            }
-
-            $schemaReviews[] = $review;
+            $initialData['feedbacks'] = $feedbacks;
+            $initialData['pagination'] = [
+                'page' => 1,
+                'lastPage' => $feedbackPage->getLastPage(),
+                'isLastPage' => $feedbackPage->isLastPage(),
+                'totalCount' => $feedbackPage->getTotalCount()
+            ];
         }
 
-        $initialData['feedbacks'] = $feedbacks;
-        $initialData['pagination'] = [
-            'page' => 1,
-            'lastPage' => $feedbackPage->getLastPage(),
-            'isLastPage' => $feedbackPage->isLastPage(),
-            'totalCount' => $feedbackPage->getTotalCount()
-        ];
-
-        if (count($schemaReviews) > 0) {
+        if ($includeProductOfferSchema) {
+            $schemaBuilder = new ProductSchemaBuilder();
+            $initialData['jsonLd'] = $schemaBuilder->build(
+                $itemData,
+                $this->getCanonicalProductUrl(),
+                $counts,
+                $schemaReviews,
+                (string)$sellerName
+            );
+        } elseif (!empty($schemaReviews)) {
+            // Backwards-compatible review-only schema if Product/Offer output
+            // was explicitly disabled in the widget settings.
             $initialData['jsonLd'] = [
                 '@context' => 'https://schema.org',
                 '@type' => 'Product',
@@ -471,6 +500,23 @@ class FeedbackService
         }
 
         return $initialData;
+    }
+
+    /**
+     * Resolve a public product URL without ShopBuilder preview parameters.
+     *
+     * @return string
+     */
+    private function getCanonicalProductUrl()
+    {
+        $requestUri = (string)$this->request->getRequestUri();
+        $path = parse_url($requestUri, PHP_URL_PATH);
+
+        if (!is_string($path) || $path === '') {
+            return '';
+        }
+
+        return (string)$this->request->getUriForPath($path);
     }
 
     /**

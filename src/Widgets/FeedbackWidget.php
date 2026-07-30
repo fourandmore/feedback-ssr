@@ -57,18 +57,93 @@ class FeedbackWidget extends BaseWidget
             ->withName('Widget.serverSideRendering')
             ->withTooltip('Widget.serverSideRenderingTooltip');
 
+        $settings->createSetting('productOfferSchema', CheckboxSettingFactory::class)
+            ->withDefaultValue(true)
+            ->withName('Widget.productOfferSchema')
+            ->withTooltip('Widget.productOfferSchemaTooltip');
+
+        $settings->createSetting('schemaSellerName')
+            ->withType('text')
+            ->withDefaultValue('Four & More GmbH')
+            ->withName('Widget.schemaSellerName')
+            ->withTooltip('Widget.schemaSellerNameTooltip');
+
         return $settings->toArray();
     }
 
     protected function getTemplateData($widgetSettings, $isPreview)
     {
-        // As only mobile is currently used, flatten breakpoints
+        // Existing ShopBuilder contents may not yet contain the settings added
+        // by this fork. Always use safe fallbacks so an old content does not fail.
+        $feedbacksPerPage = (int)$this->getMobileSetting($widgetSettings, 'feedbacksPerPage', 10);
+        $feedbacksPerPage = max(1, min(10, $feedbacksPerPage));
+
+        $timestampVisibility = $this->toBool(
+            $this->getMobileSetting($widgetSettings, 'timestampVisibility', false)
+        );
+        $serverSideRendering = $this->toBool(
+            $this->getMobileSetting($widgetSettings, 'serverSideRendering', true)
+        );
+        $productOfferSchema = $this->toBool(
+            $this->getMobileSetting($widgetSettings, 'productOfferSchema', true)
+        );
+        $schemaSellerName = (string)$this->getMobileSetting(
+            $widgetSettings,
+            'schemaSellerName',
+            'Four & More GmbH'
+        );
+
         return [
             "options" => [
-                "feedbacksPerPage" => $widgetSettings["feedbacksPerPage"]["mobile"],
-                "timestampVisibility" => $widgetSettings["timestampVisibility"]["mobile"],
-                "serverSideRendering" => $widgetSettings["serverSideRendering"]["mobile"]
+                "feedbacksPerPage" => $feedbacksPerPage,
+                "timestampVisibility" => $timestampVisibility,
+                // SSR and schema calls must never run in the ShopBuilder editor.
+                // The editor has no reliable item document and BaseWidget returns
+                // an empty preview when the generated Twig throws an exception.
+                "serverSideRendering" => !$isPreview && $serverSideRendering,
+                "productOfferSchema" => !$isPreview && $productOfferSchema,
+                "schemaSellerName" => trim($schemaSellerName)
             ]
         ];
+    }
+
+    /**
+     * Read a responsive ShopBuilder setting while remaining compatible with
+     * values stored by older versions of the widget.
+     *
+     * @param array $settings
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    private function getMobileSetting(array $settings, $key, $default = null)
+    {
+        if (!array_key_exists($key, $settings)) {
+            return $default;
+        }
+
+        $value = $settings[$key];
+        if (is_array($value) && array_key_exists('mobile', $value)) {
+            return $value['mobile'];
+        }
+
+        return $value !== null ? $value : $default;
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    private function toBool($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int)$value !== 0;
+        }
+
+        return in_array(strtolower(trim((string)$value)), ['true', 'yes', 'on'], true);
     }
 }

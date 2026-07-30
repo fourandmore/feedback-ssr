@@ -1,5 +1,19 @@
 # Release Notes for Feedback
 
+
+## v5.0.6 (2026-07-30)
+
+### Added
+
+- The first review page can be rendered into the initial server response.
+- The item review widget can output a complete server-side `Product`/`Offer` schema.
+- Existing aggregate ratings and individual reviews are integrated into the same Product schema.
+- Seller name and schema output can be configured in ShopBuilder.
+
+### TODO
+
+- After updating, regenerate ShopBuilder contents and test the plugin in a separate test plugin set.
+
 ## v5.0.4 (2026-02-03) <a href="https://github.com/plentymarkets/feedback-plugin/compare/5.0.3...5.0.4" target="_blank" rel="noopener"><b>Overview of all changes</b></a>
 
 ### Fixed

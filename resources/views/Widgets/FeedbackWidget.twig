@@ -10,34 +10,70 @@
 {% set spacingPadding  = WidgetHelper.getSpacingClasses(spacingSettings, spacingSettings.customPadding.mobile, "") %}
 {% set spacingMargin   = WidgetHelper.getSpacingClasses(spacingSettings, "",spacingSettings.customMargin.mobile) %}
 
-{{ Twig.set("configOptions", Twig.call("feedbackServices.feedback.getFrontendOptions") ) }}
-{{ Twig.set("options", options | json_encode) }}
-{{ Twig.set("options", "options | merge(configOptions)") }}
+{% if isPreview %}
+    {#
+       The ShopBuilder renders a widget template twice. Runtime item data and
+       feedback repositories are not guaranteed to exist in the editor iframe.
+       Render a deterministic placeholder and do not generate Twig service calls.
+    #}
+    <div data-feedback-preview class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+            {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
+        <section class="feedback-container widget-inner {{ spacingPadding }}"
+                {% if inlinePadding | length > 0 %} style="{{ inlinePadding }}"{% endif %}>
+            <div class="title">
+                {{ trans("Feedback::Feedback.customerReviews") }}
+                <small class="feedback-average-count">(3)</small>
+            </div>
+            <div class="feedback-stars-average" aria-label="5 von 5 Sternen">
+                <div class="feedback-rating">
+                    {% for i in 1..5 %}
+                        <i class="fa fa-star full" aria-hidden="true"></i>
+                    {% endfor %}
+                </div>
+            </div>
+            <hr>
+            <p class="text-muted mb-0">{{ trans("Feedback::Feedback.loadingFeedbacks") }}</p>
+        </section>
+    </div>
+{% else %}
+    {{ Twig.set("configOptions", Twig.call("feedbackServices.feedback.getFrontendOptions") ) }}
+    {{ Twig.set("options", options | json_encode) }}
+    {{ Twig.set("options", "options | merge(configOptions)") }}
 
-{% if options.serverSideRendering %}
-    {{ Twig.set("feedbackItemId", Twig.var("item.documents[0].data.item.id")) }}
-    {{ Twig.set("feedbackVariationId", Twig.var("item.documents[0].data.variation.id")) }}
-    {{ Twig.set("feedbackInitialData", Twig.call("feedbackServices.feedback.getInitialData", [Twig.var("feedbackItemId"), Twig.var("feedbackVariationId"), options.feedbacksPerPage])) }}
-{% endif %}
-
-<div data-feedback class="widget widget-feedback widget-{{ appearance | default("primary") }} {% if customClass | length > 0 %} {{ customClass }}{% endif %} {% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
-        {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
     {% if options.serverSideRendering %}
-        {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
-            "initialData": "feedbackInitialData",
-            "timestampVisibility": options.timestampVisibility ? "true" : "false"
-        }) }}
+        {# Defaults prevent a missing item context from invalidating the content. #}
+        {{ Twig.set("feedbackItemData", "item.documents[0].data | default({})") }}
+        {{ Twig.set("feedbackItemId", "feedbackItemData.item.id | default(-1)") }}
+        {{ Twig.set("feedbackVariationId", "feedbackItemData.variation.id | default(-1)") }}
+        {{ Twig.set("feedbackInitialData", Twig.call("feedbackServices.feedback.getInitialData", [
+            Twig.var("feedbackItemId"),
+            Twig.var("feedbackVariationId"),
+            options.feedbacksPerPage,
+            Twig.var("feedbackItemData"),
+            options.productOfferSchema,
+            options.schemaSellerName
+        ])) }}
     {% endif %}
 
-    <feedback-container class="widget-inner"
-            :options="{{ Twig.print('options | json_encode') }}"
-            classes="{{ spacingPadding }}"
-            styles="{{ inlinePadding }}">
-    </feedback-container>
-</div>
+    <div data-feedback class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+            {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
+        {% if options.serverSideRendering %}
+            {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
+                "initialData": "feedbackInitialData",
+                "timestampVisibility": options.timestampVisibility ? "true" : "false"
+            }) }}
+        {% endif %}
 
-{% if options.serverSideRendering %}
-    {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
-        <script id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script>
-    {{ Twig.endif() }}
+        <feedback-container class="widget-inner"
+                :options="{{ Twig.print('options | json_encode') }}"
+                classes="{{ spacingPadding }}"
+                styles="{{ inlinePadding }}">
+        </feedback-container>
+    </div>
+
+    {% if options.serverSideRendering %}
+        {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
+            <script id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script>
+        {{ Twig.endif() }}
+    {% endif %}
 {% endif %}

@@ -1,5 +1,19 @@
 # Release Notes für Feedback
 
+
+## v5.0.6 (2026-07-30)
+
+### Hinzugefügt
+
+- Die erste Bewertungsseite kann serverseitig in das initiale HTML gerendert werden.
+- Das Artikelbewertungs-Widget kann ein vollständiges serverseitiges `Product`-/`Offer`-Schema ausgeben.
+- Vorhandene Durchschnittsbewertungen und Einzelrezensionen werden in dasselbe Product-Schema integriert.
+- Verkäufername und Schema-Ausgabe sind im ShopBuilder konfigurierbar.
+
+### TODO
+
+- Nach dem Update müssen die ShopBuilder-Inhalte neu generiert und in einem separaten Test-Plugin-Set geprüft werden.
+
 ## v5.0.4 (2026-02-03) <a href="https://github.com/plentymarkets/feedback-plugin/compare/5.0.3...5.0.4" target="_blank" rel="noopener"><b>Übersicht aller Änderungen</b></a>
 
 ### Behoben

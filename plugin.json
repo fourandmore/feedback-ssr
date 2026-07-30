@@ -1,11 +1,11 @@
 {
-    "version": "5.0.5",
+    "version": "5.0.7",
     "name": "Feedback",
     "marketplaceName": {
         "de": "Kunden-Feedback",
         "en": "Customer feedback"
     },
-    "description": "Fork of the official PlentyONE feedback plugin with server-rendered initial reviews and server-side Product review structured data.",
+    "description": "Fork of the official PlentyONE feedback plugin with preview-safe server-rendered initial reviews and a complete server-side Product/Offer/Review JSON-LD schema.",
     "namespace": "Feedback",
     "author": "PlentyONE GmbH",
     "type": "general",
@@ -22,8 +22,8 @@
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Kunden-Feedback mit serverseitig gerenderten Rezensionen und Schema.org-Bewertungsdaten.",
-        "en": "Customer feedback with server-rendered reviews and Schema.org rating data."
+        "de": "Kunden-Feedback mit SSR sowie vollständigem Product-, Offer- und Review-Schema.",
+        "en": "Customer feedback with SSR and complete Product, Offer and Review schema."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",
