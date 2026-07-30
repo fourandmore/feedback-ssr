@@ -282,14 +282,6 @@ export default {
     },
 
   mounted () {
-    const ssrFallback = this.$el && this.$el.parentElement
-      ? this.$el.parentElement.querySelector('[data-feedback-ssr]')
-      : null
-
-    if (ssrFallback) {
-      ssrFallback.parentNode.removeChild(ssrFallback)
-    }
-
     if (!App.isShopBuilder) {
       const _self = this
       $.when(
@@ -299,7 +291,16 @@ export default {
         _self.isLoading = false
         _self.generateJsonLD()
         Vue.nextTick(function () {
-          // DOM updated
+          // Signal the surrounding SSR wrapper only after counts and reviews
+          // are available. This prevents the empty "Kundenrezensionen ()"
+          // client block from replacing the server-rendered reviews.
+          const readyEvent = new CustomEvent('feedback:client-ready', {
+            bubbles: true,
+            detail: {
+              count: Number(_self.counts.ratingsCountTotal || 0)
+            }
+          })
+          _self.$el.dispatchEvent(readyEvent)
           window.dispatchEvent(new Event('resize'))
         })
       })

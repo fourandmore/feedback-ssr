@@ -95,26 +95,40 @@
 
                     widget.setAttribute('data-feedback-swap-initialized', 'true');
 
-                    (function (currentServerContent, currentClientShell) {
+                    (function (currentWidget, currentServerContent, currentClientShell) {
                         var observer = null;
+                        var readyReceived = false;
 
-                        function clientIsReady() {
-                            var count = currentClientShell.querySelector('.feedback-average-count');
+                        function parseCount() {
+                            var countElement = currentClientShell.querySelector('.feedback-average-count');
+                            var text = countElement ? (countElement.textContent || '') : '';
+                            var match = text.match(/\(\s*(\d+)\s*\)/);
+
+                            return match ? parseInt(match[1], 10) : null;
+                        }
+
+                        function clientIsComplete(expectedCount) {
+                            var actualCount = parseCount();
                             var loading = currentClientShell.querySelector('.loading-hint');
 
-                            if (!count || loading) {
+                            if (actualCount === null || loading) {
                                 return false;
                             }
 
-                            return /\(\s*\d+\s*\)/.test(count.textContent || '');
+                            if (typeof expectedCount === 'number' && actualCount !== expectedCount) {
+                                return false;
+                            }
+
+                            return true;
                         }
 
-                        function swapToClient() {
-                            if (!clientIsReady()) {
+                        function swapToClient(expectedCount) {
+                            if (!readyReceived || !clientIsComplete(expectedCount)) {
                                 return;
                             }
 
                             currentClientShell.style.display = '';
+                            currentClientShell.removeAttribute('aria-hidden');
 
                             if (currentServerContent && currentServerContent.parentNode) {
                                 currentServerContent.parentNode.removeChild(currentServerContent);
@@ -125,15 +139,37 @@
                             }
                         }
 
-                        observer = new MutationObserver(swapToClient);
+                        currentClientShell.setAttribute('aria-hidden', 'true');
+
+                        currentClientShell.addEventListener('feedback:client-ready', function (event) {
+                            var detail = event && event.detail ? event.detail : {};
+                            var count = Number(detail.count);
+
+                            if (!isFinite(count) || count < 0) {
+                                return;
+                            }
+
+                            readyReceived = true;
+                            swapToClient(count);
+                        });
+
+                        /*
+                         * Conservative fallback for cached client bundles:
+                         * never reveal the client shell merely because markup exists.
+                         * It must contain a real numeric count and no loading hint.
+                         */
+                        observer = new MutationObserver(function () {
+                            if (readyReceived) {
+                                swapToClient(parseCount());
+                            }
+                        });
+
                         observer.observe(currentClientShell, {
                             childList: true,
                             subtree: true,
                             characterData: true
                         });
-
-                        swapToClient();
-                    })(serverContent, clientShell);
+                    })(widget, serverContent, clientShell);
                 }
             }
 

@@ -1,3 +1,8 @@
+## 5.0.11
+
+- Hydration-Hotfix: Der SSR-Bewertungsblock bleibt sichtbar, bis die Vue-Komponente echte Bewertungsdaten vollständig geladen und ein explizites Bereit-Signal gesendet hat.
+- Verhindert den leeren doppelten Block „Kundenrezensionen ()“.
+
 ## 5.0.10
 
 - Entfernt den leeren zweiten Bewertungsbereich „Kundenrezensionen ()“ bei aktiviertem SSR.

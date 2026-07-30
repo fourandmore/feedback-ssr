@@ -1,3 +1,8 @@
+## 5.0.11
+
+- Hydration hotfix: Keep server-rendered reviews visible until the Vue component has fully loaded real review data and emits an explicit ready event.
+- Prevents the empty duplicate “Customer reviews ()” block.
+
 ## 5.0.10
 
 - Removes the empty second review section “Customer reviews ()” when SSR is enabled.

@@ -1,4 +1,14 @@
-# Kunden Feedback Four & More 5.0.10 – JSON-LD-Hotfix
+# Kunden Feedback Four & More 5.0.11 – Hydration-Hotfix
+
+## Änderungen in Version 5.0.11
+
+- Der SSR-Bewertungsblock wird nicht mehr beim Mounten der Vue-Komponente entfernt.
+- Die clientseitige Ansicht wird erst nach einem expliziten `feedback:client-ready`-Signal eingeblendet.
+- Das Signal wird erst nach erfolgreich geladenen Bewertungszahlen und Rezensionen ausgelöst.
+- Der leere Doppelblock `Kundenrezensionen ()` kann den SSR-Inhalt nicht mehr ersetzen.
+- Bei AJAX-Fehlern bleibt der vollständige serverseitige Bewertungsblock sichtbar.
+- Filter, Formular und Nachladen bleiben nach erfolgreicher Hydrierung verfügbar.
+- Product-, Offer-, AggregateRating- und Review-Schema sowie Bestandslogik bleiben unverändert.
 
 Diese Version behebt die beim Bereitstellen gemeldeten Compilerfehler in `FeedbackService.php` und `ProductSchemaBuilder.php`:
 

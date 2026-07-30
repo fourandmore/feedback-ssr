@@ -755,17 +755,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
   })),
   mounted: function mounted() {
-    var ssrFallback = this.$el && this.$el.parentElement ? this.$el.parentElement.querySelector('[data-feedback-ssr]') : null;
-    if (ssrFallback) {
-      ssrFallback.parentNode.removeChild(ssrFallback);
-    }
     if (!App.isShopBuilder) {
       var _self = this;
       $.when(this.getUser(), this.loadFeedbacks()).done(function () {
         _self.isLoading = false;
         _self.generateJsonLD();
         Vue.nextTick(function () {
-          // DOM updated
+          var readyEvent = new CustomEvent('feedback:client-ready', {
+            bubbles: true,
+            detail: {
+              count: Number(_self.counts.ratingsCountTotal || 0)
+            }
+          });
+          _self.$el.dispatchEvent(readyEvent);
           window.dispatchEvent(new Event('resize'));
         });
       });
