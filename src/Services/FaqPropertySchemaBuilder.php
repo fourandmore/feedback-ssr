@@ -2,6 +2,8 @@
 
 namespace FeedbackGeoFM\Services;
 
+use Plenty\Modules\Item\Variation\Contracts\VariationRepositoryContract;
+use Plenty\Modules\Item\Variation\Models\Variation;
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;
 use Plenty\Modules\Item\VariationProperty\Models\VariationPropertyValue;
@@ -19,12 +21,17 @@ class FaqPropertySchemaBuilder
     /** @var VariationPropertyValueTextRepositoryContract */
     private $variationPropertyValueTextRepository;
 
+    /** @var VariationRepositoryContract */
+    private $variationRepository;
+
     public function __construct(
         VariationPropertyValueRepositoryContract $variationPropertyValueRepository,
-        VariationPropertyValueTextRepositoryContract $variationPropertyValueTextRepository
+        VariationPropertyValueTextRepositoryContract $variationPropertyValueTextRepository,
+        VariationRepositoryContract $variationRepository
     ) {
         $this->variationPropertyValueRepository = $variationPropertyValueRepository;
         $this->variationPropertyValueTextRepository = $variationPropertyValueTextRepository;
+        $this->variationRepository = $variationRepository;
     }
     /**
      * @param mixed $itemData
@@ -51,27 +58,24 @@ class FaqPropertySchemaBuilder
             return $result;
         }
 
-        $html = $this->findPropertyHtml($data, $propertyId, (string)$language);
-        if ($html !== '') {
-            $result['source'] = 'item-document';
+        // Product-wide FAQs are maintained exclusively on the item's main
+        // variation. Do not read the current child variation or the current
+        // item document: property inheritance may be disabled and a child can
+        // contain a different property value.
+        $mainVariationId = $this->resolveMainVariationId($data, (int)$variationId);
+        if ($mainVariationId <= 0) {
+            return $result;
         }
 
-        if ($html === '') {
-            $variationIds = $this->resolveVariationIds($data, (int)$variationId);
+        $result['resolvedVariationId'] = $mainVariationId;
+        $html = $this->findPropertyHtmlByVariationId(
+            $mainVariationId,
+            $propertyId,
+            (string)$language
+        );
 
-            foreach ($variationIds as $resolvedVariationId) {
-                $html = $this->findPropertyHtmlByVariationId(
-                    $resolvedVariationId,
-                    $propertyId,
-                    (string)$language
-                );
-
-                if ($html !== '') {
-                    $result['source'] = 'variation-repository';
-                    $result['resolvedVariationId'] = (int)$resolvedVariationId;
-                    break;
-                }
-            }
+        if ($html !== '') {
+            $result['source'] = 'main-variation-repository';
         }
 
         if ($html === '') {
@@ -108,69 +112,96 @@ class FaqPropertySchemaBuilder
     }
 
     /**
-     * Resolve the current and main variation ids from the plentyShop item document.
-     * The main variation is included because properties can be inherited from it.
+     * Resolve the item's main variation. The item document is preferred. If
+     * the reduced ShopBuilder payload does not contain the main variation ID,
+     * load the current variation model and use its documented mainVariationId.
      *
      * @param array $data
      * @param int $variationId
-     * @return array
+     * @return int
      */
-    private function resolveVariationIds(array $data, $variationId = -1)
+    private function resolveMainVariationId(array $data, $variationId = -1)
     {
-        $candidates = [];
+        if (isset($data['item'])
+            && is_array($data['item'])
+            && isset($data['item']['mainVariationId'])
+            && is_numeric($data['item']['mainVariationId'])
+            && (int)$data['item']['mainVariationId'] > 0) {
+            return (int)$data['item']['mainVariationId'];
+        }
 
-        if ((int)$variationId > 0) {
-            $candidates[] = (int)$variationId;
+        if (isset($data['variation'])
+            && is_array($data['variation'])
+            && isset($data['variation']['mainVariationId'])
+            && is_numeric($data['variation']['mainVariationId'])
+            && (int)$data['variation']['mainVariationId'] > 0) {
+            return (int)$data['variation']['mainVariationId'];
+        }
+
+        if (isset($data['mainVariationId'])
+            && is_numeric($data['mainVariationId'])
+            && (int)$data['mainVariationId'] > 0) {
+            return (int)$data['mainVariationId'];
+        }
+
+        $currentVariationId = (int)$variationId;
+        if ($currentVariationId <= 0
+            && isset($data['variation'])
+            && is_array($data['variation'])) {
+            if (isset($data['variation']['id']) && is_numeric($data['variation']['id'])) {
+                $currentVariationId = (int)$data['variation']['id'];
+            } elseif (isset($data['variation']['variationId'])
+                && is_numeric($data['variation']['variationId'])) {
+                $currentVariationId = (int)$data['variation']['variationId'];
+            }
+        }
+
+        if ($currentVariationId <= 0
+            && isset($data['variationId'])
+            && is_numeric($data['variationId'])) {
+            $currentVariationId = (int)$data['variationId'];
+        }
+
+        if ($currentVariationId <= 0) {
+            return 0;
+        }
+
+        try {
+            $variation = $this->variationRepository->findById($currentVariationId);
+        } catch (\Exception $exception) {
+            return 0;
+        }
+
+        $variationData = $this->toArray($variation);
+        if (isset($variationData['mainVariationId'])
+            && is_numeric($variationData['mainVariationId'])
+            && (int)$variationData['mainVariationId'] > 0) {
+            return (int)$variationData['mainVariationId'];
+        }
+
+        // PlentyONE documents mainVariationId as NULL on the main variation.
+        // In that case the current model ID is the required source itself.
+        $isMain = isset($variationData['isMain'])
+            && in_array($variationData['isMain'], [true, 1, '1', 'true'], true);
+        $hasNullMainVariationId = array_key_exists('mainVariationId', $variationData)
+            && $variationData['mainVariationId'] === null;
+
+        if (($isMain || $hasNullMainVariationId)
+            && isset($variationData['id'])
+            && is_numeric($variationData['id'])
+            && (int)$variationData['id'] > 0) {
+            return (int)$variationData['id'];
         }
 
         if (isset($data['variation']) && is_array($data['variation'])) {
-            if (isset($data['variation']['id'])) {
-                $candidates[] = $data['variation']['id'];
-            }
-            if (isset($data['variation']['variationId'])) {
-                $candidates[] = $data['variation']['variationId'];
-            }
-
-            // A child variation can inherit its properties from another
-            // variation. propertyVariationId is the most precise source for
-            // inherited properties; mainVariationId and parentVariationId
-            // cover older or reduced plentyShop item-document shapes.
-            foreach (['propertyVariationId', 'mainVariationId', 'parentVariationId'] as $key) {
-                if (isset($data['variation'][$key])) {
-                    $candidates[] = $data['variation'][$key];
-                }
+            $dataSaysMain = isset($data['variation']['isMain'])
+                && in_array($data['variation']['isMain'], [true, 1, '1', 'true'], true);
+            if ($dataSaysMain) {
+                return $currentVariationId;
             }
         }
 
-        if (isset($data['variationId'])) {
-            $candidates[] = $data['variationId'];
-        }
-
-        foreach (['propertyVariationId', 'mainVariationId', 'parentVariationId'] as $key) {
-            if (isset($data[$key])) {
-                $candidates[] = $data[$key];
-            }
-        }
-
-        if (isset($data['item']) && is_array($data['item'])) {
-            if (isset($data['item']['mainVariationId'])) {
-                $candidates[] = $data['item']['mainVariationId'];
-            }
-        }
-
-        $result = [];
-        foreach ($candidates as $candidate) {
-            if (!is_numeric($candidate) || (int)$candidate <= 0) {
-                continue;
-            }
-
-            $candidate = (int)$candidate;
-            if (!in_array($candidate, $result, true)) {
-                $result[] = $candidate;
-            }
-        }
-
-        return $result;
+        return 0;
     }
 
     /**
@@ -752,7 +783,9 @@ class FaqPropertySchemaBuilder
             return $value;
         }
 
-        if ($value instanceof VariationPropertyValue || $value instanceof VariationPropertyValueText) {
+        if ($value instanceof Variation
+            || $value instanceof VariationPropertyValue
+            || $value instanceof VariationPropertyValueText) {
             $modelData = $value->toArray();
             return is_array($modelData) ? $modelData : [];
         }

@@ -1,3 +1,11 @@
+## 5.0.27
+
+- FAQPage JSON-LD now reads property 151 exclusively from the item's main variation on every product page.
+- Disabled property inheritance on child variations no longer prevents FAQ schema output.
+- If the layout container omits the main variation ID, it is resolved server-side through the variation repository.
+- Values from the current child variation and the current ShopBuilder item document are intentionally ignored for property 151.
+- Product, ProductGroup, and Offer output remains unchanged.
+
 ## 5.0.26
 
 - FAQPage JSON-LD is now rendered on purchasable child variations when property 151 is inherited from the main variation.

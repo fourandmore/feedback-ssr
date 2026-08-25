@@ -1,3 +1,11 @@
+## 5.0.27
+
+- FAQPage-JSON-LD liest Eigenschaft 151 auf allen Artikelseiten ausschließlich von der Hauptvariante.
+- Deaktivierte Property-Vererbung auf Kindvarianten beeinflusst das FAQ-Schema nicht mehr.
+- Fehlt die Hauptvarianten-ID im Layout-Container, wird sie serverseitig über das Varianten-Repository ermittelt.
+- Werte der aktuellen Kindvariante und das aktuelle ShopBuilder-Artikeldokument werden für Property 151 bewusst nicht verwendet.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
 ## 5.0.26
 
 - FAQPage-JSON-LD wird auf kaufbaren Kindvarianten nun auch dann ausgegeben, wenn Eigenschaft 151 von der Hauptvariation geerbt wird.
