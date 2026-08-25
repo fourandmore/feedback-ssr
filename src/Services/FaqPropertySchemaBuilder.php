@@ -10,6 +10,8 @@ use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueReposi
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;
 use Plenty\Modules\Item\VariationProperty\Models\VariationPropertyValue;
 use Plenty\Modules\Item\VariationProperty\Models\VariationPropertyValueText;
+use Plenty\Modules\Webshop\ItemSearch\SearchPresets\SingleItem;
+use Plenty\Modules\Webshop\ItemSearch\Services\ItemSearchService;
 
 /**
  * Extracts a visible FAQ HTML block from a plentyShop item property and builds
@@ -29,16 +31,21 @@ class FaqPropertySchemaBuilder
     /** @var ItemRepositoryContract */
     private $itemRepository;
 
+    /** @var ItemSearchService */
+    private $itemSearchService;
+
     public function __construct(
         VariationPropertyValueRepositoryContract $variationPropertyValueRepository,
         VariationPropertyValueTextRepositoryContract $variationPropertyValueTextRepository,
         VariationRepositoryContract $variationRepository,
-        ItemRepositoryContract $itemRepository
+        ItemRepositoryContract $itemRepository,
+        ItemSearchService $itemSearchService
     ) {
         $this->variationPropertyValueRepository = $variationPropertyValueRepository;
         $this->variationPropertyValueTextRepository = $variationPropertyValueTextRepository;
         $this->variationRepository = $variationRepository;
         $this->itemRepository = $itemRepository;
+        $this->itemSearchService = $itemSearchService;
     }
     /**
      * @param mixed $itemData
@@ -75,14 +82,30 @@ class FaqPropertySchemaBuilder
         }
 
         $result['resolvedVariationId'] = $mainVariationId;
-        $html = $this->findPropertyHtmlByVariationId(
+        // Use the same SingleItem search path as IO's ItemService. Unlike the
+        // variation-property repositories, this returns the complete webshop
+        // item document (documents[0].data) for the explicitly requested main
+        // variation and therefore includes item properties/characteristics.
+        $html = $this->findPropertyHtmlByMainVariationDocument(
             $mainVariationId,
             $propertyId,
             (string)$language
         );
 
         if ($html !== '') {
-            $result['source'] = 'main-variation-repository';
+            $result['source'] = 'main-variation-item-document';
+        }
+
+        if ($html === '') {
+            $html = $this->findPropertyHtmlByVariationId(
+                $mainVariationId,
+                $propertyId,
+                (string)$language
+            );
+
+            if ($html !== '') {
+                $result['source'] = 'main-variation-repository';
+            }
         }
 
         // PlentyONE can expose older item characteristics in the ShopBuilder
@@ -228,6 +251,72 @@ class FaqPropertySchemaBuilder
         }
 
         return 0;
+    }
+
+    /**
+     * Load the complete plentyShop item document for the resolved main
+     * variation. ItemSearchService returns the same document structure used by
+     * IO/Ceres, but the variation ID is supplied explicitly and can therefore
+     * never drift to the currently selected child variation.
+     *
+     * @param int $mainVariationId
+     * @param int $propertyId
+     * @param string $language
+     * @return string
+     */
+    private function findPropertyHtmlByMainVariationDocument(
+        $mainVariationId,
+        $propertyId,
+        $language
+    ) {
+        if ((int)$mainVariationId <= 0) {
+            return '';
+        }
+
+        try {
+            $results = $this->itemSearchService->getResults([
+                SingleItem::getSearchFactory([
+                    'variationId' => (int)$mainVariationId
+                ])
+            ]);
+        } catch (\Exception $exception) {
+            return '';
+        }
+
+        $results = $this->toArray($results);
+        if (empty($results)) {
+            return '';
+        }
+
+        // Current IO versions return one result per search factory. Keep the
+        // direct check as a compatibility path for installations returning the
+        // single result without a numeric wrapper.
+        $html = $this->findPropertyHtml(
+            $results,
+            (int)$propertyId,
+            (string)$language
+        );
+        if ($html !== '') {
+            return $html;
+        }
+
+        foreach ($results as $result) {
+            $result = $this->toArray($result);
+            if (empty($result)) {
+                continue;
+            }
+
+            $html = $this->findPropertyHtml(
+                $result,
+                (int)$propertyId,
+                (string)$language
+            );
+            if ($html !== '') {
+                return $html;
+            }
+        }
+
+        return '';
     }
 
     /**

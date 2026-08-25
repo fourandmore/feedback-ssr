@@ -1,3 +1,11 @@
+## 5.0.29
+
+- Eigenschaft 151 wird über `ItemSearchService` und das `SingleItem`-Preset gezielt aus dem vollständigen Artikeldokument der Hauptvariante geladen.
+- Der Abruf entspricht dem offiziellen IO-`ItemService` und verwendet keine veraltete `ItemDataLayer`-Schnittstelle.
+- Kindvarianten-Dokumente bleiben ausgeschlossen; die bisherigen Hauptvarianten-Repositories dienen nur noch als Fallbacks.
+- Der Diagnosepfad für den neuen Abruf lautet `main-variation-item-document`.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
 ## 5.0.28
 
 - Zusätzlicher serverseitiger FAQ-Fallback über den Hauptartikel mit geladener `properties`-Relation.

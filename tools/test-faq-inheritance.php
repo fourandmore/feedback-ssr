@@ -64,12 +64,65 @@ namespace Plenty\Modules\Item\VariationProperty\Models {
     }
 }
 
+namespace Plenty\Modules\Webshop\ItemSearch\SearchPresets {
+    class SingleItem
+    {
+        public static function getSearchFactory($options)
+        {
+            return $options;
+        }
+    }
+}
+
+namespace Plenty\Modules\Webshop\ItemSearch\Services {
+    class ItemSearchService
+    {
+        public $requestedVariationIds = [];
+
+        public function getResults($searchFactories)
+        {
+            $variationId = isset($searchFactories[0]['variationId'])
+                ? (int)$searchFactories[0]['variationId']
+                : 0;
+            $this->requestedVariationIds[] = $variationId;
+
+            if ($variationId !== 7875) {
+                return [];
+            }
+
+            return [[
+                'documents' => [[
+                    'data' => [
+                        'item' => [
+                            'id' => 600000,
+                            'mainVariationId' => 7875
+                        ],
+                        'variation' => [
+                            'id' => 7875,
+                            'isMain' => true
+                        ],
+                        'properties' => [[
+                            'id' => 55,
+                            'propertyId' => 151,
+                            'valueTexts' => [[
+                                'lang' => 'de',
+                                'value' => '<details class="faq-item"><summary>FAQ aus dem Hauptvarianten-Dokument?</summary><div class="faq-answer"><p>Dieser Inhalt gilt für alle Varianten.</p></div></details>'
+                            ]]
+                        ]]
+                    ]
+                ]]
+            ]];
+        }
+    }
+}
+
 namespace {
     use FeedbackGeoFM\Services\FaqPropertySchemaBuilder;
     use Plenty\Modules\Item\Item\Contracts\ItemRepositoryContract;
     use Plenty\Modules\Item\Variation\Contracts\VariationRepositoryContract;
     use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
     use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;
+    use Plenty\Modules\Webshop\ItemSearch\Services\ItemSearchService;
 
     require_once __DIR__ . '/../src/Services/FaqPropertySchemaBuilder.php';
 
@@ -162,11 +215,13 @@ namespace {
     $textRepository = new TestVariationPropertyValueTextRepository();
     $variationRepository = new TestVariationRepository();
     $itemRepository = new TestItemRepository();
+    $itemSearchService = new ItemSearchService();
     $builder = new FaqPropertySchemaBuilder(
         $propertyRepository,
         $textRepository,
         $variationRepository,
-        $itemRepository
+        $itemRepository,
+        $itemSearchService
     );
 
     $result = $builder->build([
@@ -184,17 +239,15 @@ namespace {
 
     $assertions = [
         $result['status'] === 'found',
-        $result['source'] === 'main-item-repository',
+        $result['source'] === 'main-variation-item-document',
         $result['resolvedVariationId'] === 7875,
         isset($result['jsonLd']['@type']) && $result['jsonLd']['@type'] === 'FAQPage',
         isset($result['jsonLd']['mainEntity'][0]['name'])
-            && $result['jsonLd']['mainEntity'][0]['name'] === 'FAQ des Hauptartikels?',
+            && $result['jsonLd']['mainEntity'][0]['name'] === 'FAQ aus dem Hauptvarianten-Dokument?',
         $variationRepository->requestedVariationIds === [9001],
-        $propertyRepository->requestedVariationIds === [7875],
-        count($itemRepository->requests) === 1,
-        $itemRepository->requests[0]['itemId'] === 600000,
-        $itemRepository->requests[0]['lang'] === 'de',
-        $itemRepository->requests[0]['with'] === ['properties']
+        $itemSearchService->requestedVariationIds === [7875],
+        $propertyRepository->requestedVariationIds === [],
+        count($itemRepository->requests) === 0
     ];
 
     foreach ($assertions as $assertion) {

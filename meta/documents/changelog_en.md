@@ -1,3 +1,11 @@
+## 5.0.29
+
+- Property 151 is loaded from the complete main-variation item document through `ItemSearchService` and the `SingleItem` preset.
+- This follows the official IO `ItemService` path and does not use the deprecated `ItemDataLayer` interface.
+- Child-variation documents remain excluded; the existing main-variation repositories are retained as fallbacks only.
+- The diagnostic source for the new path is `main-variation-item-document`.
+- Product, ProductGroup, and Offer output remains unchanged.
+
 ## 5.0.28
 
 - Added a server-side FAQ fallback through the owning main item with its `properties` relation loaded.
