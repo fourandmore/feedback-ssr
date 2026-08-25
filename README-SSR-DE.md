@@ -136,3 +136,10 @@ Die FAQPage-Ausgabe aus Artikeleigenschaft **151** wurde aus dem ShopBuilder-Wid
 Nach dem Update den DataProvider **„FAQPage JSON-LD serverseitig (Property 151)“** im Plugin-Set mit dem Standardcontainer **`Ceres::SingleItem.BeforePrice`** verknüpfen (bzw. die Standard-Container-Verknüpfungen des Plugins übernehmen). Das sichtbare FAQ bleibt weiterhin über die Artikeleigenschaft/den bisherigen Inhaltsblock bestehen. Das separate ShopBuilder-Widget **„FAQ Serverseitig und Schema“** ist für Property 151 nicht erforderlich.
 
 Das Hauptwidget **„Feedback Product Offer GEO F&M“** behält den Diagnosemarker `feedback-faq-property-status-151`, erzeugt selbst aber keinen zweiten FAQPage-Scriptblock mehr.
+
+
+## Version 5.0.23 – Layout-Container-Hotfix
+
+Der FAQ-DataProvider verwendet nun die von PlentyONE dokumentierte Layout-Container-Signatur `call(Twig $twig, $args)`. Das vom Container `Ceres::SingleItem.BeforePrice` übergebene `item.documents[0].data` wird aus `$args[0]` gelesen. Dadurch kann Property 151 serverseitig ausgewertet und als echtes, gefülltes `application/ld+json`-Script ausgegeben werden.
+
+**Wichtig:** `defaultLayoutContainer` in `plugin.json` ist nur eine Standardzuordnung. Im Plugin-Set muss der DataProvider **FAQPage JSON-LD serverseitig (Property 151)** einmal mit **Ceres::SingleItem.BeforePrice** verknüpft bzw. die Funktion **Standard-Container-Verknüpfungen herstellen** ausgeführt werden. Ohne diese Verknüpfung wird der Provider nicht aufgerufen und im Quelltext erscheint kein FAQ-Script.

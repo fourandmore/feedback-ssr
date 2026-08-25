@@ -3,30 +3,37 @@
 namespace FeedbackGeoFM\DataProviders;
 
 use FeedbackGeoFM\Services\FeedbackService;
+use Plenty\Plugin\Templates\Twig;
 
 /**
  * Server-side FAQPage JSON-LD provider for plentyShop single item views.
  *
- * The ShopBuilder sanitises dynamic content inside normal <script> tags.
- * Rendering JSON-LD through a layout-container data provider avoids that
- * processing step and sends a populated application/ld+json script in the
- * original HTML response.
+ * Linked to Ceres::SingleItem.BeforePrice. plentyShop passes the current
+ * item.documents[0].data object to the provider as the first container
+ * argument. The provider returns a real application/ld+json script outside
+ * ShopBuilder processing, so the JSON-LD is present in the initial HTML.
  */
 class FaqPropertySchema
 {
     const FAQ_PROPERTY_ID = 151;
 
     /**
-     * The Ceres single-item container passes item.documents[0].data as the
-     * final argument. Dependencies before it are resolved by the plugin DI.
-     *
-     * @param FeedbackService $feedbackService
-     * @param mixed $itemData
+     * @param Twig $twig
+     * @param mixed $args Layout-container arguments. For
+     *                    Ceres::SingleItem.BeforePrice, $args[0] contains
+     *                    item.documents[0].data.
      * @return string
      */
-    public function call(FeedbackService $feedbackService, $itemData)
+    public function call(Twig $twig, $args)
     {
-        $data = is_array($itemData) ? $itemData : [];
+        /** @var FeedbackService $feedbackService */
+        $feedbackService = pluginApp(FeedbackService::class);
+
+        $data = $this->resolveItemData($args);
+        if (empty($data)) {
+            return '';
+        }
+
         $variationId = $this->resolveVariationId($data);
 
         $faqData = $feedbackService->getFaqDataFromProperty(
@@ -63,6 +70,35 @@ class FaqPropertySchema
             . '" type="application/ld+json">'
             . $json
             . '</script>';
+    }
+
+    /**
+     * Normalise the argument shape used by plentyShop layout containers.
+     *
+     * @param mixed $args
+     * @return array
+     */
+    private function resolveItemData($args)
+    {
+        if (!is_array($args)) {
+            return [];
+        }
+
+        // Standard layout-container shape: container(..., object) => $args[0].
+        if (isset($args[0]) && is_array($args[0])) {
+            return $args[0];
+        }
+
+        // Defensive fallback for environments that pass the object directly.
+        if (isset($args['variation'])
+            || isset($args['variationId'])
+            || isset($args['item'])
+            || isset($args['properties'])
+            || isset($args['variationProperties'])) {
+            return $args;
+        }
+
+        return [];
     }
 
     /**
