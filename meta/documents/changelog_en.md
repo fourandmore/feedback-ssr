@@ -1,3 +1,9 @@
+## 5.0.26
+
+- FAQPage JSON-LD is now rendered on purchasable child variations when property 151 is inherited from the main variation.
+- FAQ resolution now considers `propertyVariationId`, `mainVariationId`, and `parentVariationId` in direct and nested plentyShop item data.
+- Product/ProductGroup/Offer output remains unchanged: non-purchasable main variations receive `ProductGroup`, while purchasable variations receive `Product` with `Offer` and `isVariantOf`.
+
 ## 5.0.25
 
 - Replaced the deprecated `Ceres::SingleItem.BeforePrice` default assignment for Product and FAQ data providers with `Ceres::SingleItem.BeforeAddToBasket`.

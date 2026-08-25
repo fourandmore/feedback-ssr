@@ -130,10 +130,26 @@ class FaqPropertySchemaBuilder
             if (isset($data['variation']['variationId'])) {
                 $candidates[] = $data['variation']['variationId'];
             }
+
+            // A child variation can inherit its properties from another
+            // variation. propertyVariationId is the most precise source for
+            // inherited properties; mainVariationId and parentVariationId
+            // cover older or reduced plentyShop item-document shapes.
+            foreach (['propertyVariationId', 'mainVariationId', 'parentVariationId'] as $key) {
+                if (isset($data['variation'][$key])) {
+                    $candidates[] = $data['variation'][$key];
+                }
+            }
         }
 
         if (isset($data['variationId'])) {
             $candidates[] = $data['variationId'];
+        }
+
+        foreach (['propertyVariationId', 'mainVariationId', 'parentVariationId'] as $key) {
+            if (isset($data[$key])) {
+                $candidates[] = $data[$key];
+            }
         }
 
         if (isset($data['item']) && is_array($data['item'])) {

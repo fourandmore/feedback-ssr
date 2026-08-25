@@ -1,10 +1,16 @@
-# Feedback Product Offer GEO F&M – Version 5.0.25
+# Feedback Product Offer GEO F&M – Version 5.0.26
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.26 – FAQ-Vererbung auf Kindvarianten
+
+- Kaufbare Kindvarianten erhalten das FAQPage-Schema auch dann, wenn Property 151 von der Hauptvariation geerbt wird.
+- Der FAQ-Builder prüft dafür zusätzlich `propertyVariationId`, `mainVariationId` und `parentVariationId`.
+- Die vorhandene Product-Logik bleibt unverändert: `ProductGroup` ohne Offer auf der nicht kaufbaren Hauptvariation sowie `Product` mit Offer und `isVariantOf` auf einer kaufbaren Variante.
 
 ## Version 5.0.25 – nicht veralteter Einzelartikel-Container
 

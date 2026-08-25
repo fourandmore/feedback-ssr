@@ -1,3 +1,9 @@
+## 5.0.26
+
+- FAQPage-JSON-LD wird auf kaufbaren Kindvarianten nun auch dann ausgegeben, wenn Eigenschaft 151 von der Hauptvariation geerbt wird.
+- Die FAQ-Auflösung berücksichtigt dazu `propertyVariationId`, `mainVariationId` und `parentVariationId` aus direkten und verschachtelten plentyShop-Artikeldaten.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert: nicht kaufbare Hauptvarianten erhalten `ProductGroup`, kaufbare Varianten `Product` mit `Offer` und `isVariantOf`.
+
 ## 5.0.25
 
 - Veraltete Standardzuordnung `Ceres::SingleItem.BeforePrice` für Product- und FAQ-DataProvider durch `Ceres::SingleItem.BeforeAddToBasket` ersetzt.
