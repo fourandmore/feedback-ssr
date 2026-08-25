@@ -1,4 +1,4 @@
-# Feedback Product Offer GEO F&M – Version 5.0.21
+# Feedback Product Offer GEO F&M – Version 5.0.22
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
@@ -126,3 +126,13 @@ Das Ergebnis muss ein `<script type="application/ld+json">`-Element sein und dar
 ## FAQ-Eigenschaft 151 – Diagnose und Fallbacks
 
 Version 5.0.18 liest Property-Modelle explizit per `toArray()`, durchsucht das komplette Item-Dokument rekursiv, unterstützt zusätzliche Sprachcodes und kann die Varianten-ID aus der Produkt-URL ermitteln. Zusätzlich wird ein unsichtbares Diagnoseelement `feedback-faq-property-status-151` ausgegeben.
+
+## Version 5.0.22 – echtes serverseitiges FAQPage JSON-LD
+
+Die FAQPage-Ausgabe aus Artikeleigenschaft **151** wurde aus dem ShopBuilder-Widget entfernt und in einen serverseitigen Layout-Container/DataProvider verlagert. Hintergrund: ShopBuilder kann dynamischen Inhalt innerhalb normaler `<script>`-Tags entfernen. Der neue Provider gibt das vollständig gefüllte `<script type="application/ld+json">` außerhalb des ShopBuilder-Parsers direkt im initialen HTML aus.
+
+### Einmalige Container-Verknüpfung
+
+Nach dem Update den DataProvider **„FAQPage JSON-LD serverseitig (Property 151)“** im Plugin-Set mit dem Standardcontainer **`Ceres::SingleItem.BeforePrice`** verknüpfen (bzw. die Standard-Container-Verknüpfungen des Plugins übernehmen). Das sichtbare FAQ bleibt weiterhin über die Artikeleigenschaft/den bisherigen Inhaltsblock bestehen. Das separate ShopBuilder-Widget **„FAQ Serverseitig und Schema“** ist für Property 151 nicht erforderlich.
+
+Das Hauptwidget **„Feedback Product Offer GEO F&M“** behält den Diagnosemarker `feedback-faq-property-status-151`, erzeugt selbst aber keinen zweiten FAQPage-Scriptblock mehr.

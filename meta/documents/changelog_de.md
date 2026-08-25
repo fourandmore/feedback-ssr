@@ -1,3 +1,9 @@
+## 5.0.22
+
+- FAQPage aus Property 151 wird über einen serverseitigen Layout-Container/DataProvider als echtes, gefülltes JSON-LD ausgegeben.
+
+- Leeren FAQ-`<script>`-Block aus dem ShopBuilder-Widget entfernt; Diagnosemarker bleibt erhalten.
+
 ## 5.0.21
 
 - Technischer Plugin-Name von `Feedback` auf `FeedbackGeoFM` geändert.

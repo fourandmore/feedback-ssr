@@ -306,8 +306,7 @@
               data-status="{{ Twig.print("feedbackFaqPropertyData.status | default('not-found')") }}"
               data-source="{{ Twig.print("feedbackFaqPropertyData.source | default('')") }}"
               data-variation-id="{{ Twig.print("feedbackFaqPropertyData.resolvedVariationId | default(feedbackVariationId)") }}">
-        {{ Twig.if("feedbackFaqPropertyData.jsonLd is not empty") }}
-            <script id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script>
-        {{ Twig.endif() }}
+        {# FAQPage JSON-LD is rendered by the server-side layout-container data provider.
+           Keep only this diagnostic marker in the ShopBuilder widget. #}
     {% endif %}
 {% endif %}
