@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Widgets;
+namespace FeedbackGeoFM\Widgets;
 
 use Ceres\Widgets\Category\Filter\FilterBaseWidget;
 use Ceres\Widgets\Helper\Factories\WidgetDataFactory;
@@ -17,7 +17,7 @@ class RatingFilterWidget extends FilterBaseWidget
 
     public function getData(): array
     {
-        return WidgetDataFactory::make('Feedback::RatingFilterWidget')
+        return WidgetDataFactory::make('FeedbackGeoFM::RatingFilterWidget')
             ->withLabel('Widget.ratingFilterLabel')
             ->withPreviewImageUrl('/images/rating-filter.svg')
             ->withType(WidgetTypes::CATEGORY_ITEM)
@@ -37,7 +37,7 @@ class RatingFilterWidget extends FilterBaseWidget
 
         $feedback = [
             'id' => 'feedback',
-            'name' => $this->trans('Feedback::Widget.feedbackLabel'),
+            'name' => $this->trans('FeedbackGeoFM::Widget.feedbackLabel'),
             'position' => 0,
             'values' => [],
             'minHitCount' => 1,

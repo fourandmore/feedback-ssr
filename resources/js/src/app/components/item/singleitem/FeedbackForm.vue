@@ -6,7 +6,7 @@
     >
       <div class="stars">
         <fieldset>
-          <legend><span class="visually-hidden">{{ $translate("Feedback::Feedback.feedbackTextLegend") }}</span></legend>
+          <legend><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.feedbackTextLegend") }}</span></legend>
           <template v-for="i in [5,4,3,2,1]">
             <input
               :id="'star-' + i + _uid"
@@ -21,7 +21,7 @@
               :key="'star_label_' + i"
               :class="'star star-' + i"
               :for="'star-' + i + _uid"
-            ><span class="visually-hidden">{{ $translate("Feedback::Feedback.feedbackAverageLabel", {"count": i }) }}</span></label>
+            ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.feedbackAverageLabel", {"count": i }) }}</span></label>
           </template>
         </fieldset>
       </div>
@@ -30,7 +30,7 @@
         v-if="ratingMissing"
         class="feedback-error alert alert-danger"
       >
-        {{ $translate("Feedback::Feedback.ratingRequired") }}
+        {{ $translate("FeedbackGeoFM::Feedback.ratingRequired") }}
       </p>
 
       <div
@@ -43,13 +43,13 @@
           type="text"
           class="form-control"
           name="author"
-          :placeholder="$translate('Feedback::Feedback.authorName')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.authorName')"
           :disabled="authenticatedUser.limitReached || !authenticatedUser.hasPurchased"
         >
         <label
           class="position-absolute"
           for="author"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.authorName") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.authorName") }}</span></label>
 
         <input
           id="feedback-textfield"
@@ -62,7 +62,7 @@
         ><label
           class="position-absolute"
           for="feedback-textfield"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.honeypotLabel") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.honeypotLabel") }}</span></label>
       </div>
 
       <div class="form-group">
@@ -73,15 +73,15 @@
           class="form-control"
           :class="{'is-invalid': titleMissing}"
           name="title"
-          :placeholder="$translate('Feedback::Feedback.title')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.title')"
           :disabled="authenticatedUser.limitReached || !authenticatedUser.hasPurchased"
         >
         <label
           class="position-absolute"
           for="title"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.title") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.title") }}</span></label>
         <div class="invalid-feedback">
-          {{ $translate("Feedback::Feedback.titleRequired") }}
+          {{ $translate("FeedbackGeoFM::Feedback.titleRequired") }}
         </div>
       </div>
 
@@ -92,14 +92,14 @@
           class="form-control"
           name="message"
           rows="3"
-          :placeholder="$translate('Feedback::Feedback.reviewMessage')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.reviewMessage')"
           :disabled="authenticatedUser.limitReached || !authenticatedUser.hasPurchased"
         />
         <label
           class="position-absolute"
           for="message"
         >
-          <span class="visually-hidden">{{ $translate("Feedback::Feedback.reviewMessage") }}</span>
+          <span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.reviewMessage") }}</span>
         </label>
       </div>
 
@@ -109,13 +109,13 @@
         class="feedback-tooltip-wrapper"
         data-toggle="tooltip"
         data-placement="top"
-        :data-original-title="$translate('Feedback::Feedback.maximumNumberOfFeedbacksReached')"
+        :data-original-title="$translate('FeedbackGeoFM::Feedback.maximumNumberOfFeedbacksReached')"
       >
         <button
           class="btn btn-primary btn-appearance"
           disabled
         >
-          {{ $translate("Feedback::Feedback.submitReview") }}
+          {{ $translate("FeedbackGeoFM::Feedback.submitReview") }}
         </button>
       </div>
 
@@ -125,13 +125,13 @@
         class="feedback-tooltip-wrapper"
         data-toggle="tooltip"
         data-placement="top"
-        :data-original-title="$translate('Feedback::Feedback.errorDoesntOwnProduct')"
+        :data-original-title="$translate('FeedbackGeoFM::Feedback.errorDoesntOwnProduct')"
       >
         <button
           class="btn btn-primary btn-appearance"
           disabled
         >
-          {{ $translate("Feedback::Feedback.submitReview") }}
+          {{ $translate("FeedbackGeoFM::Feedback.submitReview") }}
         </button>
       </div>
       <button
@@ -140,12 +140,12 @@
         :disabled="isLoading"
         @click="createFeedback()"
       >
-        {{ $translate("Feedback::Feedback.submitReview") }}
+        {{ $translate("FeedbackGeoFM::Feedback.submitReview") }}
       </button>
     </div>
     <div v-else>
       <div class="alert alert-info">
-        {{ $translate("Feedback::Feedback.logInCustomerReviews") }}
+        {{ $translate("FeedbackGeoFM::Feedback.logInCustomerReviews") }}
       </div>
 
       <a
@@ -154,7 +154,7 @@
         href="#login"
         @click="createLoginModal()"
       >
-        <span>{{ $translate("Feedback::Feedback.login") }}</span>
+        <span>{{ $translate("FeedbackGeoFM::Feedback.login") }}</span>
         <i
           class="fa fa-user"
           aria-hidden="true"
@@ -237,12 +237,12 @@ export default {
           this.feedback.ratingValue = 0
           this.titleMissing = false
           this.ratingMissing = false
-          window.CeresNotification.success(this.$translate('Feedback::Feedback.notificationSuccess')).closeAfter(3000)
+          window.CeresNotification.success(this.$translate('FeedbackGeoFM::Feedback.notificationSuccess')).closeAfter(3000)
         },
         error: (jqXHR, textStatus, errorThrown) => {
           console.error(errorThrown)
           this.isLoading = false
-          window.CeresNotification.error(this.$translate('Feedback::Feedback.notificationFailure')).closeAfter(3000)
+          window.CeresNotification.error(this.$translate('FeedbackGeoFM::Feedback.notificationFailure')).closeAfter(3000)
         }
       })
     },

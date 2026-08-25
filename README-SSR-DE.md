@@ -1,4 +1,8 @@
-# Feedback Product Offer GEO F&M – Version 5.0.20
+# Feedback Product Offer GEO F&M – Version 5.0.21
+## Technischer Plugin-Name / Namespace
+
+Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
+
 
 **Entwickelt und gepflegt von Four & More GmbH.**
 

@@ -1,15 +1,15 @@
 <?php
 
-namespace Feedback\Providers;
+namespace FeedbackGeoFM\Providers;
 
-use Feedback\Extensions\FeedbackFacet;
-use Feedback\Extensions\TwigServiceProvider;
-use Feedback\Helpers\FeedbackCoreHelper;
-use Feedback\Widgets\FeedbackAverageWidget;
-use Feedback\Widgets\FeedbackOrderWidget;
-use Feedback\Widgets\FeedbackWidget;
-use Feedback\Widgets\FaqSchemaWidget;
-use Feedback\Widgets\RatingFilterWidget;
+use FeedbackGeoFM\Extensions\FeedbackFacet;
+use FeedbackGeoFM\Extensions\TwigServiceProvider;
+use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
+use FeedbackGeoFM\Widgets\FeedbackAverageWidget;
+use FeedbackGeoFM\Widgets\FeedbackOrderWidget;
+use FeedbackGeoFM\Widgets\FeedbackWidget;
+use FeedbackGeoFM\Widgets\FaqSchemaWidget;
+use FeedbackGeoFM\Widgets\RatingFilterWidget;
 use IO\Helper\ResourceContainer;
 use IO\Services\ItemService;
 use Plenty\Modules\ShopBuilder\Contracts\ContentWidgetRepositoryContract;
@@ -44,11 +44,11 @@ class FeedbackServiceProvider extends ServiceProvider
                 function (ItemService $itemService) {
                     $itemService->addAdditionalItemSorting(
                         'item.feedbackDecimal_asc',
-                        'Feedback::Feedback.customerReviewsAsc'
+                        'FeedbackGeoFM::Feedback.customerReviewsAsc'
                     );
                     $itemService->addAdditionalItemSorting(
                         'item.feedbackDecimal_desc',
-                        'Feedback::Feedback.customerReviewsDesc'
+                        'FeedbackGeoFM::Feedback.customerReviewsDesc'
                     );
                 }
             );
@@ -59,8 +59,8 @@ class FeedbackServiceProvider extends ServiceProvider
         $dispatcher->listen(
             'IO.Resources.Import',
             function (ResourceContainer $resourceContainer) {
-                $resourceContainer->addScriptTemplate('Feedback::Content.Scripts');
-                $resourceContainer->addStyleTemplate('Feedback::Content.Styles');
+                $resourceContainer->addScriptTemplate('FeedbackGeoFM::Content.Scripts');
+                $resourceContainer->addStyleTemplate('FeedbackGeoFM::Content.Styles');
             }
         );
 

@@ -1,7 +1,7 @@
 {% set ratingCount = initialData.counts.ratingsCountTotal | default(0) %}
 <section class="feedback-container feedback-ssr-content" data-feedback-ssr="true">
     <div class="title">
-        {{ trans("Feedback::Feedback.customerReviews") }}
+        {{ trans("FeedbackGeoFM::Feedback.customerReviews") }}
         <small class="feedback-average-count">({{ ratingCount }})</small>
     </div>
 
@@ -32,7 +32,7 @@
 
                         {% if feedback.isPurchased %}
                             <p class="feedback-attributes-list">
-                                <span class="feedback-verified-tag">{{ trans("Feedback::Feedback.verifiedPurchase") }}</span>
+                                <span class="feedback-verified-tag">{{ trans("FeedbackGeoFM::Feedback.verifiedPurchase") }}</span>
                             </p>
                         {% endif %}
 
@@ -56,7 +56,7 @@
     {% else %}
         <hr>
         <p class="feedback-empty-state text-muted mb-0">
-            {{ trans("Feedback::Feedback.noReviews") }}
+            {{ trans("FeedbackGeoFM::Feedback.noReviews") }}
         </p>
     {% endif %}
 </section>

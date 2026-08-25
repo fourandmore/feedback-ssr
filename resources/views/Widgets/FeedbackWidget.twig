@@ -21,7 +21,7 @@
         <section class="feedback-container widget-inner {{ spacingPadding }}"
                 {% if inlinePadding | length > 0 %} style="{{ inlinePadding }}"{% endif %}>
             <div class="title">
-                {{ trans("Feedback::Feedback.customerReviews") }}
+                {{ trans("FeedbackGeoFM::Feedback.customerReviews") }}
                 <small class="feedback-average-count">(3)</small>
             </div>
             <div class="feedback-stars-average" aria-label="5 von 5 Sternen">
@@ -32,7 +32,7 @@
                 </div>
             </div>
             <hr>
-            <p class="text-muted mb-0">{{ trans("Feedback::Feedback.loadingFeedbacks") }}</p>
+            <p class="text-muted mb-0">{{ trans("FeedbackGeoFM::Feedback.loadingFeedbacks") }}</p>
         </section>
     </div>
 {% else %}
@@ -67,10 +67,10 @@
         {% endif %}
     {% endif %}
 
-    <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('Feedback::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+    <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('FeedbackGeoFM::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
             {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
         {% if options.serverSideRendering %}
-            {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
+            {{ Twig.include("FeedbackGeoFM::Widgets.FeedbackSsrContent", {
                 "initialData": "feedbackInitialData",
                 "timestampVisibility": options.timestampVisibility ? "true" : "false"
             }) }}

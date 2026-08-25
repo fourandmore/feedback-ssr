@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Services;
+namespace FeedbackGeoFM\Services;
 
 /**
  * Builds a cache-safe Schema.org Product/Offer object from the current

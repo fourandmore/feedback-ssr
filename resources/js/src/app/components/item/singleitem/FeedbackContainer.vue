@@ -1,7 +1,7 @@
 <template>
   <section class="feedback-container">
     <div class="title">
-      {{ $translate("Feedback::Feedback.customerReviews") }}
+      {{ $translate("FeedbackGeoFM::Feedback.customerReviews") }}
       <small class="feedback-average-count"> ({{ counts.ratingsCountTotal }})</small>
     </div>
     <div class="feedback-stars-average">
@@ -150,7 +150,7 @@
       v-if="isLoading"
       class="loading-hint"
     >
-      {{ $translate("Feedback::Feedback.loadingFeedbacks") }}
+      {{ $translate("FeedbackGeoFM::Feedback.loadingFeedbacks") }}
     </p>
 
     <!-- Modal -->
@@ -170,7 +170,7 @@
             <span
               :id="'feedbackConfirmDeleteLabel-' + variationId"
               class="modal-title h5"
-            >{{ $translate("Feedback::Feedback.deleteConfirm") }}</span>
+            >{{ $translate("FeedbackGeoFM::Feedback.deleteConfirm") }}</span>
             <button
               type="button"
               class="close"
@@ -185,13 +185,13 @@
               v-if="!!feedbackToDelete && feedbackToDelete.isReply"
               class="feedback-delete-confirmation"
             >
-              {{ $translate("Feedback::Feedback.deleteReply") }}
+              {{ $translate("FeedbackGeoFM::Feedback.deleteReply") }}
             </p>
             <p
               v-else
               class="feedback-delete-confirmation"
             >
-              {{ $translate("Feedback::Feedback.deleteReview") }}
+              {{ $translate("FeedbackGeoFM::Feedback.deleteReview") }}
             </p>
           </div>
           <div class="modal-footer">
@@ -200,14 +200,14 @@
               class="btn btn-secondary"
               data-dismiss="modal"
             >
-              {{ $translate("Feedback::Feedback.cancel") }}
+              {{ $translate("FeedbackGeoFM::Feedback.cancel") }}
             </button>
             <button
               type="button"
               class="btn btn-primary btn-appearance"
               @click="deleteFeedback()"
             >
-              {{ $translate("Feedback::Feedback.yesDeleteIt") }}
+              {{ $translate("FeedbackGeoFM::Feedback.yesDeleteIt") }}
             </button>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default {
             review: []
           }
 
-          const anonymous = this.$translate('Feedback::Feedback.anonymous') || 'Anonymous'
+          const anonymous = this.$translate('FeedbackGeoFM::Feedback.anonymous') || 'Anonymous'
           this.feedbacks.forEach(function (feedback) {
             let author
 

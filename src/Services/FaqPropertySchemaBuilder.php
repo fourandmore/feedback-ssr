@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Services;
+namespace FeedbackGeoFM\Services;
 
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueTextRepositoryContract;

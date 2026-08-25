@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Providers;
+namespace FeedbackGeoFM\Providers;
 
 use Plenty\Plugin\RouteServiceProvider;
 use Plenty\Plugin\Routing\ApiRouter;
@@ -8,7 +8,7 @@ use Plenty\Plugin\Routing\Router;
 
 /**
  * Class FeedbackRouteServiceProvider
- * @package Feedback\Providers
+ * @package FeedbackGeoFM\Providers
  */
 class  FeedbackRouteServiceProvider extends RouteServiceProvider
 {
@@ -23,7 +23,7 @@ class  FeedbackRouteServiceProvider extends RouteServiceProvider
      */
     public function map(Router $router, ApiRouter $apiRouter)
     {
-        $apiRouter->version(['v1'], ['namespace' => 'Feedback\Controllers'], function ($apiRouter) {
+        $apiRouter->version(['v1'], ['namespace' => 'FeedbackGeoFM\Controllers'], function ($apiRouter) {
             $apiRouter->get('feedbacks/user/{itemId}/{variationId}', 'FeedbacksController@getAuthenticatedUser');
             $apiRouter->get('feedbacks/user', 'FeedbacksController@getAuthenticatedUserMulti');
             $apiRouter->post('feedbacks/feedback/create', 'FeedbacksController@create');

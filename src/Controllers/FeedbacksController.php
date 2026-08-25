@@ -1,8 +1,8 @@
 <?php
 
-namespace Feedback\Controllers;
+namespace FeedbackGeoFM\Controllers;
 
-use Feedback\Services\FeedbackService;
+use FeedbackGeoFM\Services\FeedbackService;
 use Plenty\Plugin\Controller;
 
 class FeedbacksController extends Controller

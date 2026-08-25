@@ -1,8 +1,8 @@
 <?php
 
-namespace Feedback\Extensions;
+namespace FeedbackGeoFM\Extensions;
 
-use Feedback\Services\FeedbackService;
+use FeedbackGeoFM\Services\FeedbackService;
 
 class TwigFeedbackServiceContainer
 {

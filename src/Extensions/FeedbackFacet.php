@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Extensions;
+namespace FeedbackGeoFM\Extensions;
 
 use IO\Helper\Utils;
 use Plenty\Modules\Cloud\ElasticSearch\Lib\Search\Aggregation\AggregationInterface;
@@ -14,7 +14,7 @@ use Plenty\Plugin\Log\Loggable;
 
 /**
  * Class FeedbackFacet
- * @package Feedback\Extensions
+ * @package FeedbackGeoFM\Extensions
  */
 class FeedbackFacet implements FacetExtension
 {
@@ -43,9 +43,9 @@ class FeedbackFacet implements FacetExtension
         $feedback = [];
 
         if (count($result)) {
-            $this->getLogger('merge into facets')->debug('Feedback::Debug.filterResponse', $result);
+            $this->getLogger('merge into facets')->debug('FeedbackGeoFM::Debug.filterResponse', $result);
 
-            $facetName = Utils::translate('Feedback::Feedback.facetName');
+            $facetName = Utils::translate('FeedbackGeoFM::Feedback.facetName');
             $feedback = [
                 'id' => 'feedback',
                 'name' => $facetName,

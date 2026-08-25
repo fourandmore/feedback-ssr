@@ -1,7 +1,7 @@
 <template>
   <section class="feedback-container feedback-orderitem-container">
     <div class="title">
-      {{ $translate("Feedback::Feedback.orderItemTitle") }}
+      {{ $translate("FeedbackGeoFM::Feedback.orderItemTitle") }}
     </div>
     <hr>
     <div
@@ -19,7 +19,7 @@
       v-else
       class="w-100 text-center"
     >
-      <p>{{ $translate("Feedback::Feedback.loadingItems") }}</p>
+      <p>{{ $translate("FeedbackGeoFM::Feedback.loadingItems") }}</p>
     </div>
     <button
       v-if="!isLoading && (page * options.itemsPerRow * options.rowsPerPage < orderItems.length)"

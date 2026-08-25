@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Widgets;
+namespace FeedbackGeoFM\Widgets;
 
 use Ceres\Widgets\Helper\BaseWidget;
 use Ceres\Widgets\Helper\Factories\Settings\CustomClassSettingFactory;
@@ -15,14 +15,14 @@ use Plenty\Modules\ShopBuilder\Factories\WidgetSettingsFactory;
 
 class FeedbackAverageWidget extends BaseWidget
 {
-    protected $template = "Feedback::Widgets.FeedbackAverageWidget";
+    protected $template = "FeedbackGeoFM::Widgets.FeedbackAverageWidget";
 
     /**
      * @inheritDoc
      */
     public function getData()
     {
-        return WidgetDataFactory::make("Feedback::FeedbackAverageWidget")
+        return WidgetDataFactory::make("FeedbackGeoFM::FeedbackAverageWidget")
             ->withLabel("Widget.feedbackAverageLabel")
             ->withPreviewImageUrl("/images/feedback-average.svg")
             ->withType(WidgetTypes::ITEM)

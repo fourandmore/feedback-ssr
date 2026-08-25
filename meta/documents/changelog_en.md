@@ -1,3 +1,11 @@
+## 5.0.21
+
+- Changed the technical plugin name from `Feedback` to `FeedbackGeoFM`.
+- Changed the PHP namespace from `Feedback\...` to `FeedbackGeoFM\...` throughout the plugin.
+- Updated Twig template, translation, `plugin_path()`, SSR entry and data provider references to `FeedbackGeoFM`.
+- Updated the plugin configuration prefix to `FeedbackGeoFM`.
+- Intentionally kept the plentyONE core namespaces `Plenty\Modules\Feedback\...` unchanged.
+
 # 5.0.20
 
 - Placeholder authors such as “Unknown”, “Unbekannt” and “Guest” are rendered as “Anonymous buyer” or “Anonymer Käufer” in visible SSR reviews and Review JSON-LD.

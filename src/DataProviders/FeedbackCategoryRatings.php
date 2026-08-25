@@ -1,7 +1,7 @@
 <?php
-namespace Feedback\DataProviders;
+namespace FeedbackGeoFM\DataProviders;
 
-use Feedback\Helpers\FeedbackCoreHelper;
+use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
 use Plenty\Plugin\Http\Request;
 use Plenty\Plugin\Templates\Twig;
 
@@ -26,6 +26,6 @@ class FeedbackCategoryRatings
         $data['options']['showEmptyRatingsInCategoryView'] = $showEmptyRatingsInCategoryView;
         $data['options']['showRatingCountInCategoryView'] = $showRatingCountInCategoryView;
 
-        return $twig->render('Feedback::DataProvider.CategoryAverageRating', $data);
+        return $twig->render('FeedbackGeoFM::DataProvider.CategoryAverageRating', $data);
     }
 }

@@ -1,13 +1,13 @@
 <?php
 
-namespace Feedback\Helpers;
+namespace FeedbackGeoFM\Helpers;
 
 use IO\Services\TemplateService;
 use Plenty\Plugin\ConfigRepository;
 
 class FeedbackCoreHelper
 {
-    const PLUGIN_NAME = 'Feedback';
+    const PLUGIN_NAME = 'FeedbackGeoFM';
     const KEY_RELEASE_FEEDBACKS_AUTOMATICALLY = "autoreleaseFeedbacks";
     const KEY_ALLOW_GUEST_FEEDBACKS = "allowGuestFeedbacks";
     const KEY_SHOW_EMPTY_RATINGS_IN_CATEGORY_VIEW = "showEmptyRatingsInCategoryView";

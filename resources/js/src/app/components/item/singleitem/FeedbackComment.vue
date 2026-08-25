@@ -27,7 +27,7 @@
             v-if="isPurchased"
             class="feedback-verified-tag"
           >
-            {{ $translate("Feedback::Feedback.verifiedPurchase") }}
+            {{ $translate("FeedbackGeoFM::Feedback.verifiedPurchase") }}
           </span>
 
           <span
@@ -54,7 +54,7 @@
             class="feedback-admin"
             data-toggle="tooltip"
             data-placement="top"
-            :data-original-title="$translate('Feedback::Feedback.shopManagerLabel')"
+            :data-original-title="$translate('FeedbackGeoFM::Feedback.shopManagerLabel')"
           >
             <i class="fa fa-check-square" />
             {{ feedbackData.sourceRelation[0].sourceRelationLabel }}
@@ -84,7 +84,7 @@
         class="feedback-info-segment btn btn-sm btn-default"
         @click="replyFormVisible = !replyFormVisible"
       >
-        {{ $translate("Feedback::Feedback.addComment") }}
+        {{ $translate("FeedbackGeoFM::Feedback.addComment") }}
       </span>
 
       <span
@@ -92,14 +92,14 @@
         class="feedback-info-segment btn btn-sm btn-default"
         @click="replyListVisible = !replyListVisible"
       >
-        {{ $translate("Feedback::Feedback.viewComments") }} ({{ feedbackData.replies.length }})
+        {{ $translate("FeedbackGeoFM::Feedback.viewComments") }} ({{ feedbackData.replies.length }})
       </span>
       <span
         v-else-if="(!!feedbackData.replies && feedbackData.replies.length > 0) && replyListVisible"
         class="feedback-info-segment btn btn-sm btn-default"
         @click="replyListVisible = !replyListVisible"
       >
-        {{ $translate("Feedback::Feedback.hideComments") }}
+        {{ $translate("FeedbackGeoFM::Feedback.hideComments") }}
       </span>
     </p>
 
@@ -117,7 +117,7 @@
           type="text"
           class="form-control"
           name="author"
-          :placeholder="$translate('Feedback::Feedback.authorName')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.authorName')"
           :disabled="authenticatedUser.limitReached || !authenticatedUser.hasPurchased"
         >
 
@@ -132,7 +132,7 @@
         ><label
           class="position-absolute"
           for="comment-textfield"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.honeypotLabel") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.honeypotLabel") }}</span></label>
       </div>
 
       <div class="form-group">
@@ -141,7 +141,7 @@
           class="form-control"
           name="message"
           rows="3"
-          :placeholder="$translate('Feedback::Feedback.commentMessage')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.commentMessage')"
         />
       </div>
 
@@ -150,7 +150,7 @@
         :disabled="!replyMessage"
         @click="createReply()"
       >
-        {{ $translate("Feedback::Feedback.submitComment") }}
+        {{ $translate("FeedbackGeoFM::Feedback.submitComment") }}
       </button>
     </div>
 
@@ -235,7 +235,7 @@ export default {
 
     displayName () {
       const rawName = this.feedbackData.sourceRelation[0].sourceRelationLabel
-      const guestName = this.$translate('Feedback::Feedback.guestName')
+      const guestName = this.$translate('FeedbackGeoFM::Feedback.guestName')
       return guestName !== ' ' ? guestName : rawName
     },
 

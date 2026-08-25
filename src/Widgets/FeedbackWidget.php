@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Widgets;
+namespace FeedbackGeoFM\Widgets;
 
 use Ceres\Widgets\Helper\BaseWidget;
 use Ceres\Widgets\Helper\Factories\Settings\AppearanceSettingFactory;
@@ -9,17 +9,17 @@ use Ceres\Widgets\Helper\Factories\Settings\SpacingSettingFactory;
 use Ceres\Widgets\Helper\Factories\WidgetDataFactory;
 use Ceres\Widgets\Helper\WidgetCategories;
 use Ceres\Widgets\Helper\WidgetTypes;
-use Feedback\Helpers\FeedbackCoreHelper;
+use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
 use Plenty\Modules\ShopBuilder\Factories\Settings\CheckboxSettingFactory;
 use Plenty\Modules\ShopBuilder\Factories\WidgetSettingsFactory;
 
 class FeedbackWidget extends BaseWidget
 {
-    protected $template = "Feedback::Widgets.FeedbackWidget";
+    protected $template = "FeedbackGeoFM::Widgets.FeedbackWidget";
 
     public function getData()
     {
-        return WidgetDataFactory::make("Feedback::FeedbackWidget")
+        return WidgetDataFactory::make("FeedbackGeoFM::FeedbackWidget")
             ->withLabel("Widget.feedbackGeoLabel")
             ->withPreviewImageUrl("/images/feedback.svg")
             ->withType(WidgetTypes::ITEM)

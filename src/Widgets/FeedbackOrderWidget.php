@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Widgets;
+namespace FeedbackGeoFM\Widgets;
 
 use Ceres\Widgets\Helper\BaseWidget;
 use Ceres\Widgets\Helper\Factories\Settings\AppearanceSettingFactory;
@@ -10,18 +10,18 @@ use Ceres\Widgets\Helper\Factories\WidgetDataFactory;
 use Ceres\Widgets\Helper\WidgetCategories;
 use Ceres\Widgets\Helper\WidgetTypes;
 use Ceres\Widgets\OrderConfirmation\OrderConfirmationBaseWidget;
-use Feedback\Helpers\FeedbackCoreHelper;
+use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
 use Plenty\Modules\ShopBuilder\Factories\Settings\SelectSettingFactory;
 use Plenty\Modules\ShopBuilder\Factories\Settings\ValueListFactory;
 use Plenty\Modules\ShopBuilder\Factories\WidgetSettingsFactory;
 
 class FeedbackOrderWidget extends OrderConfirmationBaseWidget
 {
-    protected $template = "Feedback::Widgets.FeedbackOrderWidget";
+    protected $template = "FeedbackGeoFM::Widgets.FeedbackOrderWidget";
 
     public function getData()
     {
-        return WidgetDataFactory::make("Feedback::FeedbackOrderItemWidget")
+        return WidgetDataFactory::make("FeedbackGeoFM::FeedbackOrderItemWidget")
             ->withLabel("Widget.feedbackLabel")
             ->withPreviewImageUrl("/images/order-item-feedback.svg")
             ->withType(WidgetTypes::DEFAULT)

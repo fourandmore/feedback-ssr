@@ -1,12 +1,12 @@
 {
-    "version": "5.0.20",
-    "name": "Feedback",
+    "version": "5.0.21",
+    "name": "FeedbackGeoFM",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
     "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, Offer-, Review-, FAQPage-, Versand-, Rückgabe- und optionale VideoObject-JSON-LD-Daten.",
-    "namespace": "Feedback",
+    "namespace": "FeedbackGeoFM",
     "author": "Four & More GmbH",
     "type": "general",
     "require": {
@@ -17,7 +17,7 @@
         "php": ">=7.3 <8.1"
     },
     "isClosedSource": false,
-    "serviceProvider": "Feedback\\Providers\\FeedbackServiceProvider",
+    "serviceProvider": "FeedbackGeoFM\\Providers\\FeedbackServiceProvider",
     "runOnBuild": [],
     "license": "AGPL-3.0",
     "price": 0.0,
@@ -48,7 +48,7 @@
     "containers": [],
     "dataProviders": [
         {
-            "key": "Feedback\\DataProviders\\FeedbackCategoryRatings",
+            "key": "FeedbackGeoFM\\DataProviders\\FeedbackCategoryRatings",
             "name": "Feedback category ratings",
             "description": "Feedback category ratings",
             "defaultLayoutContainer": "Ceres::CategoryItem.BeforePrices"

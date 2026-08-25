@@ -1,11 +1,11 @@
 <?php
 
-namespace Feedback\Services;
+namespace FeedbackGeoFM\Services;
 
 use Plenty\Modules\Authorization\Services\AuthHelper;
 use Plenty\Modules\Webshop\Contracts\LocalizationRepositoryContract;
 use Plenty\Plugin\Http\Request;
-use Feedback\Helpers\FeedbackCoreHelper;
+use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
 use Plenty\Modules\Feedback\Contracts\FeedbackAverageRepositoryContract;
 use Plenty\Modules\Feedback\Contracts\FeedbackRepositoryContract;
 use Plenty\Modules\Order\Contracts\OrderRepositoryContract;
@@ -291,7 +291,7 @@ class FeedbackService
             );
         } catch (\Exception $e) {
             $this->getLogger(__METHOD__)->error(
-                'Feedback::Debug.FeedbackService_itemDoesNotExistError',
+                'FeedbackGeoFM::Debug.FeedbackService_itemDoesNotExistError',
                 [
                     'code' => $e->getCode(),
                     'message' => $e->getMessage(),
@@ -1005,7 +1005,7 @@ class FeedbackService
             $feedback = $this->feedbackRepository->getFeedback($feedbackId);
         } catch (ModelNotFoundException $exception) {}
 
-        $this->getLogger(__METHOD__)->debug('Feedback::Debug.feedbackExistsResult', [
+        $this->getLogger(__METHOD__)->debug('FeedbackGeoFM::Debug.feedbackExistsResult', [
             'expectedFeedbackId' => $feedbackId,
             'obtainedFeedbackId' => $feedback->id ?? null
         ]);

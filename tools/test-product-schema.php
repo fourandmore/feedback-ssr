@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../src/Services/ProductSchemaBuilder.php';
 
-use Feedback\Services\ProductSchemaBuilder;
+use FeedbackGeoFM\Services\ProductSchemaBuilder;
 
 $itemData = [
     'texts' => [

@@ -1,3 +1,11 @@
+## 5.0.21
+
+- Technischer Plugin-Name von `Feedback` auf `FeedbackGeoFM` geändert.
+- PHP-Namespace vollständig von `Feedback\...` auf `FeedbackGeoFM\...` umgestellt.
+- Twig-Template-, Übersetzungs-, `plugin_path()`-, SSR-Entry- und DataProvider-Verweise auf `FeedbackGeoFM` umgestellt.
+- Plugin-Konfigurationspräfix auf `FeedbackGeoFM` umgestellt.
+- PlentyONE-Core-Namespaces `Plenty\Modules\Feedback\...` bewusst unverändert gelassen.
+
 # 5.0.20
 
 - Platzhalter-Autoren wie „Unbekannt“, „Unknown“ und „Gast“ werden im sichtbaren SSR-Bereich und im Review-JSON-LD als „Anonymer Käufer“ bzw. „Anonymous buyer“ ausgegeben.
