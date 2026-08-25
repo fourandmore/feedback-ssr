@@ -8,7 +8,7 @@ use Plenty\Plugin\Templates\Twig;
 /**
  * Server-side FAQPage JSON-LD provider for plentyShop single item views.
  *
- * Linked to Ceres::SingleItem.BeforePrice. plentyShop passes the current
+ * Linked to Ceres::SingleItem.BeforeAddToBasket. plentyShop passes the current
  * item.documents[0].data object to the provider as the first container
  * argument. The provider returns a real application/ld+json script outside
  * ShopBuilder processing, so the JSON-LD is present in the initial HTML.
@@ -20,7 +20,7 @@ class FaqPropertySchema
     /**
      * @param Twig $twig
      * @param mixed $args Layout-container arguments. For
-     *                    Ceres::SingleItem.BeforePrice, $args[0] contains
+     *                    Ceres::SingleItem.BeforeAddToBasket, $args[0] contains
      *                    item.documents[0].data.
      * @return string
      */
@@ -80,22 +80,70 @@ class FaqPropertySchema
      */
     private function resolveItemData($args)
     {
-        if (!is_array($args)) {
+        $args = $this->toArray($args);
+        if (empty($args)) {
             return [];
         }
 
-        // Standard layout-container shape: container(..., object) => $args[0].
-        if (isset($args[0]) && is_array($args[0])) {
-            return $args[0];
+        $candidates = [$args];
+        if (isset($args[0])) {
+            $candidates[] = $this->toArray($args[0]);
         }
 
-        // Defensive fallback for environments that pass the object directly.
-        if (isset($args['variation'])
-            || isset($args['variationId'])
-            || isset($args['item'])
-            || isset($args['properties'])
-            || isset($args['variationProperties'])) {
-            return $args;
+        foreach ($candidates as $candidate) {
+            if (isset($candidate['variation'])
+                || isset($candidate['variationId'])
+                || (isset($candidate['item'])
+                    && is_array($candidate['item'])
+                    && isset($candidate['item']['id']))
+                || isset($candidate['properties'])
+                || isset($candidate['variationProperties'])) {
+                return $candidate;
+            }
+
+            if (isset($candidate['documents'][0]['data'])) {
+                $documentData = $this->toArray($candidate['documents'][0]['data']);
+                if (!empty($documentData)) {
+                    return $documentData;
+                }
+            }
+
+            if (isset($candidate['item']['documents'][0]['data'])) {
+                $documentData = $this->toArray($candidate['item']['documents'][0]['data']);
+                if (!empty($documentData)) {
+                    return $documentData;
+                }
+            }
+
+            if (isset($candidate['data'])) {
+                $documentData = $this->toArray($candidate['data']);
+                if (!empty($documentData)) {
+                    return $documentData;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function toArray($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_object($value)) {
+            $encoded = json_encode($value);
+            if ($encoded !== false) {
+                $decoded = json_decode($encoded, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
         }
 
         return [];

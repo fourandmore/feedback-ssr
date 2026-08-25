@@ -1,3 +1,8 @@
+## 5.0.25
+
+- Veraltete Standardzuordnung `Ceres::SingleItem.BeforePrice` für Product- und FAQ-DataProvider durch `Ceres::SingleItem.BeforeAddToBasket` ersetzt.
+- Containerargumente werden nun aus direkten Artikeldaten, `documents[0].data`, `item.documents[0].data` und Objektargumenten aufgelöst.
+
 ## 5.0.24
 
 - Product/ProductGroup/Offer-JSON-LD in einen echten serverseitigen Layout-Container/DataProvider verschoben; keine Product-Ausgabe mehr als `<script2>` aus dem ShopBuilder-Widget.

@@ -1,3 +1,8 @@
+## 5.0.25
+
+- Replaced the deprecated `Ceres::SingleItem.BeforePrice` default assignment for Product and FAQ data providers with `Ceres::SingleItem.BeforeAddToBasket`.
+- Container arguments are now resolved from direct item data, `documents[0].data`, `item.documents[0].data`, and object arguments.
+
 ## 5.0.24
 
 - Moved Product/ProductGroup/Offer JSON-LD to a real server-side layout-container data provider; the ShopBuilder widget no longer emits Product markup through `<script2>`.

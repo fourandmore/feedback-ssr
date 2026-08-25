@@ -10,8 +10,9 @@ use Plenty\Plugin\Templates\Twig;
  * Outputs Product/ProductGroup/Offer JSON-LD as a real server-side script.
  *
  * ShopBuilder rewrites script tags contained in widget templates. Keeping the
- * structured data in a layout-container provider ensures that crawlers receive
- * valid application/ld+json in the initial HTML response.
+ * structured data in the non-deprecated SingleItem.BeforeAddToBasket layout
+ * container ensures that crawlers receive valid application/ld+json in the
+ * initial HTML response.
  */
 class ProductOfferSchema
 {
@@ -145,16 +146,67 @@ class ProductOfferSchema
      */
     private function resolveItemData($args)
     {
-        if (!is_array($args)) {
+        $args = $this->toArray($args);
+        if (empty($args)) {
             return [];
         }
 
-        if (isset($args[0]) && is_array($args[0])) {
-            return $args[0];
+        $candidates = [$args];
+        if (isset($args[0])) {
+            $candidates[] = $this->toArray($args[0]);
         }
 
-        if (isset($args['variation']) || isset($args['item'])) {
-            return $args;
+        foreach ($candidates as $candidate) {
+            if (isset($candidate['variation'])
+                || (isset($candidate['item'])
+                    && is_array($candidate['item'])
+                    && isset($candidate['item']['id']))) {
+                return $candidate;
+            }
+
+            if (isset($candidate['documents'][0]['data'])) {
+                $documentData = $this->toArray($candidate['documents'][0]['data']);
+                if (!empty($documentData)) {
+                    return $documentData;
+                }
+            }
+
+            if (isset($candidate['item']['documents'][0]['data'])) {
+                $documentData = $this->toArray($candidate['item']['documents'][0]['data']);
+                if (!empty($documentData)) {
+                    return $documentData;
+                }
+            }
+
+            if (isset($candidate['data'])) {
+                $documentData = $this->toArray($candidate['data']);
+                if (isset($documentData['variation']) || isset($documentData['item'])) {
+                    return $documentData;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function toArray($value)
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_object($value)) {
+            $encoded = json_encode($value);
+            if ($encoded !== false) {
+                $decoded = json_decode($encoded, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
         }
 
         return [];
