@@ -1,10 +1,16 @@
-# Feedback Product Offer GEO F&M – Version 5.0.24
+# Feedback Product Offer GEO F&M – Version 5.0.25
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.25 – nicht veralteter Einzelartikel-Container
+
+- Die beiden serverseitigen DataProvider für Product/ProductGroup/Offer und FAQPage verwenden jetzt `Ceres::SingleItem.BeforeAddToBasket`.
+- `Ceres::SingleItem.BeforePrice` wird nicht mehr als Standardzuordnung verwendet, da dieser Container im aktuellen plentyShop-LTS-Manifest als veraltet gekennzeichnet ist.
+- Die Auflösung der Containerargumente unterstützt zusätzlich direkte Artikeldaten, `documents[0].data`, `item.documents[0].data` und objektbasierte Argumente.
 
 ## Version 5.0.24 – valides Product/ProductGroup/Offer-Schema
 
@@ -17,7 +23,7 @@ Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen 
 
 ### Einmalige Einrichtung nach dem Update
 
-1. Im Plugin-Set die Standard-Container-Verknüpfungen herstellen oder den DataProvider **„Product/ProductGroup/Offer JSON-LD serverseitig“** mit `Ceres::SingleItem.BeforePrice` verknüpfen.
+1. Im Plugin-Set die Standard-Container-Verknüpfungen herstellen oder den DataProvider **„Product/ProductGroup/Offer JSON-LD serverseitig“** mit `Ceres::SingleItem.BeforeAddToBasket` verknüpfen.
 2. Unter Plugin-Konfiguration → **Strukturierte Produktdaten** Verkäufer, Hersteller, Rückgabe sowie optional Versand und `variesBy` prüfen.
 3. Die konkurrierende Product-JSON-LD-Ausgabe von Ceres bzw. einem anderen Plugin deaktivieren. Pro Produktseite soll nur eine fachlich führende Product/ProductGroup-Struktur vorhanden sein.
 4. ShopBuilder-Inhalte neu generieren und im unveränderten Seitenquelltext nach `feedback-product-offer-jsonld` suchen. Der alte Block `feedback-product-jsonld` und `<script2 ... type="application/ld+json">` dürfen nicht mehr vom FeedbackGeoFM-Widget ausgegeben werden.
@@ -149,13 +155,13 @@ Die FAQPage-Ausgabe aus Artikeleigenschaft **151** wurde aus dem ShopBuilder-Wid
 
 ### Einmalige Container-Verknüpfung
 
-Nach dem Update den DataProvider **„FAQPage JSON-LD serverseitig (Property 151)“** im Plugin-Set mit dem Standardcontainer **`Ceres::SingleItem.BeforePrice`** verknüpfen (bzw. die Standard-Container-Verknüpfungen des Plugins übernehmen). Das sichtbare FAQ bleibt weiterhin über die Artikeleigenschaft/den bisherigen Inhaltsblock bestehen. Das separate ShopBuilder-Widget **„FAQ Serverseitig und Schema“** ist für Property 151 nicht erforderlich.
+Nach dem Update den DataProvider **„FAQPage JSON-LD serverseitig (Property 151)“** im Plugin-Set mit dem Standardcontainer **`Ceres::SingleItem.BeforeAddToBasket`** verknüpfen (bzw. die Standard-Container-Verknüpfungen des Plugins übernehmen). Das sichtbare FAQ bleibt weiterhin über die Artikeleigenschaft/den bisherigen Inhaltsblock bestehen. Das separate ShopBuilder-Widget **„FAQ Serverseitig und Schema“** ist für Property 151 nicht erforderlich.
 
 Das Hauptwidget **„Feedback Product Offer GEO F&M“** behält den Diagnosemarker `feedback-faq-property-status-151`, erzeugt selbst aber keinen zweiten FAQPage-Scriptblock mehr.
 
 
 ## Version 5.0.23 – Layout-Container-Hotfix
 
-Der FAQ-DataProvider verwendet nun die von PlentyONE dokumentierte Layout-Container-Signatur `call(Twig $twig, $args)`. Das vom Container `Ceres::SingleItem.BeforePrice` übergebene `item.documents[0].data` wird aus `$args[0]` gelesen. Dadurch kann Property 151 serverseitig ausgewertet und als echtes, gefülltes `application/ld+json`-Script ausgegeben werden.
+Der FAQ-DataProvider verwendet nun die von PlentyONE dokumentierte Layout-Container-Signatur `call(Twig $twig, $args)`. Die vom Container `Ceres::SingleItem.BeforeAddToBasket` übergebenen Artikeldaten werden aus den unterstützten Argumentformen aufgelöst. Dadurch kann Property 151 serverseitig ausgewertet und als echtes, gefülltes `application/ld+json`-Script ausgegeben werden.
 
-**Wichtig:** `defaultLayoutContainer` in `plugin.json` ist nur eine Standardzuordnung. Im Plugin-Set muss der DataProvider **FAQPage JSON-LD serverseitig (Property 151)** einmal mit **Ceres::SingleItem.BeforePrice** verknüpft bzw. die Funktion **Standard-Container-Verknüpfungen herstellen** ausgeführt werden. Ohne diese Verknüpfung wird der Provider nicht aufgerufen und im Quelltext erscheint kein FAQ-Script.
+**Wichtig:** `defaultLayoutContainer` in `plugin.json` ist nur eine Standardzuordnung. Im Plugin-Set muss der DataProvider **FAQPage JSON-LD serverseitig (Property 151)** einmal mit **Ceres::SingleItem.BeforeAddToBasket** verknüpft bzw. die Funktion **Standard-Container-Verknüpfungen herstellen** ausgeführt werden. Ohne diese Verknüpfung wird der Provider nicht aufgerufen und im Quelltext erscheint kein FAQ-Script.
