@@ -1,3 +1,11 @@
+## 5.0.28
+
+- Added a server-side FAQ fallback through the owning main item with its `properties` relation loaded.
+- Supports item properties/characteristics that are present in the ShopBuilder item document but absent from the variation-property repository.
+- Main variation resolution and exclusion of child-variation values remain enforced.
+- The diagnostic source for this path is `main-item-repository`.
+- Product, ProductGroup, and Offer output remains unchanged.
+
 ## 5.0.27
 
 - FAQPage JSON-LD now reads property 151 exclusively from the item's main variation on every product page.

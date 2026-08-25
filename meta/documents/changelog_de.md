@@ -1,3 +1,11 @@
+## 5.0.28
+
+- Zusätzlicher serverseitiger FAQ-Fallback über den Hauptartikel mit geladener `properties`-Relation.
+- Erfasst auch Item-Properties/Merkmale, die im ShopBuilder-Artikeldokument vorhanden sind, aber nicht über das Variation-Property-Repository geliefert werden.
+- Hauptvarianten-ID und Ausschluss von Kindvariantenwerten bleiben erhalten.
+- Der Diagnosepfad heißt `main-item-repository`.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
 ## 5.0.27
 
 - FAQPage-JSON-LD liest Eigenschaft 151 auf allen Artikelseiten ausschließlich von der Hauptvariante.
