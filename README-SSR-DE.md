@@ -1,10 +1,18 @@
-# Feedback Product Offer GEO F&M – Version 5.0.27
+# Feedback Product Offer GEO F&M – Version 5.0.28
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.28 – zusätzlicher Hauptartikel-Property-Fallback
+
+- Die Hauptvarianten-ID wird weiterhin zwingend ermittelt; Kindvariantenwerte und das aktuelle Kindvarianten-Dokument bleiben ausgeschlossen.
+- Liefert das Variation-Property-Repository keinen Wert für Eigenschaft 151, lädt das Plugin den zugehörigen PlentyONE-Artikel serverseitig mit seinen `properties`.
+- Damit werden auch ältere Item-Properties bzw. Merkmale erfasst, die im Webshop-Artikeldokument vorhanden sind, aber nicht vom Variation-Property-Repository zurückgegeben werden.
+- Der Diagnosemarker verwendet für diesen Pfad `source="main-item-repository"` und behält die ermittelte Hauptvarianten-ID bei.
+- Product-, ProductGroup- und Offer-Schema bleiben unverändert.
 
 ## Version 5.0.27 – FAQ immer von der Hauptvariante
 

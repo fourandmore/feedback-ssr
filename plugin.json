@@ -1,5 +1,5 @@
 {
-    "version": "5.0.27",
+    "version": "5.0.28",
     "name": "FeedbackGeoFM",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
@@ -56,7 +56,7 @@
         {
             "key": "FeedbackGeoFM\\DataProviders\\FaqPropertySchema",
             "name": "FAQPage JSON-LD serverseitig (Property 151)",
-            "description": "Gibt FAQPage JSON-LD immer aus Eigenschaft 151 der Hauptvariante direkt serverseitig auf der Einzelartikelseite aus.",
+            "description": "Gibt FAQPage JSON-LD immer aus Eigenschaft 151 des Hauptartikels bzw. der Hauptvariante direkt serverseitig aus.",
             "defaultLayoutContainer": "Ceres::SingleItem.BeforeAddToBasket"
         },
         {

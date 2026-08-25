@@ -2,6 +2,8 @@
 
 namespace FeedbackGeoFM\Services;
 
+use Plenty\Modules\Item\Item\Contracts\ItemRepositoryContract;
+use Plenty\Modules\Item\Item\Models\Item;
 use Plenty\Modules\Item\Variation\Contracts\VariationRepositoryContract;
 use Plenty\Modules\Item\Variation\Models\Variation;
 use Plenty\Modules\Item\VariationProperty\Contracts\VariationPropertyValueRepositoryContract;
@@ -24,14 +26,19 @@ class FaqPropertySchemaBuilder
     /** @var VariationRepositoryContract */
     private $variationRepository;
 
+    /** @var ItemRepositoryContract */
+    private $itemRepository;
+
     public function __construct(
         VariationPropertyValueRepositoryContract $variationPropertyValueRepository,
         VariationPropertyValueTextRepositoryContract $variationPropertyValueTextRepository,
-        VariationRepositoryContract $variationRepository
+        VariationRepositoryContract $variationRepository,
+        ItemRepositoryContract $itemRepository
     ) {
         $this->variationPropertyValueRepository = $variationPropertyValueRepository;
         $this->variationPropertyValueTextRepository = $variationPropertyValueTextRepository;
         $this->variationRepository = $variationRepository;
+        $this->itemRepository = $itemRepository;
     }
     /**
      * @param mixed $itemData
@@ -76,6 +83,25 @@ class FaqPropertySchemaBuilder
 
         if ($html !== '') {
             $result['source'] = 'main-variation-repository';
+        }
+
+        // PlentyONE can expose older item characteristics in the ShopBuilder
+        // item document even though VariationPropertyValueRepositoryContract
+        // does not return them. Load the owning item with its properties as a
+        // second main-item source; never fall back to the child document.
+        if ($html === '') {
+            $itemId = $this->resolveItemId($data, $mainVariationId);
+            if ($itemId > 0) {
+                $html = $this->findPropertyHtmlByItemId(
+                    $itemId,
+                    $propertyId,
+                    (string)$language
+                );
+
+                if ($html !== '') {
+                    $result['source'] = 'main-item-repository';
+                }
+            }
         }
 
         if ($html === '') {
@@ -202,6 +228,88 @@ class FaqPropertySchemaBuilder
         }
 
         return 0;
+    }
+
+    /**
+     * Resolve the owning item without using data from another variation.
+     *
+     * @param array $data
+     * @param int $mainVariationId
+     * @return int
+     */
+    private function resolveItemId(array $data, $mainVariationId)
+    {
+        if (isset($data['item'])
+            && is_array($data['item'])
+            && isset($data['item']['id'])
+            && is_numeric($data['item']['id'])
+            && (int)$data['item']['id'] > 0) {
+            return (int)$data['item']['id'];
+        }
+
+        if (isset($data['itemId'])
+            && is_numeric($data['itemId'])
+            && (int)$data['itemId'] > 0) {
+            return (int)$data['itemId'];
+        }
+
+        if (isset($data['variation'])
+            && is_array($data['variation'])
+            && isset($data['variation']['itemId'])
+            && is_numeric($data['variation']['itemId'])
+            && (int)$data['variation']['itemId'] > 0) {
+            return (int)$data['variation']['itemId'];
+        }
+
+        if ((int)$mainVariationId <= 0) {
+            return 0;
+        }
+
+        try {
+            $mainVariation = $this->variationRepository->findById((int)$mainVariationId);
+        } catch (\Exception $exception) {
+            return 0;
+        }
+
+        $mainVariationData = $this->toArray($mainVariation);
+        if (isset($mainVariationData['itemId'])
+            && is_numeric($mainVariationData['itemId'])
+            && (int)$mainVariationData['itemId'] > 0) {
+            return (int)$mainVariationData['itemId'];
+        }
+
+        return 0;
+    }
+
+    /**
+     * Load item-level properties of the item owning the main variation. This
+     * supports PlentyONE item characteristics that are present in the webshop
+     * document but absent from the variation-property repository.
+     *
+     * @param int $itemId
+     * @param int $propertyId
+     * @param string $language
+     * @return string
+     */
+    private function findPropertyHtmlByItemId($itemId, $propertyId, $language)
+    {
+        try {
+            $item = $this->itemRepository->show(
+                (int)$itemId,
+                ['id', 'mainVariationId'],
+                (string)$language,
+                ['properties']
+            );
+        } catch (\Exception $exception) {
+            return '';
+        }
+
+        $itemData = $this->toArray($item);
+        if (empty($itemData)) {
+            return '';
+        }
+
+        return $this->findPropertyHtml($itemData, (int)$propertyId, (string)$language);
     }
 
     /**
@@ -783,7 +891,8 @@ class FaqPropertySchemaBuilder
             return $value;
         }
 
-        if ($value instanceof Variation
+        if ($value instanceof Item
+            || $value instanceof Variation
             || $value instanceof VariationPropertyValue
             || $value instanceof VariationPropertyValueText) {
             $modelData = $value->toArray();
