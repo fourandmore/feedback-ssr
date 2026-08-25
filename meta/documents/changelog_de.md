@@ -1,3 +1,11 @@
+## 5.0.24
+
+- Product/ProductGroup/Offer-JSON-LD in einen echten serverseitigen Layout-Container/DataProvider verschoben; keine Product-Ausgabe mehr als `<script2>` aus dem ShopBuilder-Widget.
+- Nicht kaufbare Hauptvarianten mit Untervarianten werden als `ProductGroup` ohne `Offer` ausgegeben.
+- Konkrete Varianten erhalten `Product`, variantenspezifische `productID`/Offer-IDs und eine artikelstabile `isVariantOf`-/`productGroupID`-Verknüpfung.
+- Marken-, Hersteller- und Verkäuferrollen getrennt; `manufacturer.responsibleName` wird bevorzugt verwendet.
+- Globale Plugin-Konfiguration für Product/Offer, Variantenmerkmale, Versand und Rückgabe ergänzt. Versanddetails sind bis zur fachlichen Prüfung standardmäßig deaktiviert.
+
 ## 5.0.22
 
 - FAQPage aus Property 151 wird über einen serverseitigen Layout-Container/DataProvider als echtes, gefülltes JSON-LD ausgegeben.

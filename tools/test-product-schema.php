@@ -11,8 +11,10 @@ $itemData = [
     ],
     'item' => [
         'id' => 51000,
+        'salableVariationCount' => 4,
         'manufacturer' => [
-            'externalName' => 'Mephisto'
+            'externalName' => 'Mephisto',
+            'responsibleName' => 'Four & More GmbH'
         ],
         'condition' => [
             'names' => [
@@ -27,7 +29,12 @@ $itemData = [
         'defaultShippingCosts' => 6.90
     ],
     'filter' => [
-        'isSalable' => true
+        'isSalable' => true,
+        'hasChildren' => false,
+        'hasActiveChildren' => false
+    ],
+    'attributes' => [
+        ['attributeName' => 'Größe']
     ],
     'prices' => [
         'default' => [
@@ -96,7 +103,12 @@ $assertions = [
     $schema['@type'] === 'Product',
     $schema['name'] === 'Mephisto Infrarotheizung 600 W',
     $schema['sku'] === '51000-600',
+    $schema['productID'] === '13046',
+    $schema['isVariantOf']['@type'] === 'ProductGroup',
+    $schema['isVariantOf']['productGroupID'] === '51000',
+    $schema['isVariantOf']['variesBy'][0] === 'https://schema.org/size',
     $schema['brand']['name'] === 'Mephisto',
+    $schema['manufacturer']['name'] === 'Four & More GmbH',
     $schema['category'] === 'Infrarotheizungen',
     $schema['offers']['price'] === '129.90',
     $schema['offers']['priceCurrency'] === 'EUR',
@@ -138,6 +150,36 @@ if (!is_array($withoutReviewsOrVideo)
     || isset($withoutReviewsOrVideo['review'])
     || isset($withoutReviewsOrVideo['subjectOf'])) {
     fwrite(STDERR, 'Product/Offer without reviews or video failed.' . PHP_EOL);
+    exit(1);
+}
+
+$parentItemData = $itemData;
+$parentItemData['variation']['id'] = 7875;
+$parentItemData['variation']['number'] = '51000';
+$parentItemData['filter']['isSalable'] = false;
+$parentItemData['filter']['hasChildren'] = true;
+$parentItemData['filter']['hasActiveChildren'] = true;
+$parentItemData['attributes'] = [];
+
+$productGroup = $builder->build(
+    $parentItemData,
+    'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_7875',
+    ['averageValue' => 0, 'ratingsCountTotal' => 0],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaVariesBy' => 'size,color',
+        'schemaVideoObject' => false
+    ])
+);
+
+if (!is_array($productGroup)
+    || $productGroup['@type'] !== 'ProductGroup'
+    || $productGroup['productGroupID'] !== '51000'
+    || isset($productGroup['offers'])
+    || isset($productGroup['sku'])
+    || count($productGroup['variesBy']) !== 2) {
+    fwrite(STDERR, 'Non-salable parent variation must be a ProductGroup without Offer.' . PHP_EOL);
     exit(1);
 }
 

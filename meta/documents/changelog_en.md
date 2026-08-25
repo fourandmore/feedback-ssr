@@ -1,3 +1,11 @@
+## 5.0.24
+
+- Moved Product/ProductGroup/Offer JSON-LD to a real server-side layout-container data provider; the ShopBuilder widget no longer emits Product markup through `<script2>`.
+- Non-purchasable parent variations with child variations are represented as `ProductGroup` without an `Offer`.
+- Concrete variants receive a `Product`, variation-specific `productID` and Offer IDs, plus an item-stable `isVariantOf`/`productGroupID` link.
+- Separated brand, manufacturer and seller roles; `manufacturer.responsibleName` is preferred.
+- Added global plugin settings for Product/Offer, variant dimensions, shipping and returns. Shipping details default to disabled until the data has been verified.
+
 ## 5.0.22
 
 - FAQPage for property 151 is rendered by a server-side layout-container data provider as populated JSON-LD.

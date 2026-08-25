@@ -90,7 +90,101 @@
                     }
                 }
             }
+        },
+        "Config.SchemaSettingsTab": {
+            "label": "Config.SchemaSettingsTab",
+            "formFields": {
+                "schemaProductOfferEnabled": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaProductOfferEnabled",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                },
+                "schemaSellerName": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "Four & More GmbH",
+                    "label": "Config.schemaSellerName"
+                },
+                "schemaManufacturerName": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "Four & More GmbH",
+                    "label": "Config.schemaManufacturerName"
+                },
+                "schemaVariesBy": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaVariesBy"
+                },
+                "schemaShippingPolicy": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaShippingPolicy",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "schemaShippingCountries": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "DE",
+                    "label": "Config.schemaShippingCountries"
+                },
+                "schemaHandlingTimeMin": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 0,
+                    "label": "Config.schemaHandlingTimeMin"
+                },
+                "schemaHandlingTimeMax": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 1,
+                    "label": "Config.schemaHandlingTimeMax"
+                },
+                "schemaTransitTimeMin": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 1,
+                    "label": "Config.schemaTransitTimeMin"
+                },
+                "schemaTransitTimeMax": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 3,
+                    "label": "Config.schemaTransitTimeMax"
+                },
+                "schemaReturnPolicy": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaReturnPolicy",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                },
+                "schemaReturnCountries": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "DE",
+                    "label": "Config.schemaReturnCountries"
+                },
+                "schemaReturnDays": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 14,
+                    "label": "Config.schemaReturnDays"
+                },
+                "schemaReturnPolicyUrl": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaReturnPolicyUrl"
+                }
+            }
         }
     }
 }
-

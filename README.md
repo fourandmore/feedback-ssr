@@ -5,7 +5,7 @@ Entwickelt und gepflegt von **Four & More GmbH** für plentyShop LTS.
 Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweitert es um:
 
 - serverseitig gerenderte Kundenrezensionen,
-- `Product`- und `Offer`-JSON-LD,
+- echtes serverseitiges `Product`-/`ProductGroup`-/`Offer`-JSON-LD,
 - `AggregateRating` und einzelne `Review`-Objekte,
 - serverseitiges `FAQPage`-Schema aus Artikeleigenschaften,
 - strukturierte Artikelzustände und Kategorien,

@@ -3,7 +3,7 @@
 namespace FeedbackGeoFM\Services;
 
 /**
- * Builds a cache-safe Schema.org Product/Offer object from the current
+ * Builds a cache-safe Schema.org Product/ProductGroup/Offer object from the current
  * plentyShop item document. The class deliberately has no PlentyONE
  * dependencies so it can be tested independently.
  */
@@ -39,11 +39,19 @@ class ProductSchemaBuilder
             'variation.model'
         ]);
 
+        $isVariationGroup = $this->isVariationGroup($data);
         $priceData = $this->resolvePrice($data);
         $currency = strtoupper(trim((string)$priceData['currency']));
         $price = $priceData['price'];
 
-        if ($name === '' || $price === null || $price <= 0 || $currency === '') {
+        if ($name === '') {
+            return null;
+        }
+
+        // A non-salable parent variation is a product group, not a purchasable
+        // offer. Price and currency are therefore only mandatory for concrete
+        // products and variants.
+        if (!$isVariationGroup && ($price === null || $price <= 0 || $currency === '')) {
             return null;
         }
 
@@ -51,13 +59,17 @@ class ProductSchemaBuilder
         $variationId = (int)$this->value($data, 'variation.id', 0);
         $itemId = (int)$this->value($data, 'item.id', 0);
 
-        $productId = $canonicalUrl !== ''
-            ? rtrim($canonicalUrl, '/') . '#product'
-            : ($variationId > 0 ? 'variation-' . $variationId : 'item-' . $itemId);
+        $groupId = $this->productGroupId($canonicalUrl, $itemId);
+        $productId = $isVariationGroup
+            ? $groupId
+            : ($canonicalUrl !== ''
+                ? rtrim($canonicalUrl, '/')
+                    . ($variationId > 0 ? '#product-variation-' . $variationId : '#product')
+                : ($variationId > 0 ? 'variation-' . $variationId : 'item-' . $itemId));
 
         $schema = [
             '@context' => 'https://schema.org',
-            '@type' => 'Product',
+            '@type' => $isVariationGroup ? 'ProductGroup' : 'Product',
             '@id' => $productId,
             'name' => $name
         ];
@@ -75,16 +87,43 @@ class ProductSchemaBuilder
             $schema['description'] = $description;
         }
 
-        $sku = $this->firstRaw($data, [
-            'variation.number',
-            'variation.externalId'
-        ]);
-        if ($sku !== '') {
-            $schema['sku'] = $sku;
-        }
+        if ($isVariationGroup) {
+            if ($itemId > 0) {
+                $schema['productGroupID'] = (string)$itemId;
+            }
 
-        if ($itemId > 0) {
-            $schema['productID'] = (string)$itemId;
+            $variesBy = $this->resolveVariesBy($data, $schemaOptions);
+            if (!empty($variesBy)) {
+                $schema['variesBy'] = $variesBy;
+            }
+        } else {
+            $sku = $this->firstRaw($data, [
+                'variation.number',
+                'variation.externalId'
+            ]);
+            if ($sku !== '') {
+                $schema['sku'] = $sku;
+            }
+
+            if ($variationId > 0) {
+                $schema['productID'] = (string)$variationId;
+            } elseif ($itemId > 0) {
+                $schema['productID'] = (string)$itemId;
+            }
+
+            if ($this->belongsToVariationGroup($data) && $itemId > 0) {
+                $schema['isVariantOf'] = [
+                    '@type' => 'ProductGroup',
+                    '@id' => $groupId,
+                    'productGroupID' => (string)$itemId,
+                    'name' => $name
+                ];
+
+                $variesBy = $this->resolveVariesBy($data, $schemaOptions);
+                if (!empty($variesBy)) {
+                    $schema['isVariantOf']['variesBy'] = $variesBy;
+                }
+            }
         }
 
         $model = $this->firstText($data, ['variation.model']);
@@ -105,6 +144,24 @@ class ProductSchemaBuilder
             ];
         }
 
+        $manufacturer = $this->firstText($data, [
+            'item.manufacturer.responsibleName',
+            'item.manufacturer.legalName'
+        ]);
+        if ($manufacturer === '') {
+            $manufacturer = $this->cleanText($this->option(
+                $schemaOptions,
+                'schemaManufacturerName',
+                $sellerName
+            ));
+        }
+        if ($manufacturer !== '') {
+            $schema['manufacturer'] = [
+                '@type' => 'Organization',
+                'name' => $manufacturer
+            ];
+        }
+
         $category = $this->resolveCategory($data, $canonicalUrl);
         if ($category !== '') {
             $schema['category'] = $category;
@@ -115,51 +172,56 @@ class ProductSchemaBuilder
             $schema['image'] = $images;
         }
 
-        $barcode = $this->resolveBarcode($data);
-        if ($barcode !== null) {
-            $schema[$barcode['property']] = $barcode['value'];
+        if (!$isVariationGroup) {
+            $barcode = $this->resolveBarcode($data);
+            if ($barcode !== null) {
+                $schema[$barcode['property']] = $barcode['value'];
+            }
+
+            $offerIdSuffix = $variationId > 0 ? '-variation-' . $variationId : '';
+            $offer = [
+                '@type' => 'Offer',
+                '@id' => ($canonicalUrl !== '' ? rtrim($canonicalUrl, '/') : $productId)
+                    . '#offer'
+                    . $offerIdSuffix,
+                'price' => number_format((float)$price, 2, '.', ''),
+                'priceCurrency' => $currency
+            ];
+
+            $availability = $this->resolveAvailability($data);
+            if ($availability !== null) {
+                $offer['availability'] = $availability;
+            }
+
+            $itemCondition = $this->resolveItemCondition($data);
+            if ($itemCondition !== null) {
+                $offer['itemCondition'] = $itemCondition;
+            }
+
+            if ($canonicalUrl !== '') {
+                $offer['url'] = $canonicalUrl;
+            }
+
+            $seller = $this->buildSellerOrganization(
+                $sellerName,
+                $canonicalUrl,
+                $schemaOptions
+            );
+            if ($seller !== null) {
+                $offer['seller'] = $seller;
+            }
+
+            $shippingDetails = $this->resolveShippingDetails(
+                $data,
+                $currency,
+                $schemaOptions
+            );
+            if ($shippingDetails !== null) {
+                $offer['shippingDetails'] = $shippingDetails;
+            }
+
+            $schema['offers'] = $offer;
         }
-
-        $offer = [
-            '@type' => 'Offer',
-            '@id' => ($canonicalUrl !== '' ? rtrim($canonicalUrl, '/') : $productId) . '#offer',
-            'price' => number_format((float)$price, 2, '.', ''),
-            'priceCurrency' => $currency
-        ];
-
-        $availability = $this->resolveAvailability($data);
-        if ($availability !== null) {
-            $offer['availability'] = $availability;
-        }
-
-        $itemCondition = $this->resolveItemCondition($data);
-        if ($itemCondition !== null) {
-            $offer['itemCondition'] = $itemCondition;
-        }
-
-        if ($canonicalUrl !== '') {
-            $offer['url'] = $canonicalUrl;
-        }
-
-        $seller = $this->buildSellerOrganization(
-            $sellerName,
-            $canonicalUrl,
-            $schemaOptions
-        );
-        if ($seller !== null) {
-            $offer['seller'] = $seller;
-        }
-
-        $shippingDetails = $this->resolveShippingDetails(
-            $data,
-            $currency,
-            $schemaOptions
-        );
-        if ($shippingDetails !== null) {
-            $offer['shippingDetails'] = $shippingDetails;
-        }
-
-        $schema['offers'] = $offer;
 
         $ratingCount = isset($counts['ratingsCountTotal']) ? (int)$counts['ratingsCountTotal'] : 0;
         $ratingValue = isset($counts['averageValue']) ? (float)$counts['averageValue'] : 0.0;
@@ -191,6 +253,166 @@ class ProductSchemaBuilder
         }
 
         return $schema;
+    }
+
+    /**
+     * A PlentyONE parent variation can carry a display price while not being
+     * purchasable itself. It must be represented as ProductGroup and must not
+     * receive an Offer copied from that display price.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function isVariationGroup(array $data)
+    {
+        $hasChildren = $this->toBool($this->value($data, 'filter.hasChildren', false))
+            || $this->toBool($this->value($data, 'filter.hasActiveChildren', false));
+        $isSalable = $this->value($data, 'filter.isSalable', null);
+
+        return $hasChildren && $isSalable !== null && !$this->toBool($isSalable);
+    }
+
+    /**
+     * Use an item-stable identifier shared by every variation URL.
+     *
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @return string
+     */
+    private function productGroupId($canonicalUrl, $itemId)
+    {
+        $origin = $this->originUrl($canonicalUrl);
+        if ($origin !== '' && $itemId > 0) {
+            return rtrim($origin, '/') . '/#product-group-' . $itemId;
+        }
+
+        return 'product-group-' . $itemId;
+    }
+
+    /**
+     * Detect concrete variants without inventing a relationship for ordinary
+     * single-variation products.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function belongsToVariationGroup(array $data)
+    {
+        if ($this->isVariationGroup($data)) {
+            return false;
+        }
+
+        $salableVariationCount = (int)$this->value($data, 'item.salableVariationCount', 0);
+        if ($salableVariationCount > 1) {
+            return true;
+        }
+
+        $attributes = $this->value($data, 'attributes', []);
+        $groupedAttributes = $this->value($data, 'groupedAttributes', []);
+
+        return !empty($this->toArray($attributes)) || !empty($this->toArray($groupedAttributes));
+    }
+
+    /**
+     * Resolve the variant dimensions that can be stated truthfully from the
+     * current item document or from an explicit global configuration.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return array
+     */
+    private function resolveVariesBy(array $data, array $schemaOptions)
+    {
+        $names = [];
+        $configured = $this->option($schemaOptions, 'schemaVariesBy', '');
+
+        if (is_array($configured)) {
+            $configuredParts = $configured;
+        } else {
+            $configuredParts = preg_split('/[,;]+/', (string)$configured);
+        }
+
+        foreach ($configuredParts as $configuredPart) {
+            $configuredPart = trim((string)$configuredPart);
+            if ($configuredPart !== '') {
+                $names[] = $configuredPart;
+            }
+        }
+
+        foreach (['attributes', 'groupedAttributes', 'variation.attributes'] as $path) {
+            $entries = $this->toArray($this->value($data, $path, []));
+            foreach ($entries as $entry) {
+                $entry = $this->toArray($entry);
+                if (empty($entry)) {
+                    continue;
+                }
+
+                $attributeName = $this->firstText($entry, [
+                    'attribute.names.name',
+                    'attribute.name',
+                    'attributeName',
+                    'names.name',
+                    'name'
+                ]);
+                if ($attributeName !== '') {
+                    $names[] = $attributeName;
+                }
+            }
+        }
+
+        $variesBy = [];
+        foreach ($names as $name) {
+            $property = $this->mapVariantProperty($name);
+            if ($property !== '' && !in_array($property, $variesBy, true)) {
+                $variesBy[] = $property;
+            }
+        }
+
+        return $variesBy;
+    }
+
+    /**
+     * @param string $name
+     * @return string
+     */
+    private function mapVariantProperty($name)
+    {
+        $name = str_replace(
+            ['Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß'],
+            ['Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue', 'ss'],
+            $this->cleanText($name)
+        );
+        $name = strtolower($name);
+
+        if (strpos($name, 'http://schema.org/') === 0
+            || strpos($name, 'https://schema.org/') === 0) {
+            return preg_replace('/^http:\/\//', 'https://', $name);
+        }
+
+        if (in_array($name, ['color', 'colour', 'farbe', 'tuchfarbe'], true)
+            || strpos($name, 'farbe') !== false) {
+            return 'https://schema.org/color';
+        }
+
+        if (in_array($name, ['size', 'groesse', 'breite', 'ausfall', 'mass'], true)
+            || strpos($name, 'groess') !== false
+            || strpos($name, 'breite') !== false
+            || strpos($name, 'ausfall') !== false) {
+            return 'https://schema.org/size';
+        }
+
+        if (in_array($name, ['material', 'stoff', 'gewebe'], true)
+            || strpos($name, 'material') !== false) {
+            return 'https://schema.org/material';
+        }
+
+        if (in_array($name, ['pattern', 'muster', 'dessin'], true)
+            || strpos($name, 'muster') !== false
+            || strpos($name, 'dessin') !== false) {
+            return 'https://schema.org/pattern';
+        }
+
+        return '';
     }
 
     /**
