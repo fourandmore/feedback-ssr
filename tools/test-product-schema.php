@@ -70,6 +70,7 @@ $reviews = [[
 ]];
 
 $schemaOptions = [
+    'schemaManufacturerName' => 'Mephisto',
     'schemaShippingPolicy' => true,
     'schemaShippingCountries' => 'DE',
     'schemaHandlingTimeMin' => 0,
@@ -108,7 +109,7 @@ $assertions = [
     $schema['isVariantOf']['productGroupID'] === '51000',
     $schema['isVariantOf']['variesBy'][0] === 'https://schema.org/size',
     $schema['brand']['name'] === 'Mephisto',
-    $schema['manufacturer']['name'] === 'Four & More GmbH',
+    $schema['manufacturer']['name'] === 'Mephisto',
     $schema['category'] === 'Infrarotheizungen',
     $schema['offers']['price'] === '129.90',
     $schema['offers']['priceCurrency'] === 'EUR',
@@ -150,6 +151,80 @@ if (!is_array($withoutReviewsOrVideo)
     || isset($withoutReviewsOrVideo['review'])
     || isset($withoutReviewsOrVideo['subjectOf'])) {
     fwrite(STDERR, 'Product/Offer without reviews or video failed.' . PHP_EOL);
+    exit(1);
+}
+
+// Manufacturer, EU responsible person, brand and seller are independent
+// roles. The configured manufacturer is authoritative per plugin set.
+$fourMoreItemData = $itemData;
+$fourMoreItemData['item']['manufacturer'] = [
+    'externalName' => 'Eclipse',
+    'legalName' => '',
+    'name' => 'Eclipse',
+    'responsibleName' => 'Four & More GmbH'
+];
+$fourMoreSchema = $builder->build(
+    $fourMoreItemData,
+    'https://www.example.test/markisen/vollkassettenmarkise_600000_7875',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaManufacturerName' => 'Four & More GmbH',
+        'schemaVideoObject' => false
+    ])
+);
+
+if (!is_array($fourMoreSchema)
+    || $fourMoreSchema['brand']['name'] !== 'Eclipse'
+    || $fourMoreSchema['manufacturer']['name'] !== 'Four & More GmbH'
+    || $fourMoreSchema['offers']['seller']['name'] !== 'Four & More GmbH') {
+    fwrite(STDERR, 'Four More manufacturer role separation failed.' . PHP_EOL);
+    exit(1);
+}
+
+$billiardItemData = $itemData;
+$billiardItemData['item']['manufacturer'] = [
+    'externalName' => 'Billiard-Royal',
+    'legalName' => '',
+    'name' => 'Billiard-Royal',
+    'responsibleName' => 'Four & More GmbH'
+];
+$billiardSchema = $builder->build(
+    $billiardItemData,
+    'https://www.example.test/milan-8-ft_10500_1042',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaManufacturerName' => 'Billiard-Royal',
+        'schemaVideoObject' => false
+    ])
+);
+
+if (!is_array($billiardSchema)
+    || $billiardSchema['brand']['name'] !== 'Billiard-Royal'
+    || $billiardSchema['manufacturer']['name'] !== 'Billiard-Royal'
+    || $billiardSchema['offers']['seller']['name'] !== 'Four & More GmbH') {
+    fwrite(STDERR, 'Billiard Royal manufacturer role separation failed.' . PHP_EOL);
+    exit(1);
+}
+
+$automaticManufacturerSchema = $builder->build(
+    $billiardItemData,
+    'https://www.example.test/milan-8-ft_10500_1042',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaManufacturerName' => '',
+        'schemaVideoObject' => false
+    ])
+);
+
+if (!is_array($automaticManufacturerSchema)
+    || $automaticManufacturerSchema['manufacturer']['name'] !== 'Billiard-Royal') {
+    fwrite(STDERR, 'Automatic manufacturer fallback must ignore responsibleName.' . PHP_EOL);
     exit(1);
 }
 

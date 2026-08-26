@@ -1,3 +1,10 @@
+## 5.0.32
+
+- The configured manufacturer is now authoritative per plugin set and overrides ambiguous PlentyONE manufacturer fields.
+- The EU responsible person in `responsibleName` is no longer emitted as `Product.manufacturer`.
+- With an empty configuration, automatic resolution uses `legalName`, `externalName`, or `name`, but never `responsibleName`.
+- Brand, manufacturer, and Offer seller remain separate Schema.org roles; FAQ and all other Product/Offer features are unchanged.
+
 ## 5.0.31
 
 - Server-rendered FAQPage JSON-LD now emits non-ASCII characters as standards-compliant JSON Unicode escapes.

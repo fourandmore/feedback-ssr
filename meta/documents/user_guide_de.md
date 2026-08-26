@@ -2,6 +2,12 @@
 
 Zeige Kundenrezensionen im Webshop an und antworte auf Feedback. Das Feedback-Plugin erfordert den plentyShop LTS ShopBuilder.
 
+## Strukturierte Produktdaten je Plugin-Set konfigurieren
+
+Unter **Plugins » Plugin-Set-Übersicht » FeedbackGeoFM » Konfiguration » Strukturierte Produktdaten** werden Verkäufer und Hersteller für jedes Plugin-Set separat gepflegt. Die Herstellerangabe ist verbindlich; ein leeres Feld aktiviert die automatische Auflösung aus `legalName`, `externalName` oder `name`. `responsibleName` bezeichnet den EU-Verantwortlichen und wird nicht als `Product.manufacturer` verwendet.
+
+Empfohlene Herstellerwerte: Four More `Four & More GmbH`, Billiard Royal `Billiard-Royal`, Mephisto Tools `Mephisto`. Der Offer-Verkäufer kann separat `Four & More GmbH` bleiben.
+
 ## Kundenrezensionen einrichten
 
 Bevor Kundenrezensionen im Webshop angezeigt werden, musst du Einstellungen in deinem PlentyONE Backend und im ShopBuilder vornehmen.

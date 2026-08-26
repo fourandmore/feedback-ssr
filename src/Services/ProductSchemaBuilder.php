@@ -144,16 +144,23 @@ class ProductSchemaBuilder
             ];
         }
 
-        $manufacturer = $this->firstText($data, [
-            'item.manufacturer.responsibleName',
-            'item.manufacturer.legalName'
-        ]);
+        // The EU responsible person is a separate GPSR role and must not be
+        // emitted as Product.manufacturer. An explicitly configured name wins
+        // because PlentyONE installations often use the manufacturer record's
+        // external name as the consumer-facing brand (for example Eclipse),
+        // while the legal manufacturer shown in the product-safety block can
+        // differ. Leaving the setting empty enables a safe data fallback.
+        $manufacturer = $this->cleanText($this->option(
+            $schemaOptions,
+            'schemaManufacturerName',
+            ''
+        ));
         if ($manufacturer === '') {
-            $manufacturer = $this->cleanText($this->option(
-                $schemaOptions,
-                'schemaManufacturerName',
-                $sellerName
-            ));
+            $manufacturer = $this->firstText($data, [
+                'item.manufacturer.legalName',
+                'item.manufacturer.externalName',
+                'item.manufacturer.name'
+            ]);
         }
         if ($manufacturer !== '') {
             $schema['manufacturer'] = [

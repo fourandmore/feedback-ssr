@@ -1,10 +1,19 @@
-# Feedback Product Offer GEO F&M – Version 5.0.31
+# Feedback Product Offer GEO F&M – Version 5.0.32
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.32 – Herstellerrolle je Plugin-Set
+
+- Die konfigurierte Angabe **„Hersteller im Product-Schema“** ist jetzt verbindlich und hat Vorrang vor den PlentyONE-Herstellerfeldern.
+- Dadurch können Brand, rechtlicher Hersteller, EU-Verantwortlicher und Verkäufer je Shop fachlich getrennt ausgegeben werden.
+- `responsibleName` wird nicht mehr automatisch als `Product.manufacturer` verwendet. Der EU-Verantwortliche bleibt eine eigene GPSR-Rolle.
+- Bleibt die Herstellerkonfiguration leer, verwendet das Plugin automatisch `legalName`, danach `externalName` und schließlich `name`; `responsibleName` ist bewusst ausgeschlossen.
+- Empfohlene Konfiguration: Four More = `Four & More GmbH`, Billiard Royal = `Billiard-Royal`, Mephisto Tools = `Mephisto`. Der Verkäufer bleibt in allen drei Shops separat `Four & More GmbH`.
+- Product-, ProductGroup-, Offer- und FAQ-Ausgabe bleiben ansonsten unverändert.
 
 ## Version 5.0.31 – transportfeste FAQ-Unicode-Ausgabe
 
@@ -63,7 +72,7 @@ Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen 
 - Product-Markup wird nicht mehr als vom ShopBuilder umgeschriebenes `<script2>`, sondern über den DataProvider **„Product/ProductGroup/Offer JSON-LD serverseitig“** als echtes `<script type="application/ld+json">` im initialen HTML ausgegeben.
 - Nicht kaufbare Hauptvarianten mit aktiven Untervarianten werden als `ProductGroup` ohne erfundenes `Offer` ausgegeben.
 - Kaufbare konkrete Varianten bleiben `Product` mit eigenem `productID`, variantenspezifischem `Offer`, Preis, Währung, URL und Verfügbarkeit. Die Gruppenzugehörigkeit wird über `isVariantOf` und eine artikelstabile `productGroupID` beschrieben.
-- `brand` wird aus dem PlentyONE-Hersteller-/Markenfeld gelesen; `manufacturer` verwendet bevorzugt `responsibleName` und fällt ansonsten auf die globale Herstellerkonfiguration zurück. `seller` bleibt davon getrennt.
+- In Version 5.0.24 wurde `brand` aus dem PlentyONE-Hersteller-/Markenfeld gelesen; `manufacturer` verwendete damals bevorzugt `responsibleName`. Diese historische Logik wurde in Version 5.0.32 durch die verbindliche, je Plugin-Set getrennte Herstellerkonfiguration ersetzt.
 - Versanddetails werden nur ausgegeben, wenn die globale Option aktiviert ist und `variation.defaultShippingCosts` für die konkrete Variante vorhanden ist. Die Option ist nach dem Update bewusst standardmäßig deaktiviert, bis Länder und Laufzeiten geprüft wurden.
 - Die bisherigen Product-/Offer-Einstellungen wurden aus dem ShopBuilder-Widget in die globale Plugin-Konfiguration **„Strukturierte Produktdaten“** verschoben.
 

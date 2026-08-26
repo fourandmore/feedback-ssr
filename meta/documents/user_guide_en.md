@@ -2,6 +2,12 @@
 
 Display customer reviews in the online store and reply to feedbacks. The feedback plugin requires the plentyShop LTS ShopBuilder.
 
+## Configure structured product data per plugin set
+
+Seller and manufacturer are maintained separately for each plugin set under **Plugins » Plugin set overview » FeedbackGeoFM » Configuration » Structured product data**. The manufacturer setting is authoritative; leaving it empty activates automatic resolution from `legalName`, `externalName`, or `name`. `responsibleName` identifies the EU responsible person and is not emitted as `Product.manufacturer`.
+
+Recommended manufacturer values: Four More `Four & More GmbH`, Billiard Royal `Billiard-Royal`, and Mephisto Tools `Mephisto`. The Offer seller can remain `Four & More GmbH` separately.
+
 ## Setting up customer reviews
 
 In order to display customer reviews in your online store, you have to carry out a few settings in the PlentyONE backend and ShopBuilder.

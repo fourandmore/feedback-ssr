@@ -1,3 +1,10 @@
+## 5.0.32
+
+- Die konfigurierte Herstellerangabe ist jetzt je Plugin-Set verbindlich und überschreibt die uneindeutigen PlentyONE-Herstellerfelder.
+- Der EU-Verantwortliche `responsibleName` wird nicht mehr als `Product.manufacturer` ausgegeben.
+- Bei leerer Konfiguration nutzt die automatische Auflösung `legalName`, `externalName` oder `name`, niemals `responsibleName`.
+- Brand, Hersteller und Offer-Verkäufer bleiben getrennte Schema.org-Rollen; FAQ- und übrige Product-/Offer-Funktionen bleiben unverändert.
+
 ## 5.0.31
 
 - Das serverseitige FAQPage-JSON-LD gibt Nicht-ASCII-Zeichen nun als standardkonforme JSON-Unicode-Escapes aus.

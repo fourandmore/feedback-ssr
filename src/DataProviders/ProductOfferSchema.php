@@ -49,7 +49,7 @@ class ProductOfferSchema
         ));
 
         $schemaOptions = [
-            'schemaManufacturerName' => trim((string)$this->configValue(
+            'schemaManufacturerName' => trim((string)$this->configValueAllowEmpty(
                 $config,
                 'schemaManufacturerName',
                 'Four & More GmbH'
@@ -240,6 +240,22 @@ class ProductOfferSchema
     {
         $value = $config->get('FeedbackGeoFM.' . $key);
         return $value !== null && $value !== '' ? $value : $default;
+    }
+
+    /**
+     * Returns a text setting while preserving an explicitly saved empty value.
+     * This is required for the manufacturer setting, where an empty value
+     * intentionally activates automatic resolution from the item document.
+     *
+     * @param ConfigRepository $config
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    private function configValueAllowEmpty(ConfigRepository $config, $key, $default)
+    {
+        $value = $config->get('FeedbackGeoFM.' . $key);
+        return $value !== null ? $value : $default;
     }
 
     /**
