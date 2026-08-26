@@ -1,10 +1,18 @@
-# Feedback Product Offer GEO F&M – Version 5.0.34
+# Feedback Product Offer GEO F&M – Version 5.0.35
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.35 – korrigierte Ceres-Template-Überschreibung
+
+- Die Ceres-Metadaten-Partiale wird über die offizielle PlentyONE-Methode `overrideTemplate()` ersetzt. Damit wird die Überschreibung auch in der Plugin-Set-Preview zuverlässig registriert.
+- Ein in einem bestehenden Plugin-Set noch nicht gespeicherter Wert für den neuen Schalter wird entsprechend seiner Konfiguration als aktiviert behandelt.
+- Ein ausdrücklich deaktivierter Schalter bleibt deaktiviert; in diesem Fall rendert Ceres weiterhin sein Product-Schema.
+- Sobald Product/ProductGroup/Offer von FeedbackGeoFM und die Abschaltung aktiv sind, entfällt ausschließlich das Ceres-Product auf Artikelseiten.
+- FAQPage, BreadcrumbList, Bewertungen, Kategoriesterne, Meta-Tags sowie das WebSite-Schema anderer Seitentypen bleiben unverändert.
 
 ## Version 5.0.34 – eindeutiges Product-Schema
 

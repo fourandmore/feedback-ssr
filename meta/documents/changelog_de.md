@@ -1,3 +1,10 @@
+## 5.0.35
+
+- Die Ceres-Metadaten-Partiale wird nun über die offizielle PlentyONE-Methode `overrideTemplate()` ersetzt.
+- Noch nicht gespeicherte neue Konfigurationswerte verwenden zuverlässig den vorgesehenen Standardwert `true`.
+- Ein ausdrücklich deaktivierter Schalter wird weiterhin berücksichtigt.
+- Die Product-Unterdrückung funktioniert dadurch auch in Plugin-Set-Previews, ohne FAQ, Bewertungen, Kategoriesterne oder übrige Metadaten zu verändern.
+
 ## 5.0.34
 
 - Neue, standardmäßig aktive Konfiguration zum serverseitigen Deaktivieren des parallelen Ceres-Product-Schemas auf Artikelseiten.

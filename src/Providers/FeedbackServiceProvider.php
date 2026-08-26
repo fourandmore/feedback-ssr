@@ -10,16 +10,15 @@ use FeedbackGeoFM\Widgets\FeedbackOrderWidget;
 use FeedbackGeoFM\Widgets\FeedbackWidget;
 use FeedbackGeoFM\Widgets\FaqSchemaWidget;
 use FeedbackGeoFM\Widgets\RatingFilterWidget;
-use IO\Extensions\Functions\Partial;
 use IO\Helper\ResourceContainer;
 use IO\Services\ItemService;
 use Plenty\Modules\ShopBuilder\Contracts\ContentWidgetRepositoryContract;
+use Plenty\Modules\Webshop\Template\Providers\TemplateServiceProvider as WebshopTemplateServiceProvider;
 use Plenty\Modules\Webshop\ItemSearch\Helpers\FacetExtensionContainer;
 use Plenty\Plugin\Events\Dispatcher;
-use Plenty\Plugin\ServiceProvider;
 use Plenty\Plugin\Templates\Twig;
 
-class FeedbackServiceProvider extends ServiceProvider
+class FeedbackServiceProvider extends WebshopTemplateServiceProvider
 {
     /**
      * @param Dispatcher $dispatcher
@@ -58,24 +57,19 @@ class FeedbackServiceProvider extends ServiceProvider
         $twig->addExtension(TwigServiceProvider::class); // Enable use of FeedbackServiceProvider in twig code
 
         $productSchemaEnabled = $coreHelper->configValueAsBool(
-            FeedbackCoreHelper::KEY_SCHEMA_PRODUCT_OFFER_ENABLED
+            FeedbackCoreHelper::KEY_SCHEMA_PRODUCT_OFFER_ENABLED,
+            true
         );
         $disableCeresProduct = $coreHelper->configValueAsBool(
-            FeedbackCoreHelper::KEY_SCHEMA_DISABLE_CERES_PRODUCT
+            FeedbackCoreHelper::KEY_SCHEMA_DISABLE_CERES_PRODUCT,
+            true
         );
 
         if ($productSchemaEnabled && $disableCeresProduct) {
-            $metadataOverride = function (Partial $partial) {
-                $partial->set(
-                    'page-metadata',
-                    'FeedbackGeoFM::PageDesign.Partials.PageMetadata'
-                );
-            };
-
-            // Ceres registers its partial with priority 100. A lower priority
-            // runs afterwards and replaces only the shared metadata partial.
-            $dispatcher->listen('IO.init.templates', $metadataOverride, 0);
-            $dispatcher->listen('IO.intl.init.templates', $metadataOverride, 0);
+            $this->overrideTemplate(
+                'Ceres::PageDesign.Partials.PageMetadata',
+                'FeedbackGeoFM::PageDesign.Partials.PageMetadata'
+            );
         }
 
         $dispatcher->listen(

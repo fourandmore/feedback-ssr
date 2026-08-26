@@ -71,11 +71,7 @@
 <meta property="og:image" content="{{ image | trim }}"/>
 <meta property="thumbnail" content="{{ image | trim }}"/>
 
-{% set suppressCeresProduct =
-    services.template.isItem() == "1"
-    and config("FeedbackGeoFM.schemaProductOfferEnabled") == "true"
-    and config("FeedbackGeoFM.schemaDisableCeresProduct") == "true"
-%}
+{% set suppressCeresProduct = services.template.isItem() == "1" %}
 
 {% if not suppressCeresProduct %}
     <script type="application/ld+json">

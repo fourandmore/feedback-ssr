@@ -53,9 +53,14 @@ class FeedbackCoreHelper
      * @param $configValue
      * @return bool
      */
-    public function configValueAsBool(string $key)
+    public function configValueAsBool(string $key, bool $default = false)
     {
         $configValue = $this->configValue($key);
+
+        if ($configValue === null || $configValue === '') {
+            return $default;
+        }
+
         return $configValue == 'true' ? true : false;
     }
 

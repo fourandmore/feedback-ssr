@@ -1,3 +1,10 @@
+## 5.0.35
+
+- The Ceres metadata partial is now replaced via the official PlentyONE `overrideTemplate()` method.
+- Newly introduced configuration values that have not yet been saved reliably use their intended `true` default.
+- An explicitly disabled switch continues to be respected.
+- Product suppression therefore also works in plugin-set previews without changing FAQ, reviews, category ratings, or other metadata.
+
 ## 5.0.34
 
 - Added a default-on configuration to suppress the parallel Ceres Product schema server-side on item pages.
