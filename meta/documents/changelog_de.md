@@ -1,3 +1,9 @@
+## 5.0.34
+
+- Neue, standardmäßig aktive Konfiguration zum serverseitigen Deaktivieren des parallelen Ceres-Product-Schemas auf Artikelseiten.
+- Die Abschaltung greift nur, wenn das Product/ProductGroup/Offer-Schema von FeedbackGeoFM aktiviert ist.
+- FAQPage, BreadcrumbList, Bewertungen, Kategoriesterne, Meta-Tags und das WebSite-Schema auf anderen Seitentypen bleiben erhalten.
+
 ## 5.0.33
 
 - Product-, ProductGroup-, Offer- und Review-Texte werden als transportfeste JSON-Unicode-Escapes ausgegeben; nach dem Parsen bleibt der korrekte Unicode-Text erhalten.

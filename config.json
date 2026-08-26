@@ -102,6 +102,14 @@
                         "defaultValue": "true"
                     }
                 },
+                "schemaDisableCeresProduct": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaDisableCeresProduct",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                },
                 "schemaFaqPropertyId": {
                     "type": "text",
                     "required": false,

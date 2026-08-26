@@ -1,10 +1,18 @@
-# Feedback Product Offer GEO F&M – Version 5.0.33
+# Feedback Product Offer GEO F&M – Version 5.0.34
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.34 – eindeutiges Product-Schema
+
+- Die Plugin-Konfiguration enthält den neuen, standardmäßig aktiven Schalter **„Ceres-Product-Schema auf Artikelseiten deaktivieren“**.
+- Wenn gleichzeitig das serverseitige Product/ProductGroup/Offer-Schema dieses Plugins aktiviert ist, unterdrückt Version 5.0.34 ausschließlich den von Ceres im Seitenkopf erzeugten Product-JSON-LD-Block.
+- FAQPage, BreadcrumbList, Bewertungen, Kategoriesterne, Meta-Tags und das WebSite-Schema auf anderen Seitentypen bleiben erhalten.
+- Wird das Product/ProductGroup/Offer-Schema des Plugins deaktiviert, bleibt das Ceres-Product automatisch aktiv. Der zugehörige DataProvider muss weiterhin im Einzelartikel-Layout eingebunden sein.
+- Die Abschaltung erfolgt serverseitig. JavaScript- oder CSS-Manipulationen sind nicht erforderlich.
 
 ## Version 5.0.33 – gemeinsame Drei-Shop-Version
 
@@ -22,7 +30,7 @@ Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen 
 | billiard-royal.com | `Billiard-Royal` | `Four & More GmbH` | `151` bzw. die dort gepflegte Property |
 | mephisto-tools.com | `Mephisto` | `Four & More GmbH` | `151` bzw. die dort gepflegte Property |
 
-Zusätzliche Product-Strukturen aus Ceres oder ProvenExpert werden nicht von FeedbackGeoFM erzeugt und müssen im jeweils verantwortlichen Plugin bzw. ShopBuilder-Inhalt deaktiviert werden.
+Zusätzliche Product-Strukturen aus ProvenExpert werden nicht von FeedbackGeoFM erzeugt und müssen im verantwortlichen Plugin bzw. ShopBuilder-Inhalt deaktiviert werden. Das parallele Ceres-Product kann ab Version 5.0.34 über die Plugin-Konfiguration serverseitig unterdrückt werden.
 
 ## Version 5.0.32 – Herstellerrolle je Plugin-Set
 

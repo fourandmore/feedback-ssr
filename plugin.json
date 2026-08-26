@@ -1,11 +1,11 @@
 {
-    "version": "5.0.33",
+    "version": "5.0.34",
     "name": "FeedbackGeoFM",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, ProductGroup-, Offer-, Review-, FAQPage-, Versand- und Rückgabe-JSON-LD-Daten.",
+    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, ProductGroup-, Offer-, Review-, FAQPage-, Versand- und Rückgabe-JSON-LD-Daten. Das parallele Ceres-Product-Schema kann gezielt deaktiviert werden.",
     "namespace": "FeedbackGeoFM",
     "author": "Four & More GmbH",
     "type": "general",

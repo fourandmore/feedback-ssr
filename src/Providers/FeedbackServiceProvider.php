@@ -10,6 +10,7 @@ use FeedbackGeoFM\Widgets\FeedbackOrderWidget;
 use FeedbackGeoFM\Widgets\FeedbackWidget;
 use FeedbackGeoFM\Widgets\FaqSchemaWidget;
 use FeedbackGeoFM\Widgets\RatingFilterWidget;
+use IO\Extensions\Functions\Partial;
 use IO\Helper\ResourceContainer;
 use IO\Services\ItemService;
 use Plenty\Modules\ShopBuilder\Contracts\ContentWidgetRepositoryContract;
@@ -55,6 +56,27 @@ class FeedbackServiceProvider extends ServiceProvider
         }
 
         $twig->addExtension(TwigServiceProvider::class); // Enable use of FeedbackServiceProvider in twig code
+
+        $productSchemaEnabled = $coreHelper->configValueAsBool(
+            FeedbackCoreHelper::KEY_SCHEMA_PRODUCT_OFFER_ENABLED
+        );
+        $disableCeresProduct = $coreHelper->configValueAsBool(
+            FeedbackCoreHelper::KEY_SCHEMA_DISABLE_CERES_PRODUCT
+        );
+
+        if ($productSchemaEnabled && $disableCeresProduct) {
+            $metadataOverride = function (Partial $partial) {
+                $partial->set(
+                    'page-metadata',
+                    'FeedbackGeoFM::PageDesign.Partials.PageMetadata'
+                );
+            };
+
+            // Ceres registers its partial with priority 100. A lower priority
+            // runs afterwards and replaces only the shared metadata partial.
+            $dispatcher->listen('IO.init.templates', $metadataOverride, 0);
+            $dispatcher->listen('IO.intl.init.templates', $metadataOverride, 0);
+        }
 
         $dispatcher->listen(
             'IO.Resources.Import',

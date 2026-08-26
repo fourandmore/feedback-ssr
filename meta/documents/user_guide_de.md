@@ -8,6 +8,8 @@ Unter **Plugins » Plugin-Set-Übersicht » FeedbackGeoFM » Konfiguration » St
 
 Empfohlene Herstellerwerte: Four More `Four & More GmbH`, Billiard Royal `Billiard-Royal`, Mephisto Tools `Mephisto`. Der Offer-Verkäufer kann separat `Four & More GmbH` bleiben.
 
+Die Option **Ceres-Product-Schema auf Artikelseiten deaktivieren** verhindert einen zweiten, von Ceres erzeugten Product-Knoten. Sie ist standardmäßig aktiv und greift nur zusammen mit **Product/ProductGroup/Offer JSON-LD serverseitig ausgeben**. Stelle sicher, dass der DataProvider **Product/ProductGroup/Offer JSON-LD serverseitig** im Einzelartikel-Layout eingebunden ist.
+
 ## Kundenrezensionen einrichten
 
 Bevor Kundenrezensionen im Webshop angezeigt werden, musst du Einstellungen in deinem PlentyONE Backend und im ShopBuilder vornehmen.

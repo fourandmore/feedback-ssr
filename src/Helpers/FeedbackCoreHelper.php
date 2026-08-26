@@ -15,6 +15,8 @@ class FeedbackCoreHelper
     const KEY_SHOW_RATING_SORTING = "showRatingSorting";
     const KEY_SHOW_RATING_FACET = "showRatingFacet";
     const KEY_NUMBER_OF_FEEDBACKS = "numberOfFeedbacks";
+    const KEY_SCHEMA_PRODUCT_OFFER_ENABLED = "schemaProductOfferEnabled";
+    const KEY_SCHEMA_DISABLE_CERES_PRODUCT = "schemaDisableCeresProduct";
 
     const KEY_ALLOW_FEEDBACK_ONLY_IF_PURCHASED = "allowFeedbacksOnlyIfPurchased";
     const KEY_SHOW_EMPTY_RATINGS_IN_ORDER_CONFIRMATION_VIEW = "showEmptyRatingsInOrderConfirmationView";

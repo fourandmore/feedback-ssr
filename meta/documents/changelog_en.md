@@ -1,3 +1,9 @@
+## 5.0.34
+
+- Added a default-on configuration to suppress the parallel Ceres Product schema server-side on item pages.
+- Suppression is enabled only while the FeedbackGeoFM Product/ProductGroup/Offer schema is enabled.
+- FAQPage, BreadcrumbList, reviews, category ratings, metadata, and the WebSite schema on other page types remain intact.
+
 ## 5.0.33
 
 - Product, ProductGroup, Offer, and Review text is emitted as transport-safe JSON Unicode escapes and decodes back to the original Unicode text.
