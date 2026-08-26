@@ -70,40 +70,26 @@
 <meta property="og:url" content="{{ url | trim }}"/>
 <meta property="og:image" content="{{ image | trim }}"/>
 <meta property="thumbnail" content="{{ image | trim }}"/>
+<meta name="feedbackgeofm-schema-override" content="5.0.39"/>
 
 {#
- # Ceres injects its Product through the schemaOrg block of SingleItemWrapper.
- # In plugin-set previews services.template.isItem() has not been reliable in
- # every combination, therefore the presence of the item document/itemData is
- # used as a server-side fallback. This suppresses only the Ceres JSON-LD on
- # item pages; FeedbackGeoFM supplies the authoritative Product/ProductGroup.
+ # Ceres passes the page-specific JSON-LD through the schemaOrg block.
+ # Instead of trying to infer whether the current request is an item page
+ # (which is unreliable in ShopBuilder/plugin-set previews), inspect the
+ # rendered block itself. If Ceres is about to emit Product/ProductGroup,
+ # suppress only that JSON-LD block. Other Ceres schemas such as WebSite
+ # remain untouched. FeedbackGeoFM supplies the authoritative product schema
+ # via its server-side ProductOfferSchema DataProvider.
  #}
-{% set suppressCeresProduct = false %}
-{% if services.template.isItem() %}
-    {% set suppressCeresProduct = true %}
-{% elseif item is defined and item.documents is defined and item.documents | length > 0 %}
-    {% set suppressCeresProduct = true %}
-{% elseif itemData is defined and itemData.variation is defined %}
-    {% set suppressCeresProduct = true %}
-{% endif %}
+{% set schemaOrgContent = block('schemaOrg') | trim %}
+{% set schemaOrgCompact = schemaOrgContent | replace({' ': ''}) %}
+{% set suppressCeresProduct =
+    '"@type":"Product"' in schemaOrgCompact
+    or '"@type":"ProductGroup"' in schemaOrgCompact
+%}
 
 {% if not suppressCeresProduct %}
-    <script type="application/ld+json">
-    {% block schemaOrg %}
-    {
-        "@context": "http://schema.org",
-        "@type": "WebSite",
-        "url": "{{ url | raw }}"
-        {% if services.template.isHome() %}
-        ,"potentialAction":{
-            "@type": "SearchAction",
-            "target": "{{ webstoreConfig.domainSsl ~ urls.search }}?query={search_term}",
-            "query-input": "required name=search_term"
-        }
-        {% endif %}
-    }
-    {% endblock %}
-    </script>
+    <script type="application/ld+json">{{ schemaOrgContent | raw }}</script>
 {% endif %}
 
 <title>{{ title | trim | raw }}</title>

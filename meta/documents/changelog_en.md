@@ -1,3 +1,10 @@
+## Version 5.0.39 – Targeted Ceres Product schema suppression
+
+- Ceres Product schema suppression no longer relies on page-type detection.
+- The `schemaOrg` block passed to `PageMetadata.twig` is inspected directly.
+- Only Ceres `Product`/`ProductGroup` JSON-LD is suppressed; `WebSite` and other metadata remain intact.
+- External JSON-LD such as ProvenExpert is not modified.
+
 ## 5.0.36
 
 - VideoObject is now generated server-side from configurable properties; defaults: 110 = YouTube ID and 158 = upload date.

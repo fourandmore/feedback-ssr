@@ -1,3 +1,11 @@
+## Version 5.0.39 – Ceres-Product-Schema gezielt unterdrückt
+
+- Die Unterdrückung des parallelen Ceres-Product-Schemas prüft nicht mehr den Seitentyp über `services.template.isItem()` oder Item-Kontextvariablen.
+- Stattdessen wird der von Ceres an `PageMetadata.twig` übergebene `schemaOrg`-Block direkt ausgewertet.
+- Enthält der Block `@type: Product` oder `ProductGroup`, wird ausschließlich dieser Ceres-JSON-LD-Block nicht ausgegeben.
+- `WebSite`- und andere Ceres-Metadaten bleiben unverändert erhalten.
+- Das serverseitige `feedback-product-offer-jsonld` von FeedbackGeoFM bleibt das maßgebliche Produktschema. ProvenExpert oder andere externe JSON-LD-Blöcke werden nicht verändert.
+
 ## 5.0.36
 
 - VideoObject wird automatisch serverseitig aus den konfigurierten Eigenschaften erzeugt; Standard 110 = YouTube-ID und 158 = Upload-Datum.
