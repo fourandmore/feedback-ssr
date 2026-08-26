@@ -1,3 +1,10 @@
+## 5.0.31
+
+- Server-rendered FAQPage JSON-LD now emits non-ASCII characters as standards-compliant JSON Unicode escapes.
+- Umlauts, `ß`, degree signs and typographic punctuation therefore remain intact even if the Plenty/Twig output path alters literal UTF-8.
+- `JSON.parse()` and search engines still receive the complete original Unicode text.
+- Product/ProductGroup/Offer output remains unchanged.
+
 ## 5.0.30
 
 - Doubly HTML-encoded FAQ text from property 151 is now fully decoded before schema generation.

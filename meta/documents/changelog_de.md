@@ -1,3 +1,10 @@
+## 5.0.31
+
+- Das serverseitige FAQPage-JSON-LD gibt Nicht-ASCII-Zeichen nun als standardkonforme JSON-Unicode-Escapes aus.
+- Dadurch bleiben Umlaute, `ß`, Gradzeichen und typografische Zeichen auch dann korrekt, wenn der Plenty-/Twig-Ausgabeweg literal ausgegebenes UTF-8 nachträglich verändert.
+- `JSON.parse()` und Suchmaschinen erhalten weiterhin die vollständigen ursprünglichen Unicode-Texte.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
 ## 5.0.30
 
 - Doppelt HTML-kodierte FAQ-Texte aus Eigenschaft 151 werden vor der Schema-Erzeugung vollständig dekodiert.
