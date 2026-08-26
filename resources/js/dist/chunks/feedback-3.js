@@ -315,7 +315,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       var _self = this;
       $.when(this.getUser(), this.loadFeedbacks()).done(function () {
         _self.isLoading = false;
-        _self.generateJsonLD();
         Vue.nextTick(function () {
           var readyEvent = new CustomEvent('feedback:client-ready', {
             bubbles: true,

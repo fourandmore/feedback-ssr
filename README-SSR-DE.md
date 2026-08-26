@@ -1,3 +1,15 @@
+# Feedback Product Offer GEO F&M – Version 5.0.38
+
+## Bereinigung des alten Feedback-Product-Schemas
+
+- Der aus dem ursprünglichen PlentyONE-Feedback-Plugin übernommene clientseitige Aufruf `generateJsonLD()` wird nicht mehr ausgeführt.
+- Dadurch erzeugt der Vue-Feedback-Container nach dem Laden der Bewertungen kein zusätzliches `Product`-JSON-LD mehr.
+- Reviews und `AggregateRating` bleiben Bestandteil des zentralen serverseitigen Product/ProductGroup-Schemas von FeedbackGeoFM.
+- Das serverseitige VideoObject aus Eigenschaft 110 + 158 bleibt unverändert.
+- Die Ceres-Schema-Unterdrückung aus 5.0.37 bleibt aktiv; verbleibende Product-Blöcke lassen sich dadurch im nächsten Live-Test eindeutig Ceres bzw. anderen Quellen zuordnen.
+
+---
+
 # Feedback Product Offer GEO F&M – Version 5.0.37
 ## Technischer Plugin-Name / Namespace
 

@@ -289,7 +289,6 @@ export default {
         this.loadFeedbacks()
       ).done(function () {
         _self.isLoading = false
-        _self.generateJsonLD()
         Vue.nextTick(function () {
           // Signal the surrounding SSR wrapper only after counts and reviews
           // are available. This prevents the empty "Kundenrezensionen ()"
