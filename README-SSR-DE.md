@@ -1,4 +1,4 @@
-# Feedback Product Offer GEO F&M – Version 5.0.36
+# Feedback Product Offer GEO F&M – Version 5.0.37
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
@@ -6,6 +6,14 @@ Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
 
+
+
+## Version 5.0.37 – PlentyONE Deployment-Hotfix
+
+- Direkte Instanziierung von `VideoPropertyResolver` entfernt.
+- Der Resolver wird nun PlentyONE-konform über `pluginApp(VideoPropertyResolver::class)` bezogen.
+- Behebt den Deployment-Fehler `clone or new are not allowed` in `ProductOfferSchema.php`.
+- Funktionalität von Version 5.0.36 bleibt unverändert.
 
 ## Version 5.0.36 – VideoObject aus Eigenschaften + eindeutiges Product-Schema
 

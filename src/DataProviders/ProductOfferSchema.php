@@ -117,7 +117,8 @@ class ProductOfferSchema
                 158
             ));
 
-            $videoResolver = new VideoPropertyResolver();
+            /** @var VideoPropertyResolver $videoResolver */
+            $videoResolver = pluginApp(VideoPropertyResolver::class);
             $videoOptions = $videoResolver->resolve(
                 $data,
                 $youtubePropertyId,
