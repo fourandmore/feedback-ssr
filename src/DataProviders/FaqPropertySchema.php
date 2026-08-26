@@ -3,6 +3,7 @@
 namespace FeedbackGeoFM\DataProviders;
 
 use FeedbackGeoFM\Services\FeedbackService;
+use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
 
 /**
@@ -15,7 +16,7 @@ use Plenty\Plugin\Templates\Twig;
  */
 class FaqPropertySchema
 {
-    const FAQ_PROPERTY_ID = 151;
+    const DEFAULT_FAQ_PROPERTY_ID = 151;
 
     /**
      * @param Twig $twig
@@ -26,6 +27,10 @@ class FaqPropertySchema
      */
     public function call(Twig $twig, $args)
     {
+        /** @var ConfigRepository $config */
+        $config = pluginApp(ConfigRepository::class);
+        $propertyId = $this->resolvePropertyId($config);
+
         /** @var FeedbackService $feedbackService */
         $feedbackService = pluginApp(FeedbackService::class);
 
@@ -38,7 +43,7 @@ class FaqPropertySchema
 
         $faqData = $feedbackService->getFaqDataFromProperty(
             $data,
-            self::FAQ_PROPERTY_ID,
+            $propertyId,
             $variationId
         );
 
@@ -65,10 +70,27 @@ class FaqPropertySchema
         }
 
         return '<script id="feedback-faq-property-jsonld-'
-            . self::FAQ_PROPERTY_ID
+            . $propertyId
             . '" type="application/ld+json">'
             . $json
             . '</script>';
+    }
+
+    /**
+     * Resolve the FAQ property independently for every plugin set.
+     *
+     * @param ConfigRepository $config
+     * @return int
+     */
+    private function resolvePropertyId(ConfigRepository $config)
+    {
+        $value = $config->get('FeedbackGeoFM.schemaFaqPropertyId');
+
+        if (is_numeric($value) && (int)$value > 0) {
+            return (int)$value;
+        }
+
+        return self::DEFAULT_FAQ_PROPERTY_ID;
     }
 
     /**

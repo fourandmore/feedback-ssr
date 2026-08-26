@@ -1,3 +1,11 @@
+## 5.0.33
+
+- Product, ProductGroup, Offer, and Review text is emitted as transport-safe JSON Unicode escapes and decodes back to the original Unicode text.
+- The legacy client-side review Product block is suppressed when the server-rendered `feedback-product-offer-jsonld` block exists.
+- The FAQ property ID is configurable per plugin set; `151` remains the default and invalid-value fallback.
+- Recommended settings for Four More, Billiard Royal, and Mephisto are documented.
+- The required category assignment `Feedback category ratings` → `Ceres::CategoryItem.BeforePrices` is explicitly documented.
+
 ## 5.0.32
 
 - The configured manufacturer is now authoritative per plugin set and overrides ambiguous PlentyONE manufacturer fields.

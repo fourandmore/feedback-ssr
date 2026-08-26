@@ -30,16 +30,42 @@ namespace Plenty\Plugin\Templates {
     }
 }
 
+namespace Plenty\Plugin {
+    class ConfigRepository
+    {
+        private $propertyId;
+
+        public function __construct($propertyId = 151)
+        {
+            $this->propertyId = $propertyId;
+        }
+
+        public function get($key)
+        {
+            return $key === 'FeedbackGeoFM.schemaFaqPropertyId'
+                ? $this->propertyId
+                : null;
+        }
+    }
+}
+
 namespace {
     use FeedbackGeoFM\DataProviders\FaqPropertySchema;
     use FeedbackGeoFM\Services\FeedbackService;
+    use Plenty\Plugin\ConfigRepository;
     use Plenty\Plugin\Templates\Twig;
 
     $feedbackService = new FeedbackService();
+    $configRepository = new ConfigRepository(912);
 
     function pluginApp($className)
     {
-        global $feedbackService;
+        global $feedbackService, $configRepository;
+
+        if ($className === ConfigRepository::class) {
+            return $configRepository;
+        }
+
         return $feedbackService;
     }
 
@@ -56,7 +82,7 @@ namespace {
     $json = isset($matches[1]) ? $matches[1] : '';
 
     $assertions = [
-        strpos($output, 'id="feedback-faq-property-jsonld-151"') !== false,
+        strpos($output, 'id="feedback-faq-property-jsonld-912"') !== false,
         strpos($json, 'Für') === false,
         strpos($json, '\\u00fcr') !== false,
         strpos($json, '\\u00f6') !== false,

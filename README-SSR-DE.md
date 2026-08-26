@@ -1,10 +1,28 @@
-# Feedback Product Offer GEO F&M – Version 5.0.32
+# Feedback Product Offer GEO F&M – Version 5.0.33
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.33 – gemeinsame Drei-Shop-Version
+
+- Product-, ProductGroup-, Offer- und Review-Texte werden transportfest mit JSON-Unicode-Escapes serialisiert. Nach `JSON.parse()` bleiben Umlaute, `ß` und typografische Zeichen unverändert; die auf Mephisto beobachtete Umwandlung zu HTML-Mojibake wird vermieden.
+- Der alte clientseitige Review-`Product`-Block `feedback-product-jsonld` wird nicht mehr erzeugt, sobald der serverseitige Block `feedback-product-offer-jsonld` vorhanden ist. Dadurch erzeugt FeedbackGeoFM nicht selbst zwei konkurrierende Product-Strukturen.
+- Die FAQ-Eigenschaft ist unter **Plugin-Konfiguration → Strukturierte Produktdaten → Eigenschafts-ID für FAQPage** je Plugin-Set konfigurierbar. Standard und Fallback bleiben `151`.
+- Die FAQ wird weiterhin ausschließlich aus dem Artikeldokument der Hauptvariante gelesen.
+- Die Kategorie-Bewertungssterne bleiben über den DataProvider **Feedback category ratings** verfügbar. Nach einem Plugin-Update muss dieser im jeweiligen Plugin-Set mit `Ceres::CategoryItem.BeforePrices` verknüpft sein; bei fehlenden Sternen die Standard-Container-Verknüpfungen erneut herstellen.
+
+### Empfohlene Konfiguration pro Shop
+
+| Shop | Hersteller im Product-Schema | Verkäufer im Offer-Schema | FAQ-Property |
+| --- | --- | --- | --- |
+| four-more.net | `Four & More GmbH` | `Four & More GmbH` | `151` |
+| billiard-royal.com | `Billiard-Royal` | `Four & More GmbH` | `151` bzw. die dort gepflegte Property |
+| mephisto-tools.com | `Mephisto` | `Four & More GmbH` | `151` bzw. die dort gepflegte Property |
+
+Zusätzliche Product-Strukturen aus Ceres oder ProvenExpert werden nicht von FeedbackGeoFM erzeugt und müssen im jeweils verantwortlichen Plugin bzw. ShopBuilder-Inhalt deaktiviert werden.
 
 ## Version 5.0.32 – Herstellerrolle je Plugin-Set
 
@@ -78,7 +96,7 @@ Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen 
 
 ### Einmalige Einrichtung nach dem Update
 
-1. Im Plugin-Set die Standard-Container-Verknüpfungen herstellen oder den DataProvider **„Product/ProductGroup/Offer JSON-LD serverseitig“** mit `Ceres::SingleItem.BeforeAddToBasket` verknüpfen.
+1. Im Plugin-Set die Standard-Container-Verknüpfungen herstellen oder die DataProvider manuell verknüpfen: **Product/ProductGroup/Offer JSON-LD serverseitig** und **FAQPage JSON-LD serverseitig (konfigurierbare Property)** mit `Ceres::SingleItem.BeforeAddToBasket`, **Feedback category ratings** mit `Ceres::CategoryItem.BeforePrices`.
 2. Unter Plugin-Konfiguration → **Strukturierte Produktdaten** Verkäufer, Hersteller, Rückgabe sowie optional Versand und `variesBy` prüfen.
 3. Die konkurrierende Product-JSON-LD-Ausgabe von Ceres bzw. einem anderen Plugin deaktivieren. Pro Produktseite soll nur eine fachlich führende Product/ProductGroup-Struktur vorhanden sein.
 4. ShopBuilder-Inhalte neu generieren und im unveränderten Seitenquelltext nach `feedback-product-offer-jsonld` suchen. Der alte Block `feedback-product-jsonld` und `<script2 ... type="application/ld+json">` dürfen nicht mehr vom FeedbackGeoFM-Widget ausgegeben werden.

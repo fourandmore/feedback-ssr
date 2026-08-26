@@ -351,11 +351,14 @@ export default {
       },
 
       generateJsonLD () {
-        if (document.getElementById('feedback-product-jsonld')) {
-        return
-      }
+        if (
+          document.getElementById('feedback-product-jsonld') ||
+          document.getElementById('feedback-product-offer-jsonld')
+        ) {
+          return
+        }
 
-      if (this.counts.ratingsCountTotal > 0) {
+        if (this.counts.ratingsCountTotal > 0) {
           const jsonld = {
             '@context': 'https://schema.org',
             '@type': 'Product',

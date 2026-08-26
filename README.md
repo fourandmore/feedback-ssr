@@ -8,6 +8,8 @@ Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweite
 - echtes serverseitiges `Product`-/`ProductGroup`-/`Offer`-JSON-LD,
 - `AggregateRating` und einzelne `Review`-Objekte,
 - serverseitiges `FAQPage`-Schema aus Artikeleigenschaften,
+- je Plugin-Set konfigurierbare FAQ-Property (Standard `151`),
+- Bewertungssterne in Kategorieansichten über `Ceres::CategoryItem.BeforePrices`,
 - strukturierte Artikelzustände und Kategorien,
 - artikelspezifische Versanddaten und eine konfigurierbare Rückgaberichtlinie,
 - optionales `VideoObject` bei vollständig gepflegten Videodaten,

@@ -1,3 +1,11 @@
+## 5.0.33
+
+- Product-, ProductGroup-, Offer- und Review-Texte werden als transportfeste JSON-Unicode-Escapes ausgegeben; nach dem Parsen bleibt der korrekte Unicode-Text erhalten.
+- Der alte clientseitige Review-Product-Block wird unterdrückt, sobald `feedback-product-offer-jsonld` serverseitig vorhanden ist.
+- Die FAQ-Property-ID ist je Plugin-Set konfigurierbar; Standard und ungültiger-Wert-Fallback bleiben `151`.
+- Die gemeinsame Konfiguration für Four More, Billiard Royal und Mephisto wird dokumentiert.
+- Die notwendige Kategorie-Verknüpfung `Feedback category ratings` → `Ceres::CategoryItem.BeforePrices` ist ausdrücklich dokumentiert.
+
 ## 5.0.32
 
 - Die konfigurierte Herstellerangabe ist jetzt je Plugin-Set verbindlich und überschreibt die uneindeutigen PlentyONE-Herstellerfelder.

@@ -102,6 +102,12 @@
                         "defaultValue": "true"
                     }
                 },
+                "schemaFaqPropertyId": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "151",
+                    "label": "Config.schemaFaqPropertyId"
+                },
                 "schemaSellerName": {
                     "type": "text",
                     "required": false,

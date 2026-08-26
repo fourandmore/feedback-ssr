@@ -810,7 +810,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       $(this.$refs.confirmDeleteModal).modal('hide');
     },
     generateJsonLD: function generateJsonLD() {
-      if (document.getElementById('feedback-product-jsonld')) {
+      if (document.getElementById('feedback-product-jsonld') || document.getElementById('feedback-product-offer-jsonld')) {
         return;
       }
       if (this.counts.ratingsCountTotal > 0) {
