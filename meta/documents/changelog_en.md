@@ -1,3 +1,9 @@
+## 5.0.30
+
+- Doubly HTML-encoded FAQ text from property 151 is now fully decoded before schema generation.
+- Common UTF-8/Latin-1 mojibake affecting umlauts, `ß`, special characters and typographic punctuation is repaired selectively.
+- Already valid UTF-8 remains unchanged; Product/ProductGroup/Offer output is unchanged.
+
 ## 5.0.29
 
 - Property 151 is loaded from the complete main-variation item document through `ItemSearchService` and the `SingleItem` preset.

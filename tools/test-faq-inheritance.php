@@ -106,7 +106,7 @@ namespace Plenty\Modules\Webshop\ItemSearch\Services {
                             'propertyId' => 151,
                             'valueTexts' => [[
                                 'lang' => 'de',
-                                'value' => '<details class="faq-item"><summary>FAQ aus dem Hauptvarianten-Dokument?</summary><div class="faq-answer"><p>Dieser Inhalt gilt für alle Varianten.</p></div></details>'
+                                'value' => '<details class="faq-item"><summary>F&amp;Atilde;&amp;frac14;r welche Gr&amp;Atilde;&amp;para;&amp;Atilde;&amp;#159;e gilt das?</summary><div class="faq-answer"><p>Der Zubeh&amp;Atilde;&amp;para;rumfang ist zuverl&amp;Atilde;&amp;curren;ssig &amp;Atilde;&amp;frac14;berpr&amp;Atilde;&amp;frac14;ft.</p></div></details><details class="faq-item"><summary>Bleiben Größe und Zubehör korrekt?</summary><div class="faq-answer"><p>Ja, bereits korrektes UTF-8 bleibt unverändert.</p></div></details>'
                             ]]
                         ]]
                     ]
@@ -243,7 +243,13 @@ namespace {
         $result['resolvedVariationId'] === 7875,
         isset($result['jsonLd']['@type']) && $result['jsonLd']['@type'] === 'FAQPage',
         isset($result['jsonLd']['mainEntity'][0]['name'])
-            && $result['jsonLd']['mainEntity'][0]['name'] === 'FAQ aus dem Hauptvarianten-Dokument?',
+            && $result['jsonLd']['mainEntity'][0]['name'] === 'Für welche Größe gilt das?',
+        isset($result['jsonLd']['mainEntity'][0]['acceptedAnswer']['text'])
+            && $result['jsonLd']['mainEntity'][0]['acceptedAnswer']['text'] === 'Der Zubehörumfang ist zuverlässig überprüft.',
+        isset($result['jsonLd']['mainEntity'][1]['name'])
+            && $result['jsonLd']['mainEntity'][1]['name'] === 'Bleiben Größe und Zubehör korrekt?',
+        isset($result['jsonLd']['mainEntity'][1]['acceptedAnswer']['text'])
+            && $result['jsonLd']['mainEntity'][1]['acceptedAnswer']['text'] === 'Ja, bereits korrektes UTF-8 bleibt unverändert.',
         $variationRepository->requestedVariationIds === [9001],
         $itemSearchService->requestedVariationIds === [7875],
         $propertyRepository->requestedVariationIds === [],

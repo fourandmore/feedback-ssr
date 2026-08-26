@@ -964,10 +964,113 @@ class FaqPropertySchemaBuilder
             return '';
         }
 
-        $text = html_entity_decode(strip_tags((string)$value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = $this->decodeTextEntities((string)$value);
+        $text = strip_tags($text);
+        $text = $this->decodeTextEntities($text);
+        $text = $this->repairUtf8Mojibake($text);
         $text = preg_replace('/\s+/u', ' ', $text);
 
         return trim((string)$text);
+    }
+
+    /**
+     * Decode HTML entities repeatedly, but with a strict pass limit. PlentyONE
+     * can return an HTML property in an already escaped item document and
+     * escape that value once more while serialising the document. A single
+     * html_entity_decode() then leaves strings such as
+     * "F&amp;Atilde;&amp;frac14;r" only half decoded.
+     *
+     * @param string $text
+     * @return string
+     */
+    private function decodeTextEntities($text)
+    {
+        $text = (string)$text;
+        $decodePass = 0;
+
+        while ($decodePass < 4) {
+            $decoded = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $text) {
+                break;
+            }
+
+            $text = $decoded;
+            $decodePass++;
+        }
+
+        return $text;
+    }
+
+    /**
+     * Repair the common UTF-8-as-Latin-1 byte sequences that remain after
+     * fully decoding a doubly escaped property value. Byte literals keep this
+     * independent from the source file's own character encoding and avoid a
+     * broad conversion that could damage already correct UTF-8 text.
+     *
+     * @param string $text
+     * @return string
+     */
+    private function repairUtf8Mojibake($text)
+    {
+        return str_replace(
+            [
+                "\xC3\x83\xC2\xA4",
+                "\xC3\x83\xC2\xB6",
+                "\xC3\x83\xC2\xBC",
+                "\xC3\x83\xC2\x84",
+                "\xC3\x83\xC2\x96",
+                "\xC3\x83\xC2\x9C",
+                "\xC3\x83\xC2\x9F",
+                "\xC3\x83\xE2\x80\x9E",
+                "\xC3\x83\xE2\x80\x93",
+                "\xC3\x83\xC5\x93",
+                "\xC3\x83\xC5\xB8",
+                "\xC3\x83&#132;",
+                "\xC3\x83&#150;",
+                "\xC3\x83&#156;",
+                "\xC3\x83&#159;",
+                "\xC3\x82\xC2\xB0",
+                "\xC3\x82\xC2\xB2",
+                "\xC3\x82\xC2\xB3",
+                "\xC3\x82\xC2\xA0",
+                "\xC3\xA2\xE2\x82\xAC\xE2\x80\x9C",
+                "\xC3\xA2\xE2\x82\xAC\xE2\x80\x9D",
+                "\xC3\xA2\xE2\x82\xAC\xC5\xBE",
+                "\xC3\xA2\xE2\x82\xAC\xC5\x93",
+                "\xC3\xA2\xE2\x82\xAC\xE2\x84\xA2",
+                "\xC3\xA2\xE2\x82\xAC\xCB\x9C",
+                "\xC3\xA2\xE2\x82\xAC\xC2\xA6"
+            ],
+            [
+                "\xC3\xA4",
+                "\xC3\xB6",
+                "\xC3\xBC",
+                "\xC3\x84",
+                "\xC3\x96",
+                "\xC3\x9C",
+                "\xC3\x9F",
+                "\xC3\x84",
+                "\xC3\x96",
+                "\xC3\x9C",
+                "\xC3\x9F",
+                "\xC3\x84",
+                "\xC3\x96",
+                "\xC3\x9C",
+                "\xC3\x9F",
+                "\xC2\xB0",
+                "\xC2\xB2",
+                "\xC2\xB3",
+                " ",
+                "\xE2\x80\x93",
+                "\xE2\x80\x94",
+                "\xE2\x80\x9E",
+                "\xE2\x80\x9C",
+                "\xE2\x80\x99",
+                "\xE2\x80\x98",
+                "\xE2\x80\xA6"
+            ],
+            (string)$text
+        );
     }
 
     /**

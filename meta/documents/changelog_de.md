@@ -1,3 +1,9 @@
+## 5.0.30
+
+- Doppelt HTML-kodierte FAQ-Texte aus Eigenschaft 151 werden vor der Schema-Erzeugung vollständig dekodiert.
+- Typische UTF-8-/Latin-1-Fehlkodierungen bei Umlauten, `ß`, Sonderzeichen und typografischen Zeichen werden gezielt repariert.
+- Bereits korrektes UTF-8 bleibt unverändert; Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
 ## 5.0.29
 
 - Eigenschaft 151 wird über `ItemSearchService` und das `SingleItem`-Preset gezielt aus dem vollständigen Artikeldokument der Hauptvariante geladen.

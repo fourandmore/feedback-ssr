@@ -1,10 +1,17 @@
-# Feedback Product Offer GEO F&M – Version 5.0.29
+# Feedback Product Offer GEO F&M – Version 5.0.30
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+## Version 5.0.30 – bereinigte FAQ-Zeichenkodierung
+
+- Mehrfach als HTML-Entities kodierte Inhalte aus Eigenschaft 151 werden vor dem Aufbau des FAQPage-Schemas kontrolliert vollständig dekodiert.
+- Verbliebene typische UTF-8-/Latin-1-Fehlkodierungen werden ausschließlich für bekannte Zeichenfolgen repariert, damit korrektes UTF-8 unverändert bleibt.
+- Umlaute, `ß`, Grad- und Hochzeichen sowie häufige typografische Zeichen erscheinen dadurch als echte Unicode-Zeichen im JSON-LD.
+- Die Product-, ProductGroup- und Offer-Ausgabe bleibt unverändert.
 
 ## Version 5.0.29 – Hauptvarianten-Artikeldokument über SingleItem
 
