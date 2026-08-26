@@ -1,10 +1,27 @@
-# Feedback Product Offer GEO F&M – Version 5.0.35
+# Feedback Product Offer GEO F&M – Version 5.0.36
 ## Technischer Plugin-Name / Namespace
 
 Ab Version 5.0.21 verwendet diese Fork den eindeutigen technischen Plugin-Namen und PHP-Namespace `FeedbackGeoFM`. Dadurch kollidiert sie nicht mehr mit einem Plugin, das weiterhin den technischen Namen/Namespace `Feedback` verwendet. Sichtbare Bezeichnungen im ShopBuilder bleiben unverändert.
 
 
 **Entwickelt und gepflegt von Four & More GmbH.**
+
+
+## Version 5.0.36 – VideoObject aus Eigenschaften + eindeutiges Product-Schema
+
+- Das serverseitige `Product`/`ProductGroup`-JSON-LD ergänzt automatisch ein `VideoObject` als `subjectOf`, wenn die beiden konfigurierten Artikeleigenschaften vollständig und valide sind. Standard: **110 = YouTube-ID**, **158 = Upload-Datum**.
+- Aus der YouTube-ID werden serverseitig `embedUrl` (`youtube-nocookie.com`) und `thumbnailUrl` erzeugt. Titel und Beschreibung stammen automatisch aus dem Produkt; das Upload-Datum wird als ISO-Datum validiert.
+- Das Video-Markup wird im bestehenden `feedback-product-offer-jsonld` ausgegeben. Es entsteht kein zusätzlicher konkurrierender Product- oder Video-Scriptblock.
+- Die Unterdrückung des Ceres-Product-Schemas wurde für Artikelseiten und Plugin-Set-Previews gehärtet: Neben `services.template.isItem()` werden das vorhandene `item.documents`-Dokument und `itemData.variation` als serverseitige Fallbacks erkannt.
+- Der fehleranfällige Vergleich von `services.template.isItem()` mit dem String `"1"` entfällt.
+- Neue globale Konfigurationen: automatische Video-Ausgabe aktivieren/deaktivieren sowie Property-IDs für YouTube-ID und Upload-Datum.
+
+### Mephisto-Standard
+
+- YouTube-ID: Eigenschaft **110**
+- Upload-Datum: Eigenschaft **158**
+- Beispiel: `HY2oXdCfsus` + `2026-08-26` erzeugt `Product.subjectOf` vom Typ `VideoObject`.
+- Der sichtbare YouTube-iframe bleibt im ShopBuilder. Ein zusätzliches `<script2 type="application/ld+json">` im ShopBuilder ist nicht mehr erforderlich und sollte entfernt werden.
 
 ## Version 5.0.35 – korrigierte Ceres-Template-Überschreibung
 

@@ -10,7 +10,7 @@
                     "label": "Config.releaseFeedbacks",
                     "options": {
                         "defaultValue": 0,
-                        "selectBoxValues":[
+                        "selectBoxValues": [
                             {
                                 "value": 0,
                                 "caption": "Config.doNotRelease"
@@ -32,7 +32,6 @@
                     "defaultValue": 1,
                     "label": "Config.numberOfFeedbacks"
                 },
-
                 "allowFeedbacksOnlyIfPurchased": {
                     "type": "checkBox",
                     "required": false,
@@ -115,6 +114,26 @@
                     "required": false,
                     "defaultValue": "151",
                     "label": "Config.schemaFaqPropertyId"
+                },
+                "schemaVideoFromProperties": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaVideoFromProperties",
+                    "options": {
+                        "defaultValue": "true"
+                    }
+                },
+                "schemaVideoYoutubePropertyId": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "110",
+                    "label": "Config.schemaVideoYoutubePropertyId"
+                },
+                "schemaVideoUploadDatePropertyId": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "158",
+                    "label": "Config.schemaVideoUploadDatePropertyId"
                 },
                 "schemaSellerName": {
                     "type": "text",

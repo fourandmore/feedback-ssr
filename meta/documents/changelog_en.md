@@ -1,3 +1,10 @@
+## 5.0.36
+
+- VideoObject is now generated server-side from configurable properties; defaults: 110 = YouTube ID and 158 = upload date.
+- VideoObject is integrated as `Product.subjectOf` into the existing `feedback-product-offer-jsonld` block.
+- Ceres Product suppression is more robust on item pages and plugin-set previews and no longer depends on comparing `isItem()` with the string `"1"`.
+- New configuration for automatic video output and both property IDs.
+
 ## 5.0.35
 
 - The Ceres metadata partial is now replaced via the official PlentyONE `overrideTemplate()` method.

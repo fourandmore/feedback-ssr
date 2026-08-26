@@ -3,6 +3,7 @@
 namespace FeedbackGeoFM\DataProviders;
 
 use FeedbackGeoFM\Services\FeedbackService;
+use FeedbackGeoFM\Services\VideoPropertyResolver;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
 
@@ -97,10 +98,36 @@ class ProductOfferSchema
                 'schemaReturnPolicyUrl',
                 ''
             )),
-            // Per-product video data cannot be represented safely by global
-            // plugin settings and remains disabled in the DataProvider.
             'schemaVideoObject' => false
         ];
+
+        // Resolve the per-product YouTube video directly from the same PlentyONE
+        // variation properties used by the ShopBuilder video block. The defaults
+        // match the Mephisto setup: property 110 = YouTube ID, property 158 =
+        // upload date. Invalid or incomplete values simply produce no VideoObject.
+        if ($this->configBool($config, 'schemaVideoFromProperties', true)) {
+            $youtubePropertyId = max(1, (int)$this->configValue(
+                $config,
+                'schemaVideoYoutubePropertyId',
+                110
+            ));
+            $uploadDatePropertyId = max(1, (int)$this->configValue(
+                $config,
+                'schemaVideoUploadDatePropertyId',
+                158
+            ));
+
+            $videoResolver = new VideoPropertyResolver();
+            $videoOptions = $videoResolver->resolve(
+                $data,
+                $youtubePropertyId,
+                $uploadDatePropertyId
+            );
+
+            if (is_array($videoOptions)) {
+                $schemaOptions = array_merge($schemaOptions, $videoOptions);
+            }
+        }
 
         /** @var FeedbackService $feedbackService */
         $feedbackService = pluginApp(FeedbackService::class);
