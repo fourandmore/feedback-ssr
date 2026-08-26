@@ -10,6 +10,7 @@ use FeedbackGeoFM\Widgets\FeedbackOrderWidget;
 use FeedbackGeoFM\Widgets\FeedbackWidget;
 use FeedbackGeoFM\Widgets\FaqSchemaWidget;
 use FeedbackGeoFM\Widgets\RatingFilterWidget;
+use IO\Extensions\Functions\Partial;
 use IO\Helper\ResourceContainer;
 use IO\Services\ItemService;
 use Plenty\Modules\ShopBuilder\Contracts\ContentWidgetRepositoryContract;
@@ -66,9 +67,38 @@ class FeedbackServiceProvider extends WebshopTemplateServiceProvider
         );
 
         if ($productSchemaEnabled && $disableCeresProduct) {
-            $this->overrideTemplate(
-                'Ceres::PageDesign.Partials.PageMetadata',
-                'FeedbackGeoFM::PageDesign.Partials.PageMetadata'
+            // Ceres 5.0.81 resolves the metadata template via getPartial('page-metadata').
+            // Therefore overriding the Twig view name alone is not sufficient. Replace the
+            // IO partial mapping after Ceres' default mapping (Ceres uses priority 100;
+            // custom overrides use priority 0 according to the PlentyONE theme docs).
+            // Set all standard partials explicitly before stopping the chain so the page
+            // remains fully defined even if no other template listener has run yet.
+            $dispatcher->listen(
+                'IO.init.templates',
+                function (Partial $partial) {
+                    $partial->set('head', 'Ceres::PageDesign.Partials.Head');
+                    $partial->set('header', 'Ceres::PageDesign.Partials.Header.Header');
+                    $partial->set('footer', 'Ceres::PageDesign.Partials.Footer');
+                    $partial->set('page-design', 'Ceres::PageDesign.PageDesign');
+                    $partial->set('page-metadata', 'FeedbackGeoFM::PageDesign.Partials.PageMetadata');
+
+                    return false;
+                },
+                0
+            );
+
+            $dispatcher->listen(
+                'IO.intl.init.templates',
+                function (Partial $partial) {
+                    $partial->set('head', 'Ceres::PageDesign.Partials.Head');
+                    $partial->set('header', 'Ceres::PageDesign.Partials.Header.Header');
+                    $partial->set('footer', 'Ceres::PageDesign.Partials.Footer');
+                    $partial->set('page-design', 'Ceres::PageDesign.PageDesign');
+                    $partial->set('page-metadata', 'FeedbackGeoFM::PageDesign.Partials.PageMetadata');
+
+                    return false;
+                },
+                0
             );
         }
 

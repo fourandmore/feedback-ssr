@@ -1,3 +1,12 @@
+# Version 5.0.40 – Ceres 5.0.81 Product-Schema-Override
+
+- Die Unterdrückung des parallelen Ceres-`Product`-Schemas erfolgt jetzt über den von Ceres 5.0.81 tatsächlich verwendeten Partial-Key `page-metadata`.
+- `IO.init.templates` und `IO.intl.init.templates` setzen `page-metadata` auf `FeedbackGeoFM::PageDesign.Partials.PageMetadata` mit Priorität `0`.
+- Die Standard-Partials `head`, `header`, `footer` und `page-design` werden dabei explizit auf die Ceres-Templates gesetzt, bevor die Event-Kette beendet wird.
+- Das FeedbackGeoFM-Produktschema, FAQPage und VideoObject bleiben unverändert serverseitig.
+- Diagnose-Marker: `<meta name="feedbackgeofm-schema-override" content="5.0.40">`.
+- ProvenExpert wird bewusst nicht verändert.
+
 ## Version 5.0.39 – Ceres-Product-Schema gezielt unterdrückt
 
 - Die Unterdrückung des parallelen Ceres-Product-Schemas prüft nicht mehr den Seitentyp über `services.template.isItem()` oder Item-Kontextvariablen.
