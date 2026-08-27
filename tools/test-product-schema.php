@@ -324,6 +324,28 @@ if (!is_array($rootProfileSchema)
     exit(1);
 }
 
+$ceresItemShippingProfilesData = $packageFallbackItemData;
+$ceresItemShippingProfilesData['variation']['itemShippingProfiles'] = [
+    ['id' => 901, 'itemId' => 51000, 'profileId' => 57]
+];
+$ceresItemShippingProfilesData['variation']['defaultShippingCosts'] = 6.9;
+$ceresProfileOptions = array_merge($fallbackOptions, [
+    'schemaShippingProfilePrices' => '19=6,90; 57=19,90'
+]);
+$ceresItemShippingProfilesSchema = $builder->build(
+    $ceresItemShippingProfilesData,
+    'https://www.example.test/ceres-item-shipping-profiles_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $ceresProfileOptions
+);
+if (!is_array($ceresItemShippingProfilesSchema)
+    || $ceresItemShippingProfilesSchema['offers']['shippingDetails']['shippingRate']['value'] !== 19.9) {
+    fwrite(STDERR, 'Ceres variation.itemShippingProfiles profileId fallback failed.' . PHP_EOL);
+    exit(1);
+}
+
 $unknownProfileItemData = $packageFallbackItemData;
 $unknownProfileItemData['variation']['shippingProfileId'] = 77;
 $unknownProfileSchema = $builder->build(

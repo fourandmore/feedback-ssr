@@ -1020,10 +1020,13 @@ class ProductSchemaBuilder
             'variation.shippingProfileId',
             'variation.shippingProfileIds',
             'variation.shippingProfiles',
+            'variation.itemShippingProfiles',
             'shippingProfileId',
             'shippingProfileIds',
             'shippingProfiles',
-            'item.shippingProfiles'
+            'itemShippingProfiles',
+            'item.shippingProfiles',
+            'item.itemShippingProfiles'
         ] as $path) {
             $this->collectShippingProfileIds(
                 $this->value($data, $path, null),

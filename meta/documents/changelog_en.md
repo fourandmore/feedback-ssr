@@ -1,3 +1,9 @@
+## Version 5.0.44 – Support Ceres ItemShippingProfiles
+
+- Shipping-profile detection now reads `variation.itemShippingProfiles`, `itemShippingProfiles`, and `item.itemShippingProfiles`.
+- This matches the PlentyONE/Ceres variation payload where item-linked shipping profiles are exposed as `itemShippingProfiles`.
+- Configured profile prices such as `57=19.90` can therefore override a generic `variation.defaultShippingCosts` parcel value such as 6.90.
+
 ## Version 5.0.43 – Profile price before Plenty default costs
 
 - An explicitly configured shipping-profile price now takes precedence over `variation.defaultShippingCosts`.

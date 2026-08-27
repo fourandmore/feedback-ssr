@@ -1,3 +1,9 @@
+# Version 5.0.44 – Ceres-Versandprofile korrekt erkennen
+
+- Ergänzt die Profil-Erkennung um `variation.itemShippingProfiles`, `itemShippingProfiles` und `item.itemShippingProfiles`.
+- Damit werden die in Ceres/PlentyONE 5.0.81 gelieferten ItemShippingProfiles mit `profileId` direkt ausgewertet.
+- Ein dort gefundener profilgenauer Preis hat weiterhin Vorrang vor `variation.defaultShippingCosts`.
+
 # Version 5.0.43 – Versandprofilpreis hat Vorrang
 
 - Ein explizit gepflegter Preis aus `schemaShippingProfilePrices` hat nun Vorrang vor `variation.defaultShippingCosts`.

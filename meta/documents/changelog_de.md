@@ -1,3 +1,9 @@
+## Version 5.0.44 – Ceres-ItemShippingProfiles unterstützt
+
+- Die Versandprofil-Erkennung wertet nun `variation.itemShippingProfiles`, `itemShippingProfiles` und `item.itemShippingProfiles` aus.
+- Das entspricht dem PlentyONE/Ceres-Variation-Datensatz, in dem die verknüpften Artikel-Versandprofile als `itemShippingProfiles` bereitgestellt werden.
+- Dadurch greifen konfigurierte Profilpreise wie `57=19,90` auch dann, wenn `variation.defaultShippingCosts` einen generischen Paketwert wie 6,90 € enthält.
+
 ## Version 5.0.43 – Profilpreis vor Plenty-Standardkosten
 
 - Ein explizit konfigurierter Versandprofilpreis hat nun Vorrang vor `variation.defaultShippingCosts`.
