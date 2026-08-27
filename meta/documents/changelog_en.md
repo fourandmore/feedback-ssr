@@ -1,3 +1,10 @@
+## 5.0.50
+- ProductGroup variants now use the documented `Ceres\Contexts\SingleItemContext`, extended through the official `IO.ctx.item` / `IO.intl.ctx.item` events.
+- The variation data already loaded by Ceres is forwarded into the item document passed to `SingleItem.BeforeAddToBasket`.
+- Full variation documents are loaded only through the documented IO method `ItemService::getVariations(array $variationIds)`.
+- Experimental variation discovery paths from 5.0.47–5.0.49 were removed.
+- Diagnostic marker updated to `5.0.50`.
+
 ## 5.0.49
 - ProductGroup variants: variation IDs are processed before optional attribute-name lookups. Attribute-name or individual variation-batch failures can no longer suppress `hasVariant` entirely.
 

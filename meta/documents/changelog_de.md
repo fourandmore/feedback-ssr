@@ -1,3 +1,10 @@
+## 5.0.50
+- ProductGroup-Varianten basieren nun auf dem dokumentierten `Ceres\Contexts\SingleItemContext`. Der Context wird über den offiziellen Event `IO.ctx.item`/`IO.intl.ctx.item` erweitert.
+- Die bereits von Ceres geladenen `$variations`-Daten werden in das an `SingleItem.BeforeAddToBasket` übergebene Artikeldokument weitergereicht.
+- Vollständige Variantendokumente werden ausschließlich über die dokumentierte IO-Methode `ItemService::getVariations(array $variationIds)` geladen.
+- Die experimentellen Varianten-Suchpfade aus 5.0.47–5.0.49 wurden entfernt.
+- Diagnose-Marker auf `5.0.50` aktualisiert.
+
 ## 5.0.49
 - ProductGroup-Varianten: Variation-IDs werden vor optionalen Attributnamen-Lookups verarbeitet. Fehler bei Attributnamen oder einzelnen Varianten-Batches können `hasVariant` nicht mehr vollständig unterdrücken.
 

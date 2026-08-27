@@ -2,6 +2,7 @@
 
 namespace FeedbackGeoFM\Providers;
 
+use FeedbackGeoFM\Contexts\FeedbackSingleItemContext;
 use FeedbackGeoFM\Extensions\FeedbackFacet;
 use FeedbackGeoFM\Extensions\TwigServiceProvider;
 use FeedbackGeoFM\Helpers\FeedbackCoreHelper;
@@ -12,6 +13,7 @@ use FeedbackGeoFM\Widgets\FaqSchemaWidget;
 use FeedbackGeoFM\Widgets\RatingFilterWidget;
 use IO\Extensions\Functions\Partial;
 use IO\Helper\ResourceContainer;
+use IO\Helper\TemplateContainer;
 use IO\Services\ItemService;
 use Plenty\Modules\ShopBuilder\Contracts\ContentWidgetRepositoryContract;
 use Plenty\Modules\Webshop\Template\Providers\TemplateServiceProvider as WebshopTemplateServiceProvider;
@@ -56,6 +58,19 @@ class FeedbackServiceProvider extends WebshopTemplateServiceProvider
         }
 
         $twig->addExtension(TwigServiceProvider::class); // Enable use of FeedbackServiceProvider in twig code
+
+        // Official Ceres context extension point for the single item template.
+        // Ceres maps tpl.item to SingleItemContext and exposes its context via
+        // IO.ctx.item / IO.intl.ctx.item. The custom context extends the Ceres
+        // implementation and only forwards the already loaded variation map
+        // into item.documents[0].data for the layout-container provider.
+        $singleItemContextListener = function (TemplateContainer $templateContainer, $templateData = []) {
+            $templateContainer->setContext(FeedbackSingleItemContext::class);
+            return false;
+        };
+
+        $dispatcher->listen('IO.ctx.item', $singleItemContextListener, 0);
+        $dispatcher->listen('IO.intl.ctx.item', $singleItemContextListener, 0);
 
         $productSchemaEnabled = $coreHelper->configValueAsBool(
             FeedbackCoreHelper::KEY_SCHEMA_PRODUCT_OFFER_ENABLED,

@@ -1,3 +1,7 @@
+# FeedbackGeoFM 5.0.50 – Varianten über den offiziellen Ceres SingleItemContext
+
+Version 5.0.50 verwendet für ProductGroup-Varianten ausschließlich dokumentierte Ceres-/IO-Schnittstellen: `SingleItemContext::$variations` als bereits geladene Variantenbasis und `ItemService::getVariations()` für die vollständigen Variantendokumente. Die experimentellen Varianten-Suchpfade der Versionen 5.0.47 bis 5.0.49 sind entfernt.
+
 Version 5.0.48 nutzt für ProductGroup-Varianten jetzt denselben `VariationAttributeMap`-Search-Preset wie der aktuelle Ceres-Endpunkt `/io/variations/map`. Dadurch soll die serverseitige GEO-Auszeichnung dieselbe Variantenbasis verwenden wie der sichtbare Ceres-Variantenwähler.
 
 # FeedbackGeoFM 5.0.47 – ProductGroup-Varianten

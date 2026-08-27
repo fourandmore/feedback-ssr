@@ -5,8 +5,6 @@ namespace FeedbackGeoFM\DataProviders;
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
 use IO\Services\ItemService;
-use Plenty\Modules\Webshop\ItemSearch\SearchPresets\VariationAttributeMap;
-use Plenty\Modules\Webshop\ItemSearch\Services\ItemSearchService;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -324,6 +322,23 @@ class ProductOfferSchema
             return $documents;
         }
 
+        // Ceres 5.0.x exposes the variation selector data through the documented
+        // SingleItemContext::$variations property. FeedbackSingleItemContext
+        // forwards that exact data into the current item document, which is the
+        // object passed to SingleItem.BeforeAddToBasket.
+        $contextVariations = isset($data['feedbackGeoFMContextVariations'])
+            ? $this->toArray($data['feedbackGeoFMContextVariations'])
+            : [];
+
+        if (empty($contextVariations)) {
+            return $documents;
+        }
+
+        $variationIds = $this->extractSalableVariationIds($contextVariations);
+        if (empty($variationIds)) {
+            return $documents;
+        }
+
         $seenVariationIds = [];
         foreach ($documents as $document) {
             $document = $this->toArray($document);
@@ -333,80 +348,45 @@ class ProductOfferSchema
             }
         }
 
+        $variationIds = array_values(array_filter(
+            $variationIds,
+            function ($variationId) use ($seenVariationIds) {
+                $variationId = (int)$variationId;
+                return $variationId > 0 && !isset($seenVariationIds[$variationId]);
+            }
+        ));
+
+        // Keep the schema bounded for unusually large variation families.
+        $variationIds = array_slice($variationIds, 0, max(0, 120 - count($documents)));
+        if (empty($variationIds)) {
+            return $documents;
+        }
+
         try {
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
 
-            // Use the exact variation-map search preset behind Ceres'
-            // /io/variations/map endpoint. In Ceres 5.0.81 the browser-side
-            // variation selector is fed by VariationAttributeMapResource,
-            // which no longer delegates to ItemService::getVariationAttributeMap().
-            // Using the same search preset here keeps the server-rendered
-            // ProductGroup in sync with the variants the shopper can select.
-            $attributeMap = $this->loadVariationAttributeMap((int)$itemId);
-            // IMPORTANT: determine IDs from the raw map first. Attribute-name
-            // repository lookups are optional enrichment and must never be able
-            // to collapse the whole ProductGroup to zero variants.
-            $variationIds = $this->extractVariationIdsFromAttributeMap($attributeMap);
+            // Documented IO API: load the full storefront variation documents
+            // for the IDs already supplied by SingleItemContext.
+            $result = $itemService->getVariations($variationIds);
 
-            // Compatibility fallback matching IO's long-standing storefront
-            // service. This returns the same raw variationId/attributes shape
-            // used by the selector in Ceres 5.x.
-            if (empty($variationIds)) {
-                $attributeMap = $itemService->getVariationAttributeMap((int)$itemId);
-                $variationIds = $this->extractVariationIdsFromAttributeMap($attributeMap);
-            }
-
-            if (empty($variationIds)) {
-                $variationIds = $itemService->getVariationList((int)$itemId, false);
-                $variationIds = is_array($variationIds)
-                    ? array_values(array_unique(array_map('intval', $variationIds)))
-                    : [];
-            }
-
-            $variationIds = array_values(array_filter($variationIds, function ($variationId) use ($seenVariationIds) {
-                $variationId = (int)$variationId;
-                return $variationId > 0 && !isset($seenVariationIds[$variationId]);
-            }));
-
-            // 120 variants comfortably covers the current Four & More product
-            // groups while keeping runaway schemas bounded.
-            $variationIds = array_slice($variationIds, 0, max(0, 120 - count($documents)));
-            if (empty($variationIds)) {
-                return $documents;
-            }
-
-            // VariationList searches are paginated internally. Query in small
-            // batches so every requested variation is returned instead of only
-            // the first default result page.
             $loadedDocuments = [];
             $loadedSeen = [];
-            foreach (array_chunk($variationIds, 20) as $variationIdChunk) {
-                try {
-                    $result = $itemService->getVariations($variationIdChunk);
-                    $this->collectVariantDocuments(
-                        $result,
-                        (int)$itemId,
-                        0,
-                        $loadedDocuments,
-                        $loadedSeen
-                    );
-                } catch (\Throwable $e) {
-                    // Keep other chunks usable if a single storefront search
-                    // fails for one batch.
-                    continue;
-                }
-            }
+            $this->collectVariantDocuments(
+                $result,
+                (int)$itemId,
+                0,
+                $loadedDocuments,
+                $loadedSeen
+            );
 
-            // Resolve human-readable attribute names only after the variation
-            // documents have been loaded. Failures here are non-fatal: hasVariant
-            // must still be emitted with Product/Offer data even if size/color
-            // labels cannot be enriched in a particular Plenty patch level.
-            $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
+            // Attribute/value names are resolved with documented ItemService
+            // methods. They enrich Product variants with size/color but are not
+            // required to discover the variant IDs themselves.
+            $variantMetaById = $this->buildVariantMetaMap($contextVariations, $itemService);
 
-            // Item shipping profiles are item-level relations. They were already
-            // resolved once for the parent document, so reuse the exact same
-            // relation for every child instead of querying the repository again.
+            // Shipping profiles are item-level relations and were resolved once
+            // for the parent. Reuse them for every child variation.
             $itemShippingProfiles = isset($data['itemShippingProfiles'])
                 ? $this->toArray($data['itemShippingProfiles'])
                 : [];
@@ -433,197 +413,51 @@ class ProductOfferSchema
                 }
             }
         } catch (\Throwable $e) {
-            // A ProductGroup without hasVariant is preferable to breaking the
-            // item page if IO cannot resolve the child variations.
+            // Schema enrichment must never break the item page. If IO cannot
+            // load full variant documents, the parent ProductGroup is retained.
         }
 
         return $documents;
     }
 
     /**
-     * Execute the same VariationAttributeMap search preset used by
-     * IO\Api\Resources\VariationAttributeMapResource. Results are flattened
-     * defensively because PlentyONE search result envelopes can differ between
-     * IO patch releases. Composite-search pagination is followed via afterKey
-     * when present, capped to avoid runaway server work.
-     *
-     * @param int $itemId
-     * @return array
-     */
-    private function loadVariationAttributeMap($itemId)
-    {
-        if ((int)$itemId <= 0) {
-            return [];
-        }
-
-        try {
-            /** @var ItemSearchService $itemSearchService */
-            $itemSearchService = pluginApp(ItemSearchService::class);
-
-            $entries = [];
-            $seenVariationIds = [];
-            $afterKey = null;
-
-            for ($page = 0; $page < 10 && count($entries) < 120; $page++) {
-                $options = ['itemId' => (int)$itemId];
-                if ($afterKey !== null && $afterKey !== '' && $afterKey !== []) {
-                    $options['afterKey'] = $afterKey;
-                }
-
-                $searchFactory = VariationAttributeMap::getSearchFactory($options);
-                $result = $itemSearchService->getResult($searchFactory);
-
-                $this->collectVariationMapEntries(
-                    $result,
-                    $entries,
-                    $seenVariationIds
-                );
-
-                $nextAfterKey = $this->findAfterKey($result);
-                if ($nextAfterKey === null
-                    || $nextAfterKey === ''
-                    || $nextAfterKey === []
-                    || $nextAfterKey === $afterKey) {
-                    break;
-                }
-
-                $afterKey = $nextAfterKey;
-            }
-
-            return array_slice($entries, 0, 120);
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-    /**
-     * @param mixed $node
-     * @param array $entries
-     * @param array $seenVariationIds
-     * @param int $depth
-     * @return void
-     */
-    private function collectVariationMapEntries(
-        $node,
-        array &$entries,
-        array &$seenVariationIds,
-        $depth = 0
-    ) {
-        if ($depth > 12 || count($entries) >= 120) {
-            return;
-        }
-
-        $node = $this->toArray($node);
-        if (empty($node)) {
-            return;
-        }
-
-        $variationId = isset($node['variationId']) && is_numeric($node['variationId'])
-            ? (int)$node['variationId']
-            : 0;
-
-        if ($variationId > 0 && !isset($seenVariationIds[$variationId])) {
-            $attributes = isset($node['attributes'])
-                ? $this->toArray($node['attributes'])
-                : [];
-
-            if (array_key_exists('attributes', $node)) {
-                $seenVariationIds[$variationId] = true;
-                $entries[] = [
-                    'variationId' => $variationId,
-                    'attributes' => $attributes
-                ];
-
-                if (count($entries) >= 120) {
-                    return;
-                }
-            }
-        }
-
-        foreach ($node as $child) {
-            if (!is_array($child) && !is_object($child)) {
-                continue;
-            }
-
-            $this->collectVariationMapEntries(
-                $child,
-                $entries,
-                $seenVariationIds,
-                $depth + 1
-            );
-
-            if (count($entries) >= 120) {
-                break;
-            }
-        }
-    }
-
-    /**
-     * Find a composite-search afterKey in an arbitrary PlentyONE result
-     * envelope without depending on a specific patch-level response shape.
+     * Extract active/salable variation IDs from the documented Ceres
+     * SingleItemContext variation map. The map may be nested, so traversal is
+     * recursive and deliberately ignores unrelated numeric values.
      *
      * @param mixed $node
      * @param int $depth
-     * @return mixed|null
-     */
-    private function findAfterKey($node, $depth = 0)
-    {
-        if ($depth > 10) {
-            return null;
-        }
-
-        $node = $this->toArray($node);
-        if (empty($node)) {
-            return null;
-        }
-
-        foreach (['afterKey', 'after_key'] as $key) {
-            if (array_key_exists($key, $node)
-                && $node[$key] !== null
-                && $node[$key] !== ''
-                && $node[$key] !== []) {
-                return $node[$key];
-            }
-        }
-
-        foreach ($node as $child) {
-            if (!is_array($child) && !is_object($child)) {
-                continue;
-            }
-
-            $found = $this->findAfterKey($child, $depth + 1);
-            if ($found !== null && $found !== '' && $found !== []) {
-                return $found;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Extract variation IDs from the raw selector map without resolving any
-     * localized attribute labels. This intentionally has no repository
-     * dependencies so a failed attribute-name lookup can never suppress
-     * ProductGroup.hasVariant.
-     *
-     * @param mixed $attributeMap
+     * @param array $ids
      * @return array<int>
      */
-    private function extractVariationIdsFromAttributeMap($attributeMap)
+    private function extractSalableVariationIds($node, $depth = 0, array &$ids = [])
     {
-        $attributeMap = $this->toArray($attributeMap);
-        if (empty($attributeMap)) {
-            return [];
+        if ($depth > 12 || count($ids) >= 120) {
+            return array_keys($ids);
         }
 
-        $ids = [];
-        foreach ($attributeMap as $entry) {
-            $entry = $this->toArray($entry);
-            if (isset($entry['variationId']) && is_numeric($entry['variationId'])) {
-                $variationId = (int)$entry['variationId'];
-                if ($variationId > 0) {
-                    $ids[$variationId] = true;
-                }
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return array_keys($ids);
+        }
+
+        if (isset($node['variationId']) && is_numeric($node['variationId'])) {
+            $variationId = (int)$node['variationId'];
+            $isSalable = !array_key_exists('isSalable', $node)
+                || $this->truthy($node['isSalable']);
+
+            if ($variationId > 0 && $isSalable) {
+                $ids[$variationId] = true;
+            }
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+            $this->extractSalableVariationIds($child, $depth + 1, $ids);
+            if (count($ids) >= 120) {
+                break;
             }
         }
 
@@ -631,18 +465,21 @@ class ProductOfferSchema
     }
 
     /**
-     * Resolve the same attribute/value information Ceres uses for its
-     * variation selector and enrich it with localized names. ItemService caches
-     * attribute and value name lookups internally, so repeated IDs are cheap.
+     * Resolve localized attribute/value names for the selector entries with
+     * documented ItemService methods. These values are only schema enrichment;
+     * failure of a single lookup never suppresses the underlying Product.
      *
-     * @param mixed $attributeMap
+     * @param mixed $variationMap
      * @param ItemService $itemService
      * @return array<int,array<int,array<string,mixed>>>
      */
-    private function buildVariantMetaMap($attributeMap, ItemService $itemService)
+    private function buildVariantMetaMap($variationMap, ItemService $itemService)
     {
-        $attributeMap = $this->toArray($attributeMap);
-        if (empty($attributeMap)) {
+        $entries = [];
+        $seen = [];
+        $this->collectVariationEntries($variationMap, 0, $entries, $seen);
+
+        if (empty($entries)) {
             return [];
         }
 
@@ -650,17 +487,11 @@ class ProductOfferSchema
         $attributeNames = [];
         $valueNames = [];
 
-        foreach ($attributeMap as $entry) {
-            $entry = $this->toArray($entry);
-            $variationId = isset($entry['variationId']) && is_numeric($entry['variationId'])
-                ? (int)$entry['variationId']
-                : 0;
-            if ($variationId <= 0) {
-                continue;
-            }
-
+        foreach ($entries as $entry) {
+            $variationId = (int)$entry['variationId'];
             $resolved = [];
-            foreach ($this->toArray(isset($entry['attributes']) ? $entry['attributes'] : []) as $attribute) {
+
+            foreach ($this->toArray($entry['attributes']) as $attribute) {
                 $attribute = $this->toArray($attribute);
                 $attributeId = isset($attribute['attributeId']) && is_numeric($attribute['attributeId'])
                     ? (int)$attribute['attributeId']
@@ -668,6 +499,7 @@ class ProductOfferSchema
                 $attributeValueId = isset($attribute['attributeValueId']) && is_numeric($attribute['attributeValueId'])
                     ? (int)$attribute['attributeValueId']
                     : 0;
+
                 if ($attributeId <= 0 || $attributeValueId <= 0) {
                     continue;
                 }
@@ -679,6 +511,7 @@ class ProductOfferSchema
                         $attributeNames[$attributeId] = '';
                     }
                 }
+
                 if (!array_key_exists($attributeValueId, $valueNames)) {
                     try {
                         $valueNames[$attributeValueId] = trim((string)$itemService->getAttributeValueName($attributeValueId));
@@ -705,6 +538,51 @@ class ProductOfferSchema
         }
 
         return $result;
+    }
+
+    /**
+     * Flatten variation selector entries while preserving only the documented
+     * variationId/attributes structure.
+     *
+     * @param mixed $node
+     * @param int $depth
+     * @param array $entries
+     * @param array $seen
+     * @return void
+     */
+    private function collectVariationEntries($node, $depth, array &$entries, array &$seen)
+    {
+        if ($depth > 12 || count($entries) >= 120) {
+            return;
+        }
+
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return;
+        }
+
+        if (isset($node['variationId']) && is_numeric($node['variationId'])) {
+            $variationId = (int)$node['variationId'];
+            if ($variationId > 0 && !isset($seen[$variationId])) {
+                $seen[$variationId] = true;
+                $entries[] = [
+                    'variationId' => $variationId,
+                    'attributes' => isset($node['attributes'])
+                        ? $this->toArray($node['attributes'])
+                        : []
+                ];
+            }
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+            $this->collectVariationEntries($child, $depth + 1, $entries, $seen);
+            if (count($entries) >= 120) {
+                break;
+            }
+        }
     }
 
     /**
