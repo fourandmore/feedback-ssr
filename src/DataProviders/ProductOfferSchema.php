@@ -5,6 +5,7 @@ namespace FeedbackGeoFM\DataProviders;
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
 use IO\Services\ItemService;
+use Plenty\Modules\Webshop\ItemSearch\Helpers\ResultFieldTemplate;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -366,19 +367,33 @@ class ProductOfferSchema
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
 
-            // Documented IO API: load the full storefront variation documents
-            // for the IDs already supplied by SingleItemContext.
-            $result = $itemService->getVariations($variationIds);
-
+            // Documented IO API: getVariations() accepts a result-field template.
+            // The default VariationList result does not necessarily contain all
+            // fields required by ProductSchemaBuilder (texts, prices, images,
+            // filter data, etc.). Request the documented SingleItem result fields
+            // explicitly and keep each request bounded to 20 variation IDs.
             $loadedDocuments = [];
             $loadedSeen = [];
-            $this->collectVariantDocuments(
-                $result,
-                (int)$itemId,
-                0,
-                $loadedDocuments,
-                $loadedSeen
-            );
+            foreach (array_chunk($variationIds, 20) as $variationIdChunk) {
+                try {
+                    $result = $itemService->getVariations(
+                        $variationIdChunk,
+                        ResultFieldTemplate::TEMPLATE_SINGLE_ITEM
+                    );
+
+                    $this->collectVariantDocuments(
+                        $result,
+                        (int)$itemId,
+                        0,
+                        $loadedDocuments,
+                        $loadedSeen
+                    );
+                } catch (\Throwable $chunkError) {
+                    // One failed batch must not suppress variants from successful
+                    // batches. All calls remain on the documented IO ItemService.
+                    continue;
+                }
+            }
 
             // Attribute/value names are resolved with documented ItemService
             // methods. They enrich Product variants with size/color but are not

@@ -1,3 +1,7 @@
+## 5.0.51
+- ProductGroup variants are loaded through the documented IO method `ItemService::getVariations()` with `ResultFieldTemplate::TEMPLATE_SINGLE_ITEM`.
+- Variants are loaded in batches of 20 so complete SingleItem fields are available for `hasVariant`, prices, availability, images and shipping details.
+
 ## 5.0.50
 - ProductGroup variants now use the documented `Ceres\Contexts\SingleItemContext`, extended through the official `IO.ctx.item` / `IO.intl.ctx.item` events.
 - The variation data already loaded by Ceres is forwarded into the item document passed to `SingleItem.BeforeAddToBasket`.
