@@ -1,3 +1,6 @@
+## 5.0.56
+- Diagnose-ID eindeutig auf 5.0.56 gesetzt; Single-Variation-Diagnose unverändert.
+
 ## 5.0.55
 
 - Diagnose: vergleicht den dokumentierten Einzelabruf `ItemService::getVariation($variationId)` mit `getVariations($variationIds)` für genau eine bestätigte kaufbare Variante.

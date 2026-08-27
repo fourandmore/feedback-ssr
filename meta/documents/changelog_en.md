@@ -1,3 +1,6 @@
+## 5.0.56
+- Diagnostic ID/version corrected to 5.0.56; single-variation diagnostic unchanged.
+
 ## 5.0.55
 
 - Diagnostic: compares documented `ItemService::getVariation($variationId)` with `getVariations($variationIds)` for exactly one confirmed salable variation.
