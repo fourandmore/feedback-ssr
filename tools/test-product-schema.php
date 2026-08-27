@@ -401,6 +401,47 @@ if (!is_array($profilePriceWinsSchema)
     exit(1);
 }
 
+// Child variants inside a ProductGroup must keep PlentyONE's concrete
+// variation-specific shipping amount before the shared item-level profile
+// fallback. This prevents one profile price from flattening different shipping
+// rates across all sizes of a variant family.
+$productGroupShippingParent = $itemData;
+$productGroupShippingParent['variation']['id'] = 12000;
+$productGroupShippingParent['variation']['number'] = '51000';
+$productGroupShippingParent['filter']['isSalable'] = false;
+$productGroupShippingParent['filter']['hasChildren'] = true;
+$productGroupShippingParent['filter']['hasActiveChildren'] = true;
+$productGroupShippingParent['attributes'] = [];
+
+$productGroupShippingChild = $itemData;
+$productGroupShippingChild['variation']['id'] = 12001;
+$productGroupShippingChild['variation']['number'] = '51000-LARGE';
+$productGroupShippingChild['variation']['defaultShippingCosts'] = 49.9;
+$productGroupShippingChild['itemShippingProfiles'] = [
+    ['id' => 903, 'itemId' => 51000, 'profileId' => 12]
+];
+
+$productGroupShippingSchema = $builder->build(
+    $productGroupShippingParent,
+    'https://www.example.test/product-group-shipping_51000_12000',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($fallbackOptions, [
+        'schemaVariantDocuments' => [
+            $productGroupShippingParent,
+            $productGroupShippingChild
+        ],
+        'schemaVideoObject' => false
+    ])
+);
+if (!is_array($productGroupShippingSchema)
+    || count($productGroupShippingSchema['hasVariant']) !== 1
+    || $productGroupShippingSchema['hasVariant'][0]['offers']['shippingDetails']['shippingRate']['value'] !== 49.9) {
+    fwrite(STDERR, 'ProductGroup child variant must prefer PlentyONE variation-specific shipping costs over item-level profile fallback.' . PHP_EOL);
+    exit(1);
+}
+
 $unmappedPlentyPriceItemData = $packageFallbackItemData;
 $unmappedPlentyPriceItemData['variation']['shippingProfileId'] = 77;
 $unmappedPlentyPriceItemData['variation']['defaultShippingCosts'] = 4.2;

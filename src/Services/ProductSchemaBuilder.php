@@ -570,6 +570,7 @@ class ProductSchemaBuilder
             $childOptions['schemaParentGroupName'] = $parentName;
             $childOptions['schemaParentGroupDescription'] = $parentDescription;
             $childOptions['schemaParentGroupVariesBy'] = $parentVariesBy;
+            $childOptions['schemaPreferVariationShippingCosts'] = true;
 
             $variant = $this->build(
                 $document,
@@ -1033,26 +1034,30 @@ class ProductSchemaBuilder
             false
         );
 
-        // An explicitly configured shipping-profile price is shop-specific
-        // knowledge and therefore takes precedence over PlentyONE's generic
-        // defaultShippingCosts value. This is important when the item document
-        // exposes a parcel default although the assigned profile has a
-        // different fixed shipping rate.
-        if ($fallbackEnabled) {
-            $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
-        }
+        $preferVariationShipping = $this->optionBool(
+            $schemaOptions,
+            'schemaPreferVariationShippingCosts',
+            false
+        );
 
-        if ($shippingCost === null || $shippingCost < 0) {
-            foreach ([
-                'variation.defaultShippingCosts',
-                'variation.defaultShippingCost',
-                'shipping.defaultShippingCosts',
-                'shipping.costs'
-            ] as $path) {
-                $shippingCost = $this->numericValue($this->value($data, $path, null));
-                if ($shippingCost !== null && $shippingCost >= 0) {
-                    break;
-                }
+        // For concrete child variants of a ProductGroup, PlentyONE's
+        // variation.defaultShippingCosts is the variant-specific calculated
+        // value and must win over an item-level shipping-profile fallback.
+        // Standalone products keep the merchant-controlled profile price first;
+        // this preserves corrections for items whose item document exposes a
+        // generic parcel default (for example 6.90) despite a different fixed
+        // shipping-profile price.
+        if ($preferVariationShipping) {
+            $shippingCost = $this->resolvePlentyShippingCost($data);
+            if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
+                $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+            }
+        } else {
+            if ($fallbackEnabled) {
+                $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+            }
+            if ($shippingCost === null || $shippingCost < 0) {
+                $shippingCost = $this->resolvePlentyShippingCost($data);
             }
         }
 
@@ -1108,6 +1113,30 @@ class ProductSchemaBuilder
                 ]
             ]
         ];
+    }
+
+    /**
+     * Resolve PlentyONE's calculated shipping amount from the current concrete
+     * variation/item document.
+     *
+     * @param array $data
+     * @return float|null
+     */
+    private function resolvePlentyShippingCost(array $data)
+    {
+        foreach ([
+            'variation.defaultShippingCosts',
+            'variation.defaultShippingCost',
+            'shipping.defaultShippingCosts',
+            'shipping.costs'
+        ] as $path) {
+            $shippingCost = $this->numericValue($this->value($data, $path, null));
+            if ($shippingCost !== null && $shippingCost >= 0) {
+                return $shippingCost;
+            }
+        }
+
+        return null;
     }
 
     /**
