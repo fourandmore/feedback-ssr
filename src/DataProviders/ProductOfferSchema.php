@@ -203,6 +203,11 @@ class ProductOfferSchema
             return '';
         }
 
+        if (isset($initialData['productSchemaVariantDiagnostics'])
+            && is_array($initialData['productSchemaVariantDiagnostics'])) {
+            $variantDiagnostics['builder'] = $initialData['productSchemaVariantDiagnostics'];
+        }
+
         $json = json_encode(
             $initialData['jsonLd'],
             JSON_UNESCAPED_SLASHES
@@ -228,7 +233,7 @@ class ProductOfferSchema
 
         $diagnosticScript = '';
         if (is_string($diagnosticJson) && $diagnosticJson !== '') {
-            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5058" type="application/json">'
+            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5059" type="application/json">'
                 . $diagnosticJson
                 . '</script>';
         }
@@ -349,7 +354,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.58',
+            'pluginVersion' => '5.0.59',
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
             'contextVariationsCount' => count($contextVariations),

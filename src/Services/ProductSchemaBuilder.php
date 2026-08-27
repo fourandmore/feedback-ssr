@@ -9,6 +9,17 @@ namespace FeedbackGeoFM\Services;
  */
 class ProductSchemaBuilder
 {
+    /** @var array */
+    private $lastVariantDiagnostics = [];
+
+    /**
+     * @return array
+     */
+    public function getLastVariantDiagnostics()
+    {
+        return $this->lastVariantDiagnostics;
+    }
+
     /**
      * @param mixed $itemData
      * @param string $canonicalUrl
@@ -467,6 +478,24 @@ class ProductSchemaBuilder
             'schemaVariantDocuments',
             []
         ));
+
+        $this->lastVariantDiagnostics = [
+            'inputDocuments' => count($documents),
+            'skippedEmpty' => 0,
+            'skippedWrongItemId' => 0,
+            'skippedVariationGroup' => 0,
+            'skippedInvalidVariationId' => 0,
+            'skippedDuplicateVariationId' => 0,
+            'skippedNotSalable' => 0,
+            'candidateMissingName' => 0,
+            'candidateMissingPrice' => 0,
+            'candidateMissingCurrency' => 0,
+            'childBuildReturnedNull' => 0,
+            'childBuildWrongType' => 0,
+            'builtProducts' => 0,
+            'childBuildNullVariationIds' => []
+        ];
+
         if (empty($documents) || (int)$itemId <= 0) {
             return [];
         }
@@ -475,20 +504,54 @@ class ProductSchemaBuilder
         $seenVariationIds = [];
         foreach ($documents as $document) {
             $document = $this->toArray($document);
-            if (empty($document)
-                || (int)$this->value($document, 'item.id', 0) !== (int)$itemId
-                || $this->isVariationGroup($document)) {
+            if (empty($document)) {
+                $this->lastVariantDiagnostics['skippedEmpty']++;
+                continue;
+            }
+
+            if ((int)$this->value($document, 'item.id', 0) !== (int)$itemId) {
+                $this->lastVariantDiagnostics['skippedWrongItemId']++;
+                continue;
+            }
+
+            if ($this->isVariationGroup($document)) {
+                $this->lastVariantDiagnostics['skippedVariationGroup']++;
                 continue;
             }
 
             $variationId = (int)$this->value($document, 'variation.id', 0);
-            if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
+            if ($variationId <= 0) {
+                $this->lastVariantDiagnostics['skippedInvalidVariationId']++;
+                continue;
+            }
+            if (isset($seenVariationIds[$variationId])) {
+                $this->lastVariantDiagnostics['skippedDuplicateVariationId']++;
                 continue;
             }
 
             $isSalable = $this->value($document, 'filter.isSalable', null);
             if ($isSalable !== null && !$this->toBool($isSalable)) {
+                $this->lastVariantDiagnostics['skippedNotSalable']++;
                 continue;
+            }
+
+            $candidateName = $this->firstText($document, [
+                'texts.name1',
+                'texts.name2',
+                'texts.name3',
+                'variation.name',
+                'variation.model'
+            ]);
+            if ($candidateName === '') {
+                $this->lastVariantDiagnostics['candidateMissingName']++;
+            }
+
+            $candidatePrice = $this->resolvePrice($document);
+            if ($candidatePrice['price'] === null || $candidatePrice['price'] <= 0) {
+                $this->lastVariantDiagnostics['candidateMissingPrice']++;
+            }
+            if (trim((string)$candidatePrice['currency']) === '') {
+                $this->lastVariantDiagnostics['candidateMissingCurrency']++;
             }
 
             $url = $this->firstRaw($document, [
@@ -501,9 +564,6 @@ class ProductSchemaBuilder
                 $url = $canonicalUrl;
             }
 
-            // Reuse the normal Product builder so every nested variant gets
-            // the same validated Offer data as a directly opened variation:
-            // SKU, price, availability, seller, return policy and shipping.
             $childOptions = $schemaOptions;
             $childOptions['schemaVariantDocuments'] = [];
             $childOptions['schemaVideoObject'] = false;
@@ -520,13 +580,22 @@ class ProductSchemaBuilder
                 $childOptions
             );
 
-            if (!is_array($variant) || ($variant['@type'] ?? '') !== 'Product') {
+            if (!is_array($variant)) {
+                $this->lastVariantDiagnostics['childBuildReturnedNull']++;
+                if (count($this->lastVariantDiagnostics['childBuildNullVariationIds']) < 10) {
+                    $this->lastVariantDiagnostics['childBuildNullVariationIds'][] = $variationId;
+                }
+                continue;
+            }
+            if (($variant['@type'] ?? '') !== 'Product') {
+                $this->lastVariantDiagnostics['childBuildWrongType']++;
                 continue;
             }
 
             unset($variant['@context']);
             $seenVariationIds[$variationId] = true;
             $variants[] = $variant;
+            $this->lastVariantDiagnostics['builtProducts']++;
         }
 
         return $variants;

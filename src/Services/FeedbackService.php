@@ -492,6 +492,7 @@ class FeedbackService
                 (string)$sellerName,
                 $schemaOptions
             );
+            $initialData['productSchemaVariantDiagnostics'] = $this->productSchemaBuilder->getLastVariantDiagnostics();
         } elseif (!empty($schemaReviews)) {
             // Backwards-compatible review-only schema if Product/Offer output
             // was explicitly disabled in the widget settings.
