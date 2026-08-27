@@ -1,3 +1,10 @@
+## 5.0.48
+
+- ProductGroup variants are now discovered through the same `VariationAttributeMap` search preset used by the Ceres `/io/variations/map` endpoint.
+- The older `ItemService::getVariationAttributeMap()` path is kept only as a fallback.
+- `afterKey` pagination is handled defensively so large product groups are not truncated after the first result page.
+- `getVariationList()` is the final ID fallback for items without variation attributes.
+
 ## 5.0.47
 
 - ProductGroup variants are now discovered through the Ceres-aligned `ItemService::getVariationAttributeMap()`, including selectable products that are not returned by the stricter stock-salable ID query.

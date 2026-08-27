@@ -5,6 +5,8 @@ namespace FeedbackGeoFM\DataProviders;
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
 use IO\Services\ItemService;
+use Plenty\Modules\Webshop\ItemSearch\SearchPresets\VariationAttributeMap;
+use Plenty\Modules\Webshop\ItemSearch\Services\ItemSearchService;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -335,18 +337,26 @@ class ProductOfferSchema
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
 
-            // Ceres builds its variation selector from getVariationAttributeMap().
-            // This is deliberately used as the primary ID source because
-            // getVariationIds() applies the stricter variationStockIsSalable()
-            // filter and may therefore return no IDs for otherwise selectable
-            // made-to-order / non-stock-managed storefront variations.
-            $attributeMap = $itemService->getVariationAttributeMap((int)$itemId);
+            // Use the exact variation-map search preset behind Ceres'
+            // /io/variations/map endpoint. In Ceres 5.0.81 the browser-side
+            // variation selector is fed by VariationAttributeMapResource,
+            // which no longer delegates to ItemService::getVariationAttributeMap().
+            // Using the same search preset here keeps the server-rendered
+            // ProductGroup in sync with the variants the shopper can select.
+            $attributeMap = $this->loadVariationAttributeMap((int)$itemId);
             $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
             $variationIds = array_keys($variantMetaById);
 
-            // Keep a compatibility fallback for items without attributes.
+            // Compatibility fallbacks for installations/items where the search
+            // preset returns no attribute map.
             if (empty($variationIds)) {
-                $variationIds = $itemService->getVariationIds((int)$itemId);
+                $attributeMap = $itemService->getVariationAttributeMap((int)$itemId);
+                $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
+                $variationIds = array_keys($variantMetaById);
+            }
+
+            if (empty($variationIds)) {
+                $variationIds = $itemService->getVariationList((int)$itemId, false);
                 $variationIds = is_array($variationIds)
                     ? array_values(array_unique(array_map('intval', $variationIds)))
                     : [];
@@ -414,6 +424,166 @@ class ProductOfferSchema
         }
 
         return $documents;
+    }
+
+    /**
+     * Execute the same VariationAttributeMap search preset used by
+     * IO\Api\Resources\VariationAttributeMapResource. Results are flattened
+     * defensively because PlentyONE search result envelopes can differ between
+     * IO patch releases. Composite-search pagination is followed via afterKey
+     * when present, capped to avoid runaway server work.
+     *
+     * @param int $itemId
+     * @return array
+     */
+    private function loadVariationAttributeMap($itemId)
+    {
+        if ((int)$itemId <= 0) {
+            return [];
+        }
+
+        try {
+            /** @var ItemSearchService $itemSearchService */
+            $itemSearchService = pluginApp(ItemSearchService::class);
+
+            $entries = [];
+            $seenVariationIds = [];
+            $afterKey = null;
+
+            for ($page = 0; $page < 10 && count($entries) < 120; $page++) {
+                $options = ['itemId' => (int)$itemId];
+                if ($afterKey !== null && $afterKey !== '' && $afterKey !== []) {
+                    $options['afterKey'] = $afterKey;
+                }
+
+                $searchFactory = VariationAttributeMap::getSearchFactory($options);
+                $result = $itemSearchService->getResult($searchFactory);
+
+                $this->collectVariationMapEntries(
+                    $result,
+                    $entries,
+                    $seenVariationIds
+                );
+
+                $nextAfterKey = $this->findAfterKey($result);
+                if ($nextAfterKey === null
+                    || $nextAfterKey === ''
+                    || $nextAfterKey === []
+                    || $nextAfterKey === $afterKey) {
+                    break;
+                }
+
+                $afterKey = $nextAfterKey;
+            }
+
+            return array_slice($entries, 0, 120);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * @param mixed $node
+     * @param array $entries
+     * @param array $seenVariationIds
+     * @param int $depth
+     * @return void
+     */
+    private function collectVariationMapEntries(
+        $node,
+        array &$entries,
+        array &$seenVariationIds,
+        $depth = 0
+    ) {
+        if ($depth > 12 || count($entries) >= 120) {
+            return;
+        }
+
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return;
+        }
+
+        $variationId = isset($node['variationId']) && is_numeric($node['variationId'])
+            ? (int)$node['variationId']
+            : 0;
+
+        if ($variationId > 0 && !isset($seenVariationIds[$variationId])) {
+            $attributes = isset($node['attributes'])
+                ? $this->toArray($node['attributes'])
+                : [];
+
+            if (array_key_exists('attributes', $node)) {
+                $seenVariationIds[$variationId] = true;
+                $entries[] = [
+                    'variationId' => $variationId,
+                    'attributes' => $attributes
+                ];
+
+                if (count($entries) >= 120) {
+                    return;
+                }
+            }
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+
+            $this->collectVariationMapEntries(
+                $child,
+                $entries,
+                $seenVariationIds,
+                $depth + 1
+            );
+
+            if (count($entries) >= 120) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Find a composite-search afterKey in an arbitrary PlentyONE result
+     * envelope without depending on a specific patch-level response shape.
+     *
+     * @param mixed $node
+     * @param int $depth
+     * @return mixed|null
+     */
+    private function findAfterKey($node, $depth = 0)
+    {
+        if ($depth > 10) {
+            return null;
+        }
+
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return null;
+        }
+
+        foreach (['afterKey', 'after_key'] as $key) {
+            if (array_key_exists($key, $node)
+                && $node[$key] !== null
+                && $node[$key] !== ''
+                && $node[$key] !== []) {
+                return $node[$key];
+            }
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+
+            $found = $this->findAfterKey($child, $depth + 1);
+            if ($found !== null && $found !== '' && $found !== []) {
+                return $found;
+            }
+        }
+
+        return null;
     }
 
     /**

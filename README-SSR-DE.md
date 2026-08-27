@@ -1,3 +1,5 @@
+Version 5.0.48 nutzt für ProductGroup-Varianten jetzt denselben `VariationAttributeMap`-Search-Preset wie der aktuelle Ceres-Endpunkt `/io/variations/map`. Dadurch soll die serverseitige GEO-Auszeichnung dieselbe Variantenbasis verwenden wie der sichtbare Ceres-Variantenwähler.
+
 # FeedbackGeoFM 5.0.47 – ProductGroup-Varianten
 
 Version 5.0.47 korrigiert große PlentyONE-Variantenartikel: Die Varianten werden über `ItemService::getVariationAttributeMap()` ermittelt und in 20er-Batches geladen. Reale Attributwerte werden als `size`/`color` etc. ausgegeben; `variesBy`, `hasVariant`, vollständiges `isVariantOf` und variantenspezifische Offers werden daraus aufgebaut.

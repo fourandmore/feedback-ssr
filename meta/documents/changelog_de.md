@@ -1,3 +1,10 @@
+## 5.0.48
+
+- ProductGroup-Varianten werden nun über denselben `VariationAttributeMap`-Search-Preset wie der Ceres-Endpunkt `/io/variations/map` ermittelt.
+- Der ältere `ItemService::getVariationAttributeMap()`-Weg bleibt nur noch als Fallback erhalten.
+- `afterKey`-Pagination wird defensiv verarbeitet, damit große Variantenartikel nicht nach der ersten Ergebnisseite abgeschnitten werden.
+- `getVariationList()` dient als letzter ID-Fallback für Artikel ohne Variantenattribute.
+
 ## 5.0.47
 
 - ProductGroup-Varianten werden jetzt über die Ceres-nahe `ItemService::getVariationAttributeMap()` ermittelt. Dadurch funktionieren auch Artikel, deren Varianten trotz fehlendem physischen Lagerbestand im Shop kaufbar sind.
