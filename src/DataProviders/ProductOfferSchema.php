@@ -67,6 +67,11 @@ class ProductOfferSchema
                 'schemaShippingFallbackEnabled',
                 false
             ),
+            'schemaShippingProfilePrices' => trim((string)$this->configValueAllowEmpty(
+                $config,
+                'schemaShippingProfilePrices',
+                ''
+            )),
             'schemaShippingPackagePrice' => trim((string)$this->configValueAllowEmpty(
                 $config,
                 'schemaShippingPackagePrice',

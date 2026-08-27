@@ -906,6 +906,11 @@ class ProductSchemaBuilder
      */
     private function resolveConfiguredShippingFallback(array $data, array $schemaOptions)
     {
+        $profilePrice = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+        if ($profilePrice !== null) {
+            return $profilePrice;
+        }
+
         $freight = $this->matchesConfiguredFreightProfile($data, $schemaOptions);
         if (!$freight) {
             $thresholdKg = $this->numericValue($this->option(
@@ -929,6 +934,41 @@ class ProductSchemaBuilder
     }
 
     /**
+     * Resolve an exact fallback price for the variation's assigned shipping
+     * profile. Format: "6=6,90; 9=59,00". Semicolons or line breaks separate
+     * mappings so decimal commas remain unambiguous. If several profiles are
+     * assigned, the first matching profile in the configured mapping wins.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return float|null
+     */
+    private function resolveConfiguredShippingProfilePrice(array $data, array $schemaOptions)
+    {
+        $configured = $this->parseShippingProfilePriceMap($this->option(
+            $schemaOptions,
+            'schemaShippingProfilePrices',
+            ''
+        ));
+        if (empty($configured)) {
+            return null;
+        }
+
+        $assigned = $this->resolveAssignedShippingProfileIds($data);
+        if (empty($assigned)) {
+            return null;
+        }
+
+        foreach ($configured as $profileId => $price) {
+            if (in_array((int)$profileId, $assigned, true)) {
+                return $price;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param array $data
      * @param array $schemaOptions
      * @return bool
@@ -944,22 +984,131 @@ class ProductSchemaBuilder
             return false;
         }
 
+        $assigned = $this->resolveAssignedShippingProfileIds($data);
+
+        return !empty(array_intersect($configured, $assigned));
+    }
+
+    /**
+     * Collect shipping profile IDs from the common plentyShop item-document
+     * shapes. The recursive collector keeps compatibility with profile arrays
+     * and nested objects used by different Ceres/IO payloads.
+     *
+     * @param array $data
+     * @return array
+     */
+    private function resolveAssignedShippingProfileIds(array $data)
+    {
         $assigned = [];
         foreach ([
             'variation.shippingProfileId',
             'variation.shippingProfileIds',
             'variation.shippingProfiles',
             'shippingProfileId',
-            'shippingProfileIds'
+            'shippingProfileIds',
+            'shippingProfiles',
+            'item.shippingProfiles'
         ] as $path) {
-            $this->collectPositiveIntegers(
+            $this->collectShippingProfileIds(
                 $this->value($data, $path, null),
                 0,
                 $assigned
             );
         }
 
-        return !empty(array_intersect($configured, $assigned));
+        return $assigned;
+    }
+
+    /**
+     * Collect shipping profile IDs without treating unrelated numeric fields
+     * inside a profile relation as profile IDs. PlentyONE relations normally
+     * expose profileId; id/shippingProfileId are supported as compatible
+     * alternative shapes.
+     *
+     * @param mixed $value
+     * @param int $depth
+     * @param array $ids
+     * @return void
+     */
+    private function collectShippingProfileIds($value, $depth, array &$ids)
+    {
+        if ($depth > 5 || $value === null) {
+            return;
+        }
+
+        if (!is_array($value) && !is_object($value)) {
+            if (is_numeric($value) && (int)$value > 0) {
+                $id = (int)$value;
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+            return;
+        }
+
+        $array = $this->toArray($value);
+        foreach (['profileId', 'shippingProfileId'] as $key) {
+            if (isset($array[$key]) && is_numeric($array[$key]) && (int)$array[$key] > 0) {
+                $id = (int)$array[$key];
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+                return;
+            }
+        }
+
+        // Some payloads expose a bare profile model where `id` itself is the
+        // shipping profile ID. Use it only for associative profile objects,
+        // not for arbitrary nested relation metadata.
+        if (isset($array['id']) && is_numeric($array['id']) && (int)$array['id'] > 0
+            && (isset($array['name']) || isset($array['backendName']) || isset($array['isParcelServicePreset']))) {
+            $id = (int)$array['id'];
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+            return;
+        }
+
+        foreach ($array as $child) {
+            $this->collectShippingProfileIds($child, $depth + 1, $ids);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function parseShippingProfilePriceMap($value)
+    {
+        if (is_array($value)) {
+            $entries = $value;
+        } else {
+            $entries = preg_split('/[;\r\n]+/', trim((string)$value));
+        }
+
+        $map = [];
+        foreach ($entries as $entry) {
+            if (is_array($entry) || is_object($entry)) {
+                $entry = $this->toArray($entry);
+                $profileId = isset($entry['profileId']) ? (int)$entry['profileId'] : 0;
+                $price = isset($entry['price']) ? $this->numericValue($entry['price']) : null;
+            } else {
+                $parts = preg_split('/\s*[=:]\s*/', trim((string)$entry), 2);
+                if (count($parts) !== 2 || !is_numeric($parts[0])) {
+                    continue;
+                }
+                $profileId = (int)$parts[0];
+                $price = $this->numericValue($parts[1]);
+            }
+
+            if ($profileId <= 0 || $price === null || $price < 0) {
+                continue;
+            }
+
+            $map[$profileId] = $price;
+        }
+
+        return $map;
     }
 
     /**

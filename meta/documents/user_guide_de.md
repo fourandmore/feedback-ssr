@@ -10,6 +10,10 @@ Empfohlene Herstellerwerte: Four More `Four & More GmbH`, Billiard Royal `Billia
 
 Die Option **Ceres-Product-Schema auf Artikelseiten deaktivieren** verhindert einen zweiten, von Ceres erzeugten Product-Knoten. Sie ist standardmäßig aktiv und greift nur zusammen mit **Product/ProductGroup/Offer JSON-LD serverseitig ausgeben**. Stelle sicher, dass der DataProvider **Product/ProductGroup/Offer JSON-LD serverseitig** im Einzelartikel-Layout eingebunden ist.
 
+### Profilgenaue Versandkosten in Version 5.0.42
+
+Im Feld **„Versandprofil-spezifische Fallbackpreise“** können mehrere Zuordnungen eingetragen werden, zum Beispiel `6=6,90; 9=59,00; 12=89,00`. Die Zahl links ist die PlentyONE-Versandprofil-ID, rechts steht der Versandpreis. Ein Semikolon oder Zeilenumbruch trennt die Zuordnungen. PlentyONE-Standardversandkosten haben weiterhin Vorrang.
+
 ### Versand und Video in Version 5.0.41
 
 Aktiviere den Versand-Fallback erst, nachdem Paket- und Speditionspreis für das jeweilige Plugin-Set geprüft wurden. PlentyONE-Standardversandkosten haben immer Vorrang. Fehlen sie, wählt das Plugin den Speditionspreis bei einer passenden Versandprofil-ID oder ab der konfigurierten Bruttogewichtsschwelle; andernfalls den Paketpreis. Ein leeres Preisfeld erzeugt keine Versandangabe.

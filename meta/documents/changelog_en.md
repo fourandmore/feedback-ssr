@@ -1,3 +1,12 @@
+## Version 5.0.42 – Shipping fallback per shipping profile
+
+- Adds exact `shipping profile ID = shipping price` mappings, e.g. `6=6.90; 9=59.00; 12=89.00`.
+- PlentyONE calculated default shipping costs always keep priority.
+- When PlentyONE costs are absent, an exact profile price takes precedence over the existing parcel/freight fallback.
+- If no exact price exists for the assigned profile, the existing parcel/freight logic including the weight threshold remains active.
+- Separate mappings with semicolons or line breaks; this also keeps decimal commas unambiguous.
+- Shipping-profile detection now also supports PlentyONE's documented top-level `shippingProfiles` array and its `profileId`.
+
 ## Version 5.0.41 – GEO additions on the verified 5.0.40 baseline
 
 - Preserves the working Ceres 5.0.81 `page-metadata` override from version 5.0.40.

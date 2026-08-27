@@ -236,6 +236,7 @@ unset($packageFallbackItemData['variation']['defaultShippingCosts']);
 $packageFallbackItemData['variation']['weightG'] = 10000;
 $fallbackOptions = array_merge($schemaOptions, [
     'schemaShippingFallbackEnabled' => true,
+    'schemaShippingProfilePrices' => '6=6,90; 9=79,50; 12=129.00',
     'schemaShippingPackagePrice' => '8,50',
     'schemaShippingFreightPrice' => '59.00',
     'schemaShippingFreightWeightThresholdKg' => 31.5,
@@ -284,8 +285,75 @@ $freightProfileSchema = $builder->build(
     $fallbackOptions
 );
 if (!is_array($freightProfileSchema)
-    || $freightProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 59.0) {
-    fwrite(STDERR, 'Configured freight fallback by shipping profile failed.' . PHP_EOL);
+    || $freightProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 79.5) {
+    fwrite(STDERR, 'Exact shipping-profile fallback must take precedence over freight fallback.' . PHP_EOL);
+    exit(1);
+}
+
+$parcelProfileItemData = $packageFallbackItemData;
+$parcelProfileItemData['variation']['shippingProfileId'] = 6;
+$parcelProfileSchema = $builder->build(
+    $parcelProfileItemData,
+    'https://www.example.test/paket_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($parcelProfileSchema)
+    || $parcelProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 6.9) {
+    fwrite(STDERR, 'Exact parcel shipping-profile fallback failed.' . PHP_EOL);
+    exit(1);
+}
+
+$rootProfileItemData = $packageFallbackItemData;
+$rootProfileItemData['shippingProfiles'] = [
+    ['id' => 501, 'itemId' => 51000, 'profileId' => 12]
+];
+$rootProfileSchema = $builder->build(
+    $rootProfileItemData,
+    'https://www.example.test/root-shipping-profile_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($rootProfileSchema)
+    || $rootProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 129.0) {
+    fwrite(STDERR, 'Top-level PlentyONE shippingProfiles profileId fallback failed.' . PHP_EOL);
+    exit(1);
+}
+
+$unknownProfileItemData = $packageFallbackItemData;
+$unknownProfileItemData['variation']['shippingProfileId'] = 77;
+$unknownProfileSchema = $builder->build(
+    $unknownProfileItemData,
+    'https://www.example.test/unknown-profile_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($unknownProfileSchema)
+    || $unknownProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 8.5) {
+    fwrite(STDERR, 'Unknown shipping profile must fall back to legacy parcel/freight logic.' . PHP_EOL);
+    exit(1);
+}
+
+$plentyPriceWinsItemData = $packageFallbackItemData;
+$plentyPriceWinsItemData['variation']['shippingProfileId'] = 12;
+$plentyPriceWinsItemData['variation']['defaultShippingCosts'] = 4.2;
+$plentyPriceWinsSchema = $builder->build(
+    $plentyPriceWinsItemData,
+    'https://www.example.test/plenty-price-wins_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($plentyPriceWinsSchema)
+    || $plentyPriceWinsSchema['offers']['shippingDetails']['shippingRate']['value'] !== 4.2) {
+    fwrite(STDERR, 'PlentyONE default shipping costs must remain authoritative.' . PHP_EOL);
     exit(1);
 }
 

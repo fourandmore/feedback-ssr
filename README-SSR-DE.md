@@ -1,3 +1,9 @@
+# Version 5.0.42 – Versandprofil-spezifischer Versandkosten-Fallback
+
+- Exakte Fallbackpreise können je PlentyONE-Versandprofil konfiguriert werden, z. B. `6=6,90; 9=59,00`.
+- PlentyONE-Standardversandkosten bleiben vorrangig. Ohne passenden Profilpreis greift weiterhin der Paket-/Speditions-Fallback aus 5.0.41.
+- Der geprüfte Ceres-5.0.81-Override bleibt technisch unverändert; der Diagnose-Marker lautet `5.0.42`.
+
 # Version 5.0.41 – additive GEO-Ergänzungen auf Basis 5.0.40
 
 - Der geprüfte Ceres-5.0.81-Override aus 5.0.40 bleibt technisch unverändert; lediglich der Diagnose-Marker lautet nun `5.0.41`.

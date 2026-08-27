@@ -1,3 +1,12 @@
+## Version 5.0.42 – Versandkosten-Fallback je Versandprofil
+
+- Neue Konfiguration für exakte Zuordnung `Versandprofil-ID = Versandpreis`, z. B. `6=6,90; 9=59,00; 12=89,00`.
+- PlentyONE-Standardversandkosten behalten immer Vorrang.
+- Fehlen PlentyONE-Kosten, hat ein passender profilgenauer Preis Vorrang vor der bisherigen Paket-/Speditionslogik.
+- Ist für das Artikelprofil kein eigener Preis hinterlegt, bleibt der bestehende Paket-/Speditions-Fallback inklusive Gewichtsschwelle unverändert aktiv.
+- Mehrere Zuordnungen werden mit Semikolon oder Zeilenumbruch getrennt; dadurch sind deutsche Dezimalkommas eindeutig möglich.
+- Die Profil-Erkennung berücksichtigt nun zusätzlich das von PlentyONE dokumentierte top-level `shippingProfiles`-Array und dessen `profileId`.
+
 ## Version 5.0.41 – GEO-Ergänzungen auf dem geprüften Stand 5.0.40
 
 - Der funktionierende Ceres-5.0.81-`page-metadata`-Override aus Version 5.0.40 bleibt erhalten.

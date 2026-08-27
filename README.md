@@ -16,6 +16,10 @@ Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweite
 - bereinigte anonyme Autorenbezeichnungen,
 - verständliche Leerzustände bei Artikeln ohne Bewertungen.
 
+## Version 5.0.42
+
+Version 5.0.42 erweitert den optionalen Versandkosten-Fallback aus 5.0.41 um exakte Preise je PlentyONE-Versandprofil. Format: `6=6,90; 9=59,00; 12=89,00`. PlentyONE-Kosten haben weiterhin Vorrang; ohne Profiltreffer bleibt die bisherige Paket-/Speditionslogik aktiv.
+
 ## Version 5.0.41
 
 Version 5.0.41 baut direkt auf dem in Ceres 5.0.81 geprüften Stand 5.0.40 auf. Der funktionierende `page-metadata`-Override, die Kategorie-Bewertungssterne und die serverseitige FAQ-Auflösung bleiben unverändert.

@@ -175,6 +175,12 @@
                         "defaultValue": "false"
                     }
                 },
+                "schemaShippingProfilePrices": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaShippingProfilePrices"
+                },
                 "schemaShippingPackagePrice": {
                     "type": "text",
                     "required": false,
