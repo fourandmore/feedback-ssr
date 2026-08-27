@@ -1,3 +1,8 @@
+## 5.0.55
+
+- Diagnose: vergleicht den dokumentierten Einzelabruf `ItemService::getVariation($variationId)` mit `getVariations($variationIds)` für genau eine bestätigte kaufbare Variante.
+- Keine Änderung am ProductGroup-/hasVariant-Mapping.
+
 ## 5.0.54
 
 - Korrigierte reine Diagnoseversion nach PlentyONE-Codecheck.

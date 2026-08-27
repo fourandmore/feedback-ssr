@@ -374,6 +374,17 @@ class ProductOfferSchema
             'getVariationsFirstValuePreview' => null,
             'collectorDocumentsCount' => 0,
             'collectorVariationIdSample' => [],
+            'singleVariationId' => null,
+            'getVariationCalled' => false,
+            'getVariationResultType' => null,
+            'getVariationResultCount' => null,
+            'getVariationTopLevelKeys' => [],
+            'getVariationFirstValueType' => null,
+            'getVariationFirstValueKeys' => [],
+            'getVariationFirstValuePreview' => null,
+            'getVariationCollectorDocumentsCount' => 0,
+            'getVariationCollectorVariationIdSample' => [],
+            'getVariationErrorMessage' => null,
             'errorClass' => null,
             'errorMessage' => null
         ];
@@ -422,6 +433,62 @@ class ProductOfferSchema
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
             $diagnostics['getVariationsCalled'] = true;
+
+            // Compare the documented single-variation endpoint against the
+            // documented batch endpoint. Only one request is made here.
+            $singleVariationId = null;
+            foreach ($diagnosticVariationIds as $candidateVariationId) {
+                $singleVariationId = (int)$candidateVariationId;
+                break;
+            }
+
+            if ($singleVariationId > 0) {
+                $diagnostics['singleVariationId'] = $singleVariationId;
+                try {
+                    $diagnostics['getVariationCalled'] = true;
+                    $singleResult = $itemService->getVariation($singleVariationId);
+                    $diagnostics['getVariationResultType'] = $this->diagnosticTypeLabel($singleResult);
+                    if (is_array($singleResult)) {
+                        $diagnostics['getVariationResultCount'] = count($singleResult);
+                        $diagnostics['getVariationTopLevelKeys'] = array_slice(array_keys($singleResult), 0, 30);
+
+                        $singleFirstValue = null;
+                        foreach ($singleResult as $singleValue) {
+                            $singleFirstValue = $singleValue;
+                            break;
+                        }
+                        $singleFirstValueArray = $this->toArray($singleFirstValue);
+                        $diagnostics['getVariationFirstValueType'] = $this->diagnosticTypeLabel($singleFirstValue);
+                        $diagnostics['getVariationFirstValueKeys'] = is_array($singleFirstValueArray)
+                            ? array_slice(array_keys($singleFirstValueArray), 0, 50)
+                            : [];
+                        $diagnostics['getVariationFirstValuePreview'] = $this->diagnosticPreview($singleFirstValue);
+                    } else {
+                        $diagnostics['getVariationFirstValuePreview'] = $this->diagnosticPreview($singleResult);
+                    }
+
+                    $singleDocuments = [];
+                    $singleSeen = [];
+                    $this->collectVariantDocuments(
+                        $singleResult,
+                        (int)$itemId,
+                        0,
+                        $singleDocuments,
+                        $singleSeen
+                    );
+                    $diagnostics['getVariationCollectorDocumentsCount'] = count($singleDocuments);
+                    $singleCollectorVariationIds = [];
+                    foreach (array_keys($singleSeen) as $singleLoadedVariationId) {
+                        $singleCollectorVariationIds[] = (int)$singleLoadedVariationId;
+                        if (count($singleCollectorVariationIds) >= 10) {
+                            break;
+                        }
+                    }
+                    $diagnostics['getVariationCollectorVariationIdSample'] = $singleCollectorVariationIds;
+                } catch (\Throwable $singleException) {
+                    $diagnostics['getVariationErrorMessage'] = $singleException->getMessage();
+                }
+            }
 
             $result = $itemService->getVariations($diagnosticVariationIds);
 

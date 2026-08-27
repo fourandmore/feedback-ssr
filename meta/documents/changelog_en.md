@@ -1,3 +1,8 @@
+## 5.0.55
+
+- Diagnostic: compares documented `ItemService::getVariation($variationId)` with `getVariations($variationIds)` for exactly one confirmed salable variation.
+- No ProductGroup/hasVariant mapping changes.
+
 ## 5.0.54
 
 - Corrected diagnostic-only release after the PlentyONE code check.
