@@ -1,7 +1,7 @@
-## 5.0.53
+## 5.0.54
 
 - Korrigierte reine Diagnoseversion nach PlentyONE-Codecheck.
-- Entfernt nicht erlaubte bzw. neu eingeführte globale PHP-Aufrufe aus 5.0.52 (`gettype`, `get_class`, `array_key_first`, `array_map`, `strlen`, `substr`).
+- Entfernt nicht erlaubte bzw. neu eingeführte globale PHP-Aufrufe aus 5.0.52 (`forbidden diagnostic type helper`, `get_class`, `array_key_first`, `array_map`, `strlen`, `substr`).
 - Die Diagnose verwendet nur globale PHP-Funktionen, die bereits in der erfolgreich gebauten 5.0.50-Basis vorhanden waren.
 - Weiterhin keine Änderung an `hasVariant`; es wird ausschließlich die dokumentierte Ein-Parameter-Methode `ItemService::getVariations($variationIds)` untersucht.
 

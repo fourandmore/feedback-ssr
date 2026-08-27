@@ -350,7 +350,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.53',
+            'pluginVersion' => '5.0.54',
             'diagnosticOnly' => true,
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
