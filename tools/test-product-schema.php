@@ -457,8 +457,12 @@ if (!is_array($productGroup)
     || count($productGroup['variesBy']) !== 2
     || count($productGroup['hasVariant']) !== 2
     || $productGroup['hasVariant'][0]['productID'] !== '13046'
-    || $productGroup['hasVariant'][1]['@id'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047#product-variation-13047') {
-    fwrite(STDERR, 'Non-salable parent variation must be a ProductGroup without Offer.' . PHP_EOL);
+    || $productGroup['hasVariant'][0]['sku'] !== '51000-600'
+    || $productGroup['hasVariant'][0]['offers']['price'] !== '129.90'
+    || $productGroup['hasVariant'][0]['offers']['shippingDetails']['shippingRate']['value'] !== 6.9
+    || $productGroup['hasVariant'][1]['@id'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047#product-variation-13047'
+    || $productGroup['hasVariant'][1]['offers']['price'] !== '129.90') {
+    fwrite(STDERR, 'Non-salable parent variation must be a ProductGroup with complete salable child Products and no parent Offer.' . PHP_EOL);
     exit(1);
 }
 

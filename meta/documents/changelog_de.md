@@ -1,3 +1,9 @@
+## Version 5.0.46 – ProductGroup-Varianten vollständig auszeichnen
+
+- ProductGroup-Seiten laden aktive und verkaufbare Varianten serverseitig über `IO\Services\ItemService`.
+- `hasVariant` enthält nun echte `Product`-Objekte mit SKU, Preis, Verfügbarkeit, Offer und `shippingDetails`.
+- Der bestehende Versandprofil-Fallback wird auf jede geladene Variante angewendet.
+
 ## Version 5.0.45 – Versandprofile serverseitig auflösen
 
 - Lädt die am Artikel verknüpften Versandprofile über `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.

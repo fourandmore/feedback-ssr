@@ -100,7 +100,8 @@ class ProductSchemaBuilder
             $hasVariants = $this->resolveHasVariants(
                 $schemaOptions,
                 $canonicalUrl,
-                $itemId
+                $itemId,
+                $sellerName
             );
             if (!empty($hasVariants)) {
                 $schema['hasVariant'] = $hasVariants;
@@ -397,8 +398,12 @@ class ProductSchemaBuilder
      * @param int $itemId
      * @return array
      */
-    private function resolveHasVariants(array $schemaOptions, $canonicalUrl, $itemId)
-    {
+    private function resolveHasVariants(
+        array $schemaOptions,
+        $canonicalUrl,
+        $itemId,
+        $sellerName = ''
+    ) {
         $documents = $this->toArray($this->option(
             $schemaOptions,
             'schemaVariantDocuments',
@@ -428,42 +433,37 @@ class ProductSchemaBuilder
                 continue;
             }
 
-            $name = $this->firstText($document, [
-                'texts.name1',
-                'texts.name2',
-                'texts.name3',
-                'variation.name',
-                'variation.model'
-            ]);
-            if ($name === '') {
-                continue;
-            }
-
-            $variant = [
-                '@type' => 'Product',
-                'productID' => (string)$variationId,
-                'name' => $name
-            ];
-
-            $sku = $this->firstRaw($document, [
-                'variation.number',
-                'variation.externalId'
-            ]);
-            if ($sku !== '') {
-                $variant['sku'] = $sku;
-            }
-
             $url = $this->firstRaw($document, [
                 'urls.canonical',
                 'url',
                 'texts.urlPath'
             ]);
             $url = $this->absoluteUrl($url, $canonicalUrl);
-            if ($url !== '') {
-                $variant['url'] = $url;
-                $variant['@id'] = rtrim($url, '/') . '#product-variation-' . $variationId;
+            if ($url === '') {
+                $url = $canonicalUrl;
             }
 
+            // Reuse the normal Product builder so every nested variant gets
+            // the same validated Offer data as a directly opened variation:
+            // SKU, price, availability, seller, return policy and shipping.
+            $childOptions = $schemaOptions;
+            $childOptions['schemaVariantDocuments'] = [];
+            $childOptions['schemaVideoObject'] = false;
+
+            $variant = $this->build(
+                $document,
+                $url,
+                [],
+                [],
+                $sellerName,
+                $childOptions
+            );
+
+            if (!is_array($variant) || ($variant['@type'] ?? '') !== 'Product') {
+                continue;
+            }
+
+            unset($variant['@context']);
             $seenVariationIds[$variationId] = true;
             $variants[] = $variant;
         }

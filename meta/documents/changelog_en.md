@@ -1,3 +1,9 @@
+## Version 5.0.46 – Fully populate ProductGroup variants
+
+- ProductGroup pages now load active and salable variants server-side through `IO\Services\ItemService`.
+- `hasVariant` now contains real `Product` objects including SKU, price, availability, Offer and `shippingDetails`.
+- Existing shipping-profile fallback logic is applied to every loaded variant.
+
 ## Version 5.0.45 – Resolve shipping profiles server-side
 
 - Loads shipping profiles linked to the item via `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.

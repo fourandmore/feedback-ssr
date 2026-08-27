@@ -1,3 +1,9 @@
+# Version 5.0.46 – ProductGroup mit vollständigen Varianten
+
+Bei nicht kaufbaren Hauptvarianten lädt FeedbackGeoFM die aktiven und verkaufbaren Kindvarianten nun serverseitig über `IO\Services\ItemService`. Dadurch enthält `ProductGroup.hasVariant` echte `Product`-Objekte inklusive SKU, Preis, Verfügbarkeit, Offer und Versanddetails.
+
+- Diagnose-Marker: `5.0.46`.
+
 # Version 5.0.45 – Versandprofile serverseitig aus PlentyONE laden
 
 - `ProductOfferSchema` lädt die echten Artikel→Versandprofil-Verknüpfungen nun über `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.

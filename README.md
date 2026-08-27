@@ -1,3 +1,5 @@
+Version 5.0.46 completes ProductGroup markup by resolving active, salable child variations server-side through `IO\Services\ItemService`. Each `hasVariant` entry is now a real Product with SKU, price, availability, Offer and shipping details.
+
 Version 5.0.45 resolves the item's real shipping-profile links server-side via PlentyONE's `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`. This removes the dependency on Ceres including the relation in the storefront item document. Exact configured profile prices therefore remain authoritative even when `variation.defaultShippingCosts` contains only a generic parcel value.
 
 Version 5.0.44 korrigiert zusätzlich die Versandprofil-Erkennung in Ceres/PlentyONE 5.0.81: `variation.itemShippingProfiles[].profileId` wird nun ausgewertet. Dadurch greifen profilgenaue Preise auch bei Artikeln, deren PlentyONE-Datensatz die Profile unter diesem offiziellen Pfad liefert.

@@ -4,6 +4,7 @@ namespace FeedbackGeoFM\DataProviders;
 
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
+use IO\Services\ItemService;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -141,7 +142,11 @@ class ProductOfferSchema
             // PlentyONE sometimes includes sibling item documents in the
             // layout-container arguments. The builder may use only these real
             // documents for ProductGroup.hasVariant; no variants are invented.
-            'schemaVariantDocuments' => $this->resolveVariantDocuments($args, $itemId)
+            'schemaVariantDocuments' => $this->resolveVariantDocumentsForSchema(
+                $args,
+                $data,
+                $itemId
+            )
         ];
 
         // Resolve the per-product YouTube video directly from the same PlentyONE
@@ -295,9 +300,135 @@ class ProductOfferSchema
     }
 
     /**
+     * Resolve sibling variant documents for ProductGroup.hasVariant.
+     *
+     * The SingleItem layout-container usually contains only the currently
+     * selected document. For a non-salable main variation this means the
+     * ProductGroup would otherwise have no hasVariant entries. On genuine
+     * ProductGroup pages we therefore load the active and salable child
+     * variations through IO's storefront-aware ItemService and merge them with
+     * any documents already present in the container arguments.
+     *
+     * @param mixed $args
+     * @param array $data
+     * @param int $itemId
+     * @return array
+     */
+    private function resolveVariantDocumentsForSchema($args, array $data, $itemId)
+    {
+        $documents = $this->resolveVariantDocuments($args, $itemId);
+
+        if (!$this->isVariationGroupData($data) || (int)$itemId <= 0) {
+            return $documents;
+        }
+
+        $seenVariationIds = [];
+        foreach ($documents as $document) {
+            $document = $this->toArray($document);
+            $variationId = $this->resolveId($document, 'variation', 'id');
+            if ($variationId > 0) {
+                $seenVariationIds[$variationId] = true;
+            }
+        }
+
+        try {
+            /** @var ItemService $itemService */
+            $itemService = pluginApp(ItemService::class);
+            $variationIds = $itemService->getVariationIds((int)$itemId);
+
+            if (!is_array($variationIds) || empty($variationIds)) {
+                return $documents;
+            }
+
+            $variationIds = array_values(array_unique(array_map('intval', $variationIds)));
+            $variationIds = array_values(array_filter($variationIds, function ($variationId) use ($seenVariationIds) {
+                return $variationId > 0 && !isset($seenVariationIds[$variationId]);
+            }));
+
+            // Keep the schema bounded even for unusually large variant sets.
+            $variationIds = array_slice($variationIds, 0, max(0, 50 - count($documents)));
+            if (empty($variationIds)) {
+                return $documents;
+            }
+
+            $result = $itemService->getVariations($variationIds);
+            $loadedDocuments = [];
+            $loadedSeen = [];
+            $this->collectVariantDocuments(
+                $result,
+                (int)$itemId,
+                0,
+                $loadedDocuments,
+                $loadedSeen
+            );
+
+            foreach ($loadedDocuments as $document) {
+                $document = $this->appendItemShippingProfiles(
+                    $this->toArray($document),
+                    (int)$itemId
+                );
+                $variationId = $this->resolveId($document, 'variation', 'id');
+                if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
+                    continue;
+                }
+
+                $seenVariationIds[$variationId] = true;
+                $documents[] = $document;
+                if (count($documents) >= 50) {
+                    break;
+                }
+            }
+        } catch (\Throwable $e) {
+            // A ProductGroup without hasVariant is preferable to breaking the
+            // item page if IO cannot resolve the child variations.
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Mirror the ProductSchemaBuilder's ProductGroup detection without making
+     * the builder part of this data-provider's control flow.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function isVariationGroupData(array $data)
+    {
+        $filter = isset($data['filter']) && is_array($data['filter'])
+            ? $data['filter']
+            : [];
+
+        $hasChildren = $this->truthy(isset($filter['hasChildren']) ? $filter['hasChildren'] : false)
+            || $this->truthy(isset($filter['hasActiveChildren']) ? $filter['hasActiveChildren'] : false);
+        $hasSalableFlag = array_key_exists('isSalable', $filter);
+        $isSalable = $hasSalableFlag ? $this->truthy($filter['isSalable']) : true;
+
+        return $hasChildren && $hasSalableFlag && !$isSalable;
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    private function truthy($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_numeric($value)) {
+            return (int)$value !== 0;
+        }
+        if (is_string($value)) {
+            return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+        }
+        return !empty($value);
+    }
+
+    /**
      * Collect concrete sibling variation documents already present in the
-     * layout-container payload. This remains deliberately local: the schema
-     * renderer must not trigger an additional variation search for every page.
+     * layout-container payload. ProductGroup pages may augment this local set
+     * via resolveVariantDocumentsForSchema().
      *
      * @param mixed $args
      * @param int $itemId
