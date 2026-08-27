@@ -350,7 +350,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.52',
+            'pluginVersion' => '5.0.53',
             'diagnosticOnly' => true,
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
@@ -425,25 +425,30 @@ class ProductOfferSchema
 
             $result = $itemService->getVariations($diagnosticVariationIds);
 
-            $diagnostics['getVariationsResultType'] = gettype($result);
+            $diagnostics['getVariationsResultType'] = $this->diagnosticTypeLabel($result);
             if (is_array($result)) {
                 $diagnostics['getVariationsResultCount'] = count($result);
                 $diagnostics['getVariationsTopLevelKeys'] = array_slice(array_keys($result), 0, 30);
 
                 if (!empty($result)) {
-                    $firstKey = array_key_first($result);
-                    $firstValue = $result[$firstKey];
+                    $firstKey = null;
+                    $firstValue = null;
+                    foreach ($result as $resultKey => $resultValue) {
+                        $firstKey = $resultKey;
+                        $firstValue = $resultValue;
+                        break;
+                    }
                     $firstValueArray = $this->toArray($firstValue);
 
                     $diagnostics['getVariationsFirstKey'] = $firstKey;
-                    $diagnostics['getVariationsFirstValueType'] = gettype($firstValue);
+                    $diagnostics['getVariationsFirstValueType'] = $this->diagnosticTypeLabel($firstValue);
                     $diagnostics['getVariationsFirstValueKeys'] = is_array($firstValueArray)
                         ? array_slice(array_keys($firstValueArray), 0, 50)
                         : [];
-                    $diagnostics['getVariationsFirstValuePreview'] = $this->jsonPreview($firstValue, 2500);
+                    $diagnostics['getVariationsFirstValuePreview'] = $this->diagnosticPreview($firstValue);
                 }
             } else {
-                $diagnostics['getVariationsFirstValuePreview'] = $this->jsonPreview($result, 2500);
+                $diagnostics['getVariationsFirstValuePreview'] = $this->diagnosticPreview($result);
             }
 
             $loadedDocuments = [];
@@ -457,15 +462,19 @@ class ProductOfferSchema
             );
 
             $diagnostics['collectorDocumentsCount'] = count($loadedDocuments);
-            $diagnostics['collectorVariationIdSample'] = array_slice(array_map(
-                'intval',
-                array_keys($loadedSeen)
-            ), 0, 10);
+            $collectorVariationIds = [];
+            foreach (array_keys($loadedSeen) as $loadedVariationId) {
+                $collectorVariationIds[] = (int)$loadedVariationId;
+                if (count($collectorVariationIds) >= 10) {
+                    break;
+                }
+            }
+            $diagnostics['collectorVariationIdSample'] = $collectorVariationIds;
 
             // Diagnostic version: do not change ProductGroup.hasVariant yet.
             // We first observe the exact documented API response in the live shop.
         } catch (\Throwable $e) {
-            $diagnostics['errorClass'] = get_class($e);
+            $diagnostics['errorClass'] = 'Throwable';
             $diagnostics['errorMessage'] = $e->getMessage();
         }
 
@@ -486,35 +495,64 @@ class ProductOfferSchema
             return [];
         }
 
-        $firstKey = array_key_first($values);
-        $firstValue = $this->toArray($values[$firstKey]);
+        $firstValue = [];
+        foreach ($values as $value) {
+            $firstValue = $this->toArray($value);
+            break;
+        }
         return empty($firstValue) ? [] : array_slice(array_keys($firstValue), 0, 50);
     }
 
     /**
-     * Serialize a bounded diagnostic preview. This is not schema data and is
-     * emitted only in the application/json diagnostic script.
+     * Return a diagnostic type label using only type checks already used by
+     * the successfully deployed 5.0.50 code base.
      *
      * @param mixed $value
-     * @param int $maxLength
-     * @return string|null
+     * @return string
      */
-    private function jsonPreview($value, $maxLength = 2500)
+    private function diagnosticTypeLabel($value)
     {
-        $json = json_encode(
-            $value,
-            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR
-        );
+        if (is_array($value)) {
+            return 'array';
+        }
+        if (is_object($value)) {
+            return 'object';
+        }
+        if (is_string($value)) {
+            return 'string';
+        }
+        if (is_bool($value)) {
+            return 'bool';
+        }
+        if (is_numeric($value)) {
+            return 'numeric';
+        }
+        if ($value === null) {
+            return 'null';
+        }
+        return 'other';
+    }
 
-        if (!is_string($json)) {
-            return null;
+    /**
+     * Serialize only the first top-level fields of a diagnostic value.
+     * No string-length functions are used, so the code check sees only
+     * global PHP functions already present in the proven 5.0.50 base.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private function diagnosticPreview($value)
+    {
+        $arrayValue = $this->toArray($value);
+        if (!empty($arrayValue)) {
+            return array_slice($arrayValue, 0, 8, true);
         }
 
-        if (strlen($json) <= $maxLength) {
-            return $json;
+        if (is_string($value) || is_numeric($value) || is_bool($value) || $value === null) {
+            return $value;
         }
 
-        return substr($json, 0, $maxLength) . '...';
+        return null;
     }
 
     /**
