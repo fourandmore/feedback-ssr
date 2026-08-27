@@ -1,3 +1,9 @@
+## Version 5.0.43 – Profilpreis vor Plenty-Standardkosten
+
+- Ein explizit konfigurierter Versandprofilpreis hat nun Vorrang vor `variation.defaultShippingCosts`.
+- Damit können Artikel korrigiert werden, bei denen PlentyONE im Artikeldokument einen generischen Paketwert liefert, obwohl das zugewiesene Versandprofil einen anderen festen Preis hat.
+- Gibt es keinen passenden Profilpreis, bleibt `defaultShippingCosts` die nächste Quelle; erst danach greifen Paket-/Speditions-Fallbacks.
+
 ## Version 5.0.42 – Versandkosten-Fallback je Versandprofil
 
 - Neue Konfiguration für exakte Zuordnung `Versandprofil-ID = Versandpreis`, z. B. `6=6,90; 9=59,00; 12=89,00`.

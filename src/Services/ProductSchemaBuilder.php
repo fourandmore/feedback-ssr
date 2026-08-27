@@ -829,20 +829,36 @@ class ProductSchemaBuilder
         }
 
         $shippingCost = null;
-        foreach ([
-            'variation.defaultShippingCosts',
-            'variation.defaultShippingCost',
-            'shipping.defaultShippingCosts',
-            'shipping.costs'
-        ] as $path) {
-            $shippingCost = $this->numericValue($this->value($data, $path, null));
-            if ($shippingCost !== null && $shippingCost >= 0) {
-                break;
+        $fallbackEnabled = $this->optionBool(
+            $schemaOptions,
+            'schemaShippingFallbackEnabled',
+            false
+        );
+
+        // An explicitly configured shipping-profile price is shop-specific
+        // knowledge and therefore takes precedence over PlentyONE's generic
+        // defaultShippingCosts value. This is important when the item document
+        // exposes a parcel default although the assigned profile has a
+        // different fixed shipping rate.
+        if ($fallbackEnabled) {
+            $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+        }
+
+        if ($shippingCost === null || $shippingCost < 0) {
+            foreach ([
+                'variation.defaultShippingCosts',
+                'variation.defaultShippingCost',
+                'shipping.defaultShippingCosts',
+                'shipping.costs'
+            ] as $path) {
+                $shippingCost = $this->numericValue($this->value($data, $path, null));
+                if ($shippingCost !== null && $shippingCost >= 0) {
+                    break;
+                }
             }
         }
 
-        if (($shippingCost === null || $shippingCost < 0)
-            && $this->optionBool($schemaOptions, 'schemaShippingFallbackEnabled', false)) {
+        if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
             $shippingCost = $this->resolveConfiguredShippingFallback($data, $schemaOptions);
         }
 

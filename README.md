@@ -1,3 +1,5 @@
+Version 5.0.43 korrigiert die Versandkosten-Priorität: Ein explizit konfigurierter Preis für das zugewiesene PlentyONE-Versandprofil hat nun Vorrang vor `variation.defaultShippingCosts`. Nur wenn kein Profilpreis passt, wird der PlentyONE-Standardwert verwendet; danach greifen die allgemeinen Paket-/Speditions-Fallbacks.
+
 # Feedback Product Offer GEO F&M
 
 Entwickelt und gepflegt von **Four & More GmbH** für plentyShop LTS.

@@ -1,3 +1,9 @@
+## Version 5.0.43 – Profile price before Plenty default costs
+
+- An explicitly configured shipping-profile price now takes precedence over `variation.defaultShippingCosts`.
+- This corrects products where PlentyONE exposes a generic parcel value in the item document although the assigned shipping profile has a different fixed price.
+- If no profile price matches, `defaultShippingCosts` remains the next source, followed by the parcel/freight fallback.
+
 ## Version 5.0.42 – Shipping fallback per shipping profile
 
 - Adds exact `shipping profile ID = shipping price` mappings, e.g. `6=6.90; 9=59.00; 12=89.00`.

@@ -340,20 +340,37 @@ if (!is_array($unknownProfileSchema)
     exit(1);
 }
 
-$plentyPriceWinsItemData = $packageFallbackItemData;
-$plentyPriceWinsItemData['variation']['shippingProfileId'] = 12;
-$plentyPriceWinsItemData['variation']['defaultShippingCosts'] = 4.2;
-$plentyPriceWinsSchema = $builder->build(
-    $plentyPriceWinsItemData,
-    'https://www.example.test/plenty-price-wins_51000_13046',
+$profilePriceWinsItemData = $packageFallbackItemData;
+$profilePriceWinsItemData['variation']['shippingProfileId'] = 12;
+$profilePriceWinsItemData['variation']['defaultShippingCosts'] = 4.2;
+$profilePriceWinsSchema = $builder->build(
+    $profilePriceWinsItemData,
+    'https://www.example.test/profile-price-wins_51000_13046',
     [],
     [],
     'Four & More GmbH',
     $fallbackOptions
 );
-if (!is_array($plentyPriceWinsSchema)
-    || $plentyPriceWinsSchema['offers']['shippingDetails']['shippingRate']['value'] !== 4.2) {
-    fwrite(STDERR, 'PlentyONE default shipping costs must remain authoritative.' . PHP_EOL);
+if (!is_array($profilePriceWinsSchema)
+    || $profilePriceWinsSchema['offers']['shippingDetails']['shippingRate']['value'] !== 129.0) {
+    fwrite(STDERR, 'Explicit shipping-profile price must take precedence over PlentyONE default shipping costs.' . PHP_EOL);
+    exit(1);
+}
+
+$unmappedPlentyPriceItemData = $packageFallbackItemData;
+$unmappedPlentyPriceItemData['variation']['shippingProfileId'] = 77;
+$unmappedPlentyPriceItemData['variation']['defaultShippingCosts'] = 4.2;
+$unmappedPlentyPriceSchema = $builder->build(
+    $unmappedPlentyPriceItemData,
+    'https://www.example.test/unmapped-plenty-price_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($unmappedPlentyPriceSchema)
+    || $unmappedPlentyPriceSchema['offers']['shippingDetails']['shippingRate']['value'] !== 4.2) {
+    fwrite(STDERR, 'PlentyONE default shipping costs must remain authoritative when no explicit profile price matches.' . PHP_EOL);
     exit(1);
 }
 

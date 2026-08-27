@@ -1,3 +1,9 @@
+# Version 5.0.43 – Versandprofilpreis hat Vorrang
+
+- Ein explizit gepflegter Preis aus `schemaShippingProfilePrices` hat nun Vorrang vor `variation.defaultShippingCosts`.
+- Ohne passenden Profilpreis bleibt PlentyONE `defaultShippingCosts` die nächste Quelle.
+- Paket-/Speditions-Fallback bleiben letzte Stufe.
+
 # Version 5.0.42 – Versandprofil-spezifischer Versandkosten-Fallback
 
 - Exakte Fallbackpreise können je PlentyONE-Versandprofil konfiguriert werden, z. B. `6=6,90; 9=59,00`.
