@@ -1,3 +1,5 @@
+Version 5.0.45 resolves the item's real shipping-profile links server-side via PlentyONE's `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`. This removes the dependency on Ceres including the relation in the storefront item document. Exact configured profile prices therefore remain authoritative even when `variation.defaultShippingCosts` contains only a generic parcel value.
+
 Version 5.0.44 korrigiert zusätzlich die Versandprofil-Erkennung in Ceres/PlentyONE 5.0.81: `variation.itemShippingProfiles[].profileId` wird nun ausgewertet. Dadurch greifen profilgenaue Preise auch bei Artikeln, deren PlentyONE-Datensatz die Profile unter diesem offiziellen Pfad liefert.
 
 Version 5.0.43 korrigiert die Versandkosten-Priorität: Ein explizit konfigurierter Preis für das zugewiesene PlentyONE-Versandprofil hat nun Vorrang vor `variation.defaultShippingCosts`. Nur wenn kein Profilpreis passt, wird der PlentyONE-Standardwert verwendet; danach greifen die allgemeinen Paket-/Speditions-Fallbacks.

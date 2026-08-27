@@ -346,6 +346,28 @@ if (!is_array($ceresItemShippingProfilesSchema)
     exit(1);
 }
 
+$repositoryItemShippingProfilesData = $packageFallbackItemData;
+$repositoryItemShippingProfilesData['itemShippingProfiles'] = [
+    ['id' => 902, 'itemId' => 51000, 'profileId' => 57]
+];
+$repositoryItemShippingProfilesData['variation']['defaultShippingCosts'] = 6.9;
+$repositoryProfileOptions = array_merge($fallbackOptions, [
+    'schemaShippingProfilePrices' => '19=6,90; 57=19,90'
+]);
+$repositoryItemShippingProfilesSchema = $builder->build(
+    $repositoryItemShippingProfilesData,
+    'https://www.example.test/repository-item-shipping-profiles_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $repositoryProfileOptions
+);
+if (!is_array($repositoryItemShippingProfilesSchema)
+    || $repositoryItemShippingProfilesSchema['offers']['shippingDetails']['shippingRate']['value'] !== 19.9) {
+    fwrite(STDERR, 'Server-side ItemShippingProfiles repository relation fallback failed.' . PHP_EOL);
+    exit(1);
+}
+
 $unknownProfileItemData = $packageFallbackItemData;
 $unknownProfileItemData['variation']['shippingProfileId'] = 77;
 $unknownProfileSchema = $builder->build(

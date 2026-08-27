@@ -1,3 +1,10 @@
+# Version 5.0.45 – Versandprofile serverseitig aus PlentyONE laden
+
+- `ProductOfferSchema` lädt die echten Artikel→Versandprofil-Verknüpfungen nun über `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.
+- Dadurch ist die Profilpreis-Zuordnung nicht mehr davon abhängig, ob Ceres 5.0.81 `itemShippingProfiles` im Artikeldokument mitsendet.
+- Ein expliziter Profilpreis bleibt vor `variation.defaultShippingCosts`; bei Repository-Fehlern bleiben Plenty-Standardkosten und die bisherigen Fallbacks funktionsfähig.
+- Diagnose-Marker: `5.0.45`.
+
 # Version 5.0.44 – Ceres-Versandprofile korrekt erkennen
 
 - Ergänzt die Profil-Erkennung um `variation.itemShippingProfiles`, `itemShippingProfiles` und `item.itemShippingProfiles`.

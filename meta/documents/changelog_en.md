@@ -1,3 +1,9 @@
+## Version 5.0.45 – Resolve shipping profiles server-side
+
+- Loads shipping profiles linked to the item via `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.
+- Exact profile shipping prices now work even when Ceres 5.0.81 omits the shipping-profile relation from the storefront item document.
+- Repository failures remain non-fatal; Plenty default costs and existing fallbacks continue to work.
+
 ## Version 5.0.44 – Support Ceres ItemShippingProfiles
 
 - Shipping-profile detection now reads `variation.itemShippingProfiles`, `itemShippingProfiles`, and `item.itemShippingProfiles`.

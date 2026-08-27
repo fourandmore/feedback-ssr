@@ -1,3 +1,9 @@
+## Version 5.0.45 – Versandprofile serverseitig auflösen
+
+- Lädt die am Artikel verknüpften Versandprofile über `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.
+- Profilgenaue Versandpreise funktionieren damit auch dann, wenn Ceres 5.0.81 die Versandprofil-Relation im Artikeldokument nicht ausliefert.
+- Repository-Fehler bleiben nicht-fatal; vorhandene Plenty-Standardkosten und Fallbacks funktionieren weiter.
+
 ## Version 5.0.44 – Ceres-ItemShippingProfiles unterstützt
 
 - Die Versandprofil-Erkennung wertet nun `variation.itemShippingProfiles`, `itemShippingProfiles` und `item.itemShippingProfiles` aus.

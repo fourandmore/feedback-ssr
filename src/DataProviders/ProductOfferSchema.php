@@ -4,6 +4,7 @@ namespace FeedbackGeoFM\DataProviders;
 
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
+use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
 
@@ -41,6 +42,14 @@ class ProductOfferSchema
 
         if ($itemId <= 0 && $variationId <= 0) {
             return '';
+        }
+
+        // The plentyShop item document does not reliably contain the shipping
+        // profiles linked to the item. Resolve the authoritative item-level
+        // relation server-side so exact profile prices can be applied even
+        // when variation.defaultShippingCosts only contains a generic value.
+        if ($itemId > 0) {
+            $data = $this->appendItemShippingProfiles($data, $itemId);
         }
 
         $sellerName = trim((string)$this->configValue(
@@ -199,6 +208,41 @@ class ProductOfferSchema
         return '<script id="feedback-product-offer-jsonld" type="application/ld+json">'
             . $json
             . '</script>';
+    }
+
+    /**
+     * Load the real item-to-shipping-profile links from PlentyONE. Shipping
+     * profiles are assigned at item level, while the plentyShop/Ceres item
+     * document may omit this relation entirely.
+     *
+     * Repository failures are intentionally non-fatal: the builder can still
+     * fall back to variation.defaultShippingCosts and the legacy package/
+     * freight rules.
+     *
+     * @param array $data
+     * @param int $itemId
+     * @return array
+     */
+    private function appendItemShippingProfiles(array $data, $itemId)
+    {
+        try {
+            /** @var ItemShippingProfilesRepositoryContract $repository */
+            $repository = pluginApp(ItemShippingProfilesRepositoryContract::class);
+            $profiles = $repository->findByItemId((int)$itemId);
+
+            if (is_array($profiles) && !empty($profiles)) {
+                $data['itemShippingProfiles'] = $profiles;
+            } elseif (is_object($profiles)) {
+                $profilesArray = $this->toArray($profiles);
+                if (!empty($profilesArray)) {
+                    $data['itemShippingProfiles'] = $profilesArray;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Keep schema rendering resilient if the repository is unavailable.
+        }
+
+        return $data;
     }
 
     /**
