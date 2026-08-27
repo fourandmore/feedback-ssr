@@ -1,6 +1,9 @@
-## 5.0.51
-- ProductGroup variants are loaded through the documented IO method `ItemService::getVariations()` with `ResultFieldTemplate::TEMPLATE_SINGLE_ITEM`.
-- Variants are loaded in batches of 20 so complete SingleItem fields are available for `hasVariant`, prices, availability, images and shipping details.
+## 5.0.52
+
+- Diagnostic-only release for ProductGroup variants.
+- Uses only documented `SingleItemContext` data and one-argument `ItemService::getVariations($variationIds)`.
+- Exposes the actual response shape in `#feedback-geofm-variant-diagnostics` (`application/json`).
+- Deliberately does not alter `hasVariant` in this diagnostic release.
 
 ## 5.0.50
 - ProductGroup variants now use the documented `Ceres\Contexts\SingleItemContext`, extended through the official `IO.ctx.item` / `IO.intl.ctx.item` events.

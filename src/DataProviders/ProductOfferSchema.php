@@ -5,7 +5,6 @@ namespace FeedbackGeoFM\DataProviders;
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
 use IO\Services\ItemService;
-use Plenty\Modules\Webshop\ItemSearch\Helpers\ResultFieldTemplate;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -59,6 +58,14 @@ class ProductOfferSchema
             'schemaSellerName',
             'Four & More GmbH'
         ));
+
+        $variantDiagnostics = [];
+        $variantDocuments = $this->resolveVariantDocumentsForSchema(
+            $args,
+            $data,
+            $itemId,
+            $variantDiagnostics
+        );
 
         $schemaOptions = [
             'schemaManufacturerName' => trim((string)$this->configValueAllowEmpty(
@@ -143,11 +150,7 @@ class ProductOfferSchema
             // PlentyONE sometimes includes sibling item documents in the
             // layout-container arguments. The builder may use only these real
             // documents for ProductGroup.hasVariant; no variants are invented.
-            'schemaVariantDocuments' => $this->resolveVariantDocumentsForSchema(
-                $args,
-                $data,
-                $itemId
-            )
+            'schemaVariantDocuments' => $variantDocuments
         ];
 
         // Resolve the per-product YouTube video directly from the same PlentyONE
@@ -211,7 +214,25 @@ class ProductOfferSchema
             return '';
         }
 
-        return '<script id="feedback-product-offer-jsonld" type="application/ld+json">'
+        $diagnosticJson = json_encode(
+            $variantDiagnostics,
+            JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+            | JSON_HEX_TAG
+            | JSON_HEX_AMP
+            | JSON_HEX_APOS
+            | JSON_HEX_QUOT
+        );
+
+        $diagnosticScript = '';
+        if (is_string($diagnosticJson) && $diagnosticJson !== '') {
+            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics" type="application/json">'
+                . $diagnosticJson
+                . '</script>';
+        }
+
+        return $diagnosticScript
+            . '<script id="feedback-product-offer-jsonld" type="application/ld+json">'
             . $json
             . '</script>';
     }
@@ -315,27 +336,56 @@ class ProductOfferSchema
      * @param int $itemId
      * @return array
      */
-    private function resolveVariantDocumentsForSchema($args, array $data, $itemId)
+    private function resolveVariantDocumentsForSchema($args, array $data, $itemId, array &$diagnostics = [])
     {
         $documents = $this->resolveVariantDocuments($args, $itemId);
-
-        if (!$this->isVariationGroupData($data) || (int)$itemId <= 0) {
-            return $documents;
-        }
-
-        // Ceres 5.0.x exposes the variation selector data through the documented
-        // SingleItemContext::$variations property. FeedbackSingleItemContext
-        // forwards that exact data into the current item document, which is the
-        // object passed to SingleItem.BeforeAddToBasket.
         $contextVariations = isset($data['feedbackGeoFMContextVariations'])
             ? $this->toArray($data['feedbackGeoFMContextVariations'])
             : [];
+        $contextAttributes = isset($data['feedbackGeoFMContextAttributes'])
+            ? $this->toArray($data['feedbackGeoFMContextAttributes'])
+            : [];
+        $contextAfterKey = isset($data['feedbackGeoFMContextAfterKey'])
+            ? $this->toArray($data['feedbackGeoFMContextAfterKey'])
+            : [];
 
-        if (empty($contextVariations)) {
+        $diagnostics = [
+            'pluginVersion' => '5.0.52',
+            'diagnosticOnly' => true,
+            'itemId' => (int)$itemId,
+            'isVariationGroup' => $this->isVariationGroupData($data),
+            'contextVariationsCount' => count($contextVariations),
+            'contextAttributesCount' => count($contextAttributes),
+            'contextAfterKeyCount' => count($contextAfterKey),
+            'contextFirstVariationKeys' => $this->firstArrayKeys($contextVariations),
+            'contextFirstAttributeKeys' => $this->firstArrayKeys($contextAttributes),
+            'existingContainerDocumentsCount' => count($documents),
+            'salableVariationIdsCount' => 0,
+            'salableVariationIdsSample' => [],
+            'getVariationsCalled' => false,
+            'getVariationsInputCount' => 0,
+            'getVariationsInputSample' => [],
+            'getVariationsResultType' => null,
+            'getVariationsResultCount' => null,
+            'getVariationsTopLevelKeys' => [],
+            'getVariationsFirstKey' => null,
+            'getVariationsFirstValueType' => null,
+            'getVariationsFirstValueKeys' => [],
+            'getVariationsFirstValuePreview' => null,
+            'collectorDocumentsCount' => 0,
+            'collectorVariationIdSample' => [],
+            'errorClass' => null,
+            'errorMessage' => null
+        ];
+
+        if (!$diagnostics['isVariationGroup'] || (int)$itemId <= 0 || empty($contextVariations)) {
             return $documents;
         }
 
         $variationIds = $this->extractSalableVariationIds($contextVariations);
+        $diagnostics['salableVariationIdsCount'] = count($variationIds);
+        $diagnostics['salableVariationIdsSample'] = array_slice(array_values($variationIds), 0, 10);
+
         if (empty($variationIds)) {
             return $documents;
         }
@@ -357,82 +407,114 @@ class ProductOfferSchema
             }
         ));
 
-        // Keep the schema bounded for unusually large variation families.
-        $variationIds = array_slice($variationIds, 0, max(0, 120 - count($documents)));
-        if (empty($variationIds)) {
+        // Diagnostic request only: use a small sample with the documented
+        // one-argument ItemService::getVariations(array $variationIds) API.
+        // This deliberately avoids guessing limits or undocumented parameters.
+        $diagnosticVariationIds = array_slice($variationIds, 0, 10);
+        $diagnostics['getVariationsInputCount'] = count($diagnosticVariationIds);
+        $diagnostics['getVariationsInputSample'] = $diagnosticVariationIds;
+
+        if (empty($diagnosticVariationIds)) {
             return $documents;
         }
 
         try {
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
+            $diagnostics['getVariationsCalled'] = true;
 
-            // Documented IO API: getVariations() accepts a result-field template.
-            // The default VariationList result does not necessarily contain all
-            // fields required by ProductSchemaBuilder (texts, prices, images,
-            // filter data, etc.). Request the documented SingleItem result fields
-            // explicitly and keep each request bounded to 20 variation IDs.
+            $result = $itemService->getVariations($diagnosticVariationIds);
+
+            $diagnostics['getVariationsResultType'] = gettype($result);
+            if (is_array($result)) {
+                $diagnostics['getVariationsResultCount'] = count($result);
+                $diagnostics['getVariationsTopLevelKeys'] = array_slice(array_keys($result), 0, 30);
+
+                if (!empty($result)) {
+                    $firstKey = array_key_first($result);
+                    $firstValue = $result[$firstKey];
+                    $firstValueArray = $this->toArray($firstValue);
+
+                    $diagnostics['getVariationsFirstKey'] = $firstKey;
+                    $diagnostics['getVariationsFirstValueType'] = gettype($firstValue);
+                    $diagnostics['getVariationsFirstValueKeys'] = is_array($firstValueArray)
+                        ? array_slice(array_keys($firstValueArray), 0, 50)
+                        : [];
+                    $diagnostics['getVariationsFirstValuePreview'] = $this->jsonPreview($firstValue, 2500);
+                }
+            } else {
+                $diagnostics['getVariationsFirstValuePreview'] = $this->jsonPreview($result, 2500);
+            }
+
             $loadedDocuments = [];
             $loadedSeen = [];
-            foreach (array_chunk($variationIds, 20) as $variationIdChunk) {
-                try {
-                    $result = $itemService->getVariations(
-                        $variationIdChunk,
-                        ResultFieldTemplate::TEMPLATE_SINGLE_ITEM
-                    );
+            $this->collectVariantDocuments(
+                $result,
+                (int)$itemId,
+                0,
+                $loadedDocuments,
+                $loadedSeen
+            );
 
-                    $this->collectVariantDocuments(
-                        $result,
-                        (int)$itemId,
-                        0,
-                        $loadedDocuments,
-                        $loadedSeen
-                    );
-                } catch (\Throwable $chunkError) {
-                    // One failed batch must not suppress variants from successful
-                    // batches. All calls remain on the documented IO ItemService.
-                    continue;
-                }
-            }
+            $diagnostics['collectorDocumentsCount'] = count($loadedDocuments);
+            $diagnostics['collectorVariationIdSample'] = array_slice(array_map(
+                'intval',
+                array_keys($loadedSeen)
+            ), 0, 10);
 
-            // Attribute/value names are resolved with documented ItemService
-            // methods. They enrich Product variants with size/color but are not
-            // required to discover the variant IDs themselves.
-            $variantMetaById = $this->buildVariantMetaMap($contextVariations, $itemService);
-
-            // Shipping profiles are item-level relations and were resolved once
-            // for the parent. Reuse them for every child variation.
-            $itemShippingProfiles = isset($data['itemShippingProfiles'])
-                ? $this->toArray($data['itemShippingProfiles'])
-                : [];
-
-            foreach ($loadedDocuments as $document) {
-                $document = $this->toArray($document);
-                $variationId = $this->resolveId($document, 'variation', 'id');
-                if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
-                    continue;
-                }
-
-                if (!empty($itemShippingProfiles)) {
-                    $document['itemShippingProfiles'] = $itemShippingProfiles;
-                }
-
-                if (isset($variantMetaById[$variationId])) {
-                    $document['feedbackVariantAttributes'] = $variantMetaById[$variationId];
-                }
-
-                $seenVariationIds[$variationId] = true;
-                $documents[] = $document;
-                if (count($documents) >= 120) {
-                    break;
-                }
-            }
+            // Diagnostic version: do not change ProductGroup.hasVariant yet.
+            // We first observe the exact documented API response in the live shop.
         } catch (\Throwable $e) {
-            // Schema enrichment must never break the item page. If IO cannot
-            // load full variant documents, the parent ProductGroup is retained.
+            $diagnostics['errorClass'] = get_class($e);
+            $diagnostics['errorMessage'] = $e->getMessage();
         }
 
         return $documents;
+    }
+
+    /**
+     * Return the keys of the first array/object entry without assuming a
+     * particular PlentyONE response shape.
+     *
+     * @param mixed $values
+     * @return array
+     */
+    private function firstArrayKeys($values)
+    {
+        $values = $this->toArray($values);
+        if (empty($values)) {
+            return [];
+        }
+
+        $firstKey = array_key_first($values);
+        $firstValue = $this->toArray($values[$firstKey]);
+        return empty($firstValue) ? [] : array_slice(array_keys($firstValue), 0, 50);
+    }
+
+    /**
+     * Serialize a bounded diagnostic preview. This is not schema data and is
+     * emitted only in the application/json diagnostic script.
+     *
+     * @param mixed $value
+     * @param int $maxLength
+     * @return string|null
+     */
+    private function jsonPreview($value, $maxLength = 2500)
+    {
+        $json = json_encode(
+            $value,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR
+        );
+
+        if (!is_string($json)) {
+            return null;
+        }
+
+        if (strlen($json) <= $maxLength) {
+            return $json;
+        }
+
+        return substr($json, 0, $maxLength) . '...';
     }
 
     /**
