@@ -1,3 +1,12 @@
+## 5.0.47
+
+- ProductGroup variants are now discovered through the Ceres-aligned `ItemService::getVariationAttributeMap()`, including selectable products that are not returned by the stricter stock-salable ID query.
+- Variant details are loaded in batches of 20 so large ProductGroups are processed completely.
+- Real variation attributes are emitted as Schema.org `size`, `color`, `material`, or `pattern`, and `variesBy` is derived automatically.
+- Variants receive unambiguous names based on the product name and real attribute values.
+- `isVariantOf` now includes the complete parent name, parent description, and `variesBy`.
+- Item-level shipping profiles are reused for all child variants instead of being queried repeatedly.
+
 ## Version 5.0.46 – Fully populate ProductGroup variants
 
 - ProductGroup pages now load active and salable variants server-side through `IO\Services\ItemService`.

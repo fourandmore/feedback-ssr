@@ -1,3 +1,12 @@
+## 5.0.47
+
+- ProductGroup-Varianten werden jetzt über die Ceres-nahe `ItemService::getVariationAttributeMap()` ermittelt. Dadurch funktionieren auch Artikel, deren Varianten trotz fehlendem physischen Lagerbestand im Shop kaufbar sind.
+- Variantendetails werden in 20er-Batches geladen, damit große ProductGroups vollständig verarbeitet werden.
+- Reale Variantenattribute werden als Schema.org `size`, `color`, `material` bzw. `pattern` ausgegeben und `variesBy` daraus automatisch abgeleitet.
+- Varianten erhalten eindeutige Namen aus Produktname plus realen Attributwerten.
+- `isVariantOf` enthält jetzt zusätzlich den vollständigen Parent-Namen, die Parent-Beschreibung und `variesBy`.
+- Artikel-Versandprofile werden für alle Varianten wiederverwendet und nicht pro Variante erneut abgefragt.
+
 ## Version 5.0.46 – ProductGroup-Varianten vollständig auszeichnen
 
 - ProductGroup-Seiten laden aktive und verkaufbare Varianten serverseitig über `IO\Services\ItemService`.

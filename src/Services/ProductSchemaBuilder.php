@@ -101,7 +101,10 @@ class ProductSchemaBuilder
                 $schemaOptions,
                 $canonicalUrl,
                 $itemId,
-                $sellerName
+                $sellerName,
+                $name,
+                $description,
+                isset($schema['variesBy']) ? $schema['variesBy'] : []
             );
             if (!empty($hasVariants)) {
                 $schema['hasVariant'] = $hasVariants;
@@ -122,17 +125,52 @@ class ProductSchemaBuilder
             }
 
             if ($this->belongsToVariationGroup($data) && $itemId > 0) {
+                $parentName = $this->cleanText($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupName',
+                    $name
+                ));
+                if ($parentName === '') {
+                    $parentName = $name;
+                }
+
                 $schema['isVariantOf'] = [
                     '@type' => 'ProductGroup',
                     '@id' => $groupId,
                     'productGroupID' => (string)$itemId,
-                    'name' => $name
+                    'name' => $parentName
                 ];
 
-                $variesBy = $this->resolveVariesBy($data, $schemaOptions);
+                $parentDescription = $this->cleanText($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupDescription',
+                    ''
+                ));
+                if ($parentDescription !== '') {
+                    $schema['isVariantOf']['description'] = $parentDescription;
+                }
+
+                $parentVariesBy = $this->toArray($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupVariesBy',
+                    []
+                ));
+                $variesBy = !empty($parentVariesBy)
+                    ? $parentVariesBy
+                    : $this->resolveVariesBy($data, $schemaOptions);
                 if (!empty($variesBy)) {
                     $schema['isVariantOf']['variesBy'] = $variesBy;
                 }
+            }
+
+            $variantProperties = $this->resolveVariantProperties($data);
+            foreach ($variantProperties as $property => $value) {
+                $schema[$property] = $value;
+            }
+
+            $variantLabel = $this->variantLabel($variantProperties);
+            if ($variantLabel !== '') {
+                $schema['name'] = $name . ' – ' . $variantLabel;
             }
         }
 
@@ -326,8 +364,11 @@ class ProductSchemaBuilder
 
         $attributes = $this->value($data, 'attributes', []);
         $groupedAttributes = $this->value($data, 'groupedAttributes', []);
+        $feedbackVariantAttributes = $this->value($data, 'feedbackVariantAttributes', []);
 
-        return !empty($this->toArray($attributes)) || !empty($this->toArray($groupedAttributes));
+        return !empty($this->toArray($attributes))
+            || !empty($this->toArray($groupedAttributes))
+            || !empty($this->toArray($feedbackVariantAttributes));
     }
 
     /**
@@ -356,7 +397,7 @@ class ProductSchemaBuilder
             }
         }
 
-        foreach (['attributes', 'groupedAttributes', 'variation.attributes'] as $path) {
+        foreach (['attributes', 'groupedAttributes', 'variation.attributes', 'feedbackVariantAttributes'] as $path) {
             $entries = $this->toArray($this->value($data, $path, []));
             foreach ($entries as $entry) {
                 $entry = $this->toArray($entry);
@@ -371,6 +412,20 @@ class ProductSchemaBuilder
                     'names.name',
                     'name'
                 ]);
+                if ($attributeName !== '') {
+                    $names[] = $attributeName;
+                }
+            }
+        }
+
+        // ProductGroup parents often have no attributes themselves. In that
+        // case derive variesBy from the real child variation metadata prepared
+        // by the server-side data provider.
+        foreach ($this->toArray($this->option($schemaOptions, 'schemaVariantDocuments', [])) as $document) {
+            $document = $this->toArray($document);
+            foreach ($this->toArray($this->value($document, 'feedbackVariantAttributes', [])) as $entry) {
+                $entry = $this->toArray($entry);
+                $attributeName = $this->firstText($entry, ['name', 'attributeName']);
                 if ($attributeName !== '') {
                     $names[] = $attributeName;
                 }
@@ -402,7 +457,10 @@ class ProductSchemaBuilder
         array $schemaOptions,
         $canonicalUrl,
         $itemId,
-        $sellerName = ''
+        $sellerName = '',
+        $parentName = '',
+        $parentDescription = '',
+        array $parentVariesBy = []
     ) {
         $documents = $this->toArray($this->option(
             $schemaOptions,
@@ -449,6 +507,9 @@ class ProductSchemaBuilder
             $childOptions = $schemaOptions;
             $childOptions['schemaVariantDocuments'] = [];
             $childOptions['schemaVideoObject'] = false;
+            $childOptions['schemaParentGroupName'] = $parentName;
+            $childOptions['schemaParentGroupDescription'] = $parentDescription;
+            $childOptions['schemaParentGroupVariesBy'] = $parentVariesBy;
 
             $variant = $this->build(
                 $document,
@@ -469,6 +530,74 @@ class ProductSchemaBuilder
         }
 
         return $variants;
+    }
+
+    /**
+     * Convert localized PlentyONE variation attributes to the Schema.org
+     * properties Google understands for product variants.
+     *
+     * @param array $data
+     * @return array
+     */
+    private function resolveVariantProperties(array $data)
+    {
+        $values = [];
+        foreach ($this->toArray($this->value($data, 'feedbackVariantAttributes', [])) as $entry) {
+            $entry = $this->toArray($entry);
+            $name = $this->firstText($entry, ['name', 'attributeName']);
+            $value = $this->firstText($entry, ['value', 'attributeValueName']);
+            if ($name === '' || $value === '') {
+                continue;
+            }
+
+            $propertyUrl = $this->mapVariantProperty($name);
+            if ($propertyUrl === '') {
+                continue;
+            }
+
+            $property = substr($propertyUrl, strrpos($propertyUrl, '/') + 1);
+            if (!isset($values[$property])) {
+                $values[$property] = [];
+            }
+            if (!in_array($value, $values[$property], true)) {
+                $values[$property][] = $value;
+            }
+        }
+
+        $result = [];
+        foreach ($values as $property => $propertyValues) {
+            if (empty($propertyValues)) {
+                continue;
+            }
+
+            if ($property === 'size' && count($propertyValues) > 1) {
+                $result[$property] = implode(' × ', $propertyValues);
+            } else {
+                $result[$property] = implode(' / ', $propertyValues);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Build a concise variant suffix for Product.name. Google requires a name
+     * on each Product; including the real varying values also makes sibling
+     * variants unambiguous without inventing marketing text.
+     *
+     * @param array $variantProperties
+     * @return string
+     */
+    private function variantLabel(array $variantProperties)
+    {
+        $parts = [];
+        foreach (['size', 'color', 'material', 'pattern'] as $property) {
+            if (isset($variantProperties[$property]) && trim((string)$variantProperties[$property]) !== '') {
+                $parts[] = trim((string)$variantProperties[$property]);
+            }
+        }
+
+        return implode(' – ', $parts);
     }
 
     /**

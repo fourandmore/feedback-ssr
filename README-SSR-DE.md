@@ -1,3 +1,7 @@
+# FeedbackGeoFM 5.0.47 – ProductGroup-Varianten
+
+Version 5.0.47 korrigiert große PlentyONE-Variantenartikel: Die Varianten werden über `ItemService::getVariationAttributeMap()` ermittelt und in 20er-Batches geladen. Reale Attributwerte werden als `size`/`color` etc. ausgegeben; `variesBy`, `hasVariant`, vollständiges `isVariantOf` und variantenspezifische Offers werden daraus aufgebaut.
+
 # Version 5.0.46 – ProductGroup mit vollständigen Varianten
 
 Bei nicht kaufbaren Hauptvarianten lädt FeedbackGeoFM die aktiven und verkaufbaren Kindvarianten nun serverseitig über `IO\Services\ItemService`. Dadurch enthält `ProductGroup.hasVariant` echte `Product`-Objekte inklusive SKU, Preis, Verfügbarkeit, Offer und Versanddetails.

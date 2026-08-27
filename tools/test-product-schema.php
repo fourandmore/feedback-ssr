@@ -466,6 +466,48 @@ if (!is_array($productGroup)
     exit(1);
 }
 
+
+$attributeVariantA = $itemData;
+$attributeVariantA['feedbackVariantAttributes'] = [
+    ['name' => 'Größe', 'value' => '200 x 150 cm'],
+    ['name' => 'Tuchfarbe', 'value' => 'Grau']
+];
+$attributeVariantB = $secondVariantItemData;
+$attributeVariantB['feedbackVariantAttributes'] = [
+    ['name' => 'Größe', 'value' => '250 x 200 cm'],
+    ['name' => 'Tuchfarbe', 'value' => 'Sand']
+];
+$attributeProductGroup = $builder->build(
+    $parentItemData,
+    'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_7875',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaVariesBy' => '',
+        'schemaVideoObject' => false,
+        'schemaVariantDocuments' => [
+            $parentItemData,
+            $attributeVariantA,
+            $attributeVariantB
+        ]
+    ])
+);
+
+if (!is_array($attributeProductGroup)
+    || !in_array('https://schema.org/size', $attributeProductGroup['variesBy'], true)
+    || !in_array('https://schema.org/color', $attributeProductGroup['variesBy'], true)
+    || $attributeProductGroup['hasVariant'][0]['size'] !== '200 x 150 cm'
+    || $attributeProductGroup['hasVariant'][0]['color'] !== 'Grau'
+    || strpos($attributeProductGroup['hasVariant'][0]['name'], '200 x 150 cm') === false
+    || strpos($attributeProductGroup['hasVariant'][0]['name'], 'Grau') === false
+    || empty($attributeProductGroup['hasVariant'][0]['isVariantOf']['name'])
+    || empty($attributeProductGroup['hasVariant'][0]['isVariantOf']['description'])
+    || empty($attributeProductGroup['hasVariant'][0]['offers']['price'])) {
+    fwrite(STDERR, 'ProductGroup variants must expose real size/color attributes, parent metadata and offers.' . PHP_EOL);
+    exit(1);
+}
+
 $json = json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 if ($json === false) {
     fwrite(STDERR, 'JSON encoding failed.' . PHP_EOL);

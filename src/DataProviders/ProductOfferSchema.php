@@ -334,47 +334,77 @@ class ProductOfferSchema
         try {
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
-            $variationIds = $itemService->getVariationIds((int)$itemId);
 
-            if (!is_array($variationIds) || empty($variationIds)) {
-                return $documents;
+            // Ceres builds its variation selector from getVariationAttributeMap().
+            // This is deliberately used as the primary ID source because
+            // getVariationIds() applies the stricter variationStockIsSalable()
+            // filter and may therefore return no IDs for otherwise selectable
+            // made-to-order / non-stock-managed storefront variations.
+            $attributeMap = $itemService->getVariationAttributeMap((int)$itemId);
+            $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
+            $variationIds = array_keys($variantMetaById);
+
+            // Keep a compatibility fallback for items without attributes.
+            if (empty($variationIds)) {
+                $variationIds = $itemService->getVariationIds((int)$itemId);
+                $variationIds = is_array($variationIds)
+                    ? array_values(array_unique(array_map('intval', $variationIds)))
+                    : [];
             }
 
-            $variationIds = array_values(array_unique(array_map('intval', $variationIds)));
             $variationIds = array_values(array_filter($variationIds, function ($variationId) use ($seenVariationIds) {
+                $variationId = (int)$variationId;
                 return $variationId > 0 && !isset($seenVariationIds[$variationId]);
             }));
 
-            // Keep the schema bounded even for unusually large variant sets.
-            $variationIds = array_slice($variationIds, 0, max(0, 50 - count($documents)));
+            // 120 variants comfortably covers the current Four & More product
+            // groups while keeping runaway schemas bounded.
+            $variationIds = array_slice($variationIds, 0, max(0, 120 - count($documents)));
             if (empty($variationIds)) {
                 return $documents;
             }
 
-            $result = $itemService->getVariations($variationIds);
+            // VariationList searches are paginated internally. Query in small
+            // batches so every requested variation is returned instead of only
+            // the first default result page.
             $loadedDocuments = [];
             $loadedSeen = [];
-            $this->collectVariantDocuments(
-                $result,
-                (int)$itemId,
-                0,
-                $loadedDocuments,
-                $loadedSeen
-            );
+            foreach (array_chunk($variationIds, 20) as $variationIdChunk) {
+                $result = $itemService->getVariations($variationIdChunk);
+                $this->collectVariantDocuments(
+                    $result,
+                    (int)$itemId,
+                    0,
+                    $loadedDocuments,
+                    $loadedSeen
+                );
+            }
+
+            // Item shipping profiles are item-level relations. They were already
+            // resolved once for the parent document, so reuse the exact same
+            // relation for every child instead of querying the repository again.
+            $itemShippingProfiles = isset($data['itemShippingProfiles'])
+                ? $this->toArray($data['itemShippingProfiles'])
+                : [];
 
             foreach ($loadedDocuments as $document) {
-                $document = $this->appendItemShippingProfiles(
-                    $this->toArray($document),
-                    (int)$itemId
-                );
+                $document = $this->toArray($document);
                 $variationId = $this->resolveId($document, 'variation', 'id');
                 if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
                     continue;
                 }
 
+                if (!empty($itemShippingProfiles)) {
+                    $document['itemShippingProfiles'] = $itemShippingProfiles;
+                }
+
+                if (isset($variantMetaById[$variationId])) {
+                    $document['feedbackVariantAttributes'] = $variantMetaById[$variationId];
+                }
+
                 $seenVariationIds[$variationId] = true;
                 $documents[] = $document;
-                if (count($documents) >= 50) {
+                if (count($documents) >= 120) {
                     break;
                 }
             }
@@ -384,6 +414,75 @@ class ProductOfferSchema
         }
 
         return $documents;
+    }
+
+    /**
+     * Resolve the same attribute/value information Ceres uses for its
+     * variation selector and enrich it with localized names. ItemService caches
+     * attribute and value name lookups internally, so repeated IDs are cheap.
+     *
+     * @param mixed $attributeMap
+     * @param ItemService $itemService
+     * @return array<int,array<int,array<string,mixed>>>
+     */
+    private function buildVariantMetaMap($attributeMap, ItemService $itemService)
+    {
+        $attributeMap = $this->toArray($attributeMap);
+        if (empty($attributeMap)) {
+            return [];
+        }
+
+        $result = [];
+        $attributeNames = [];
+        $valueNames = [];
+
+        foreach ($attributeMap as $entry) {
+            $entry = $this->toArray($entry);
+            $variationId = isset($entry['variationId']) && is_numeric($entry['variationId'])
+                ? (int)$entry['variationId']
+                : 0;
+            if ($variationId <= 0) {
+                continue;
+            }
+
+            $resolved = [];
+            foreach ($this->toArray(isset($entry['attributes']) ? $entry['attributes'] : []) as $attribute) {
+                $attribute = $this->toArray($attribute);
+                $attributeId = isset($attribute['attributeId']) && is_numeric($attribute['attributeId'])
+                    ? (int)$attribute['attributeId']
+                    : 0;
+                $attributeValueId = isset($attribute['attributeValueId']) && is_numeric($attribute['attributeValueId'])
+                    ? (int)$attribute['attributeValueId']
+                    : 0;
+                if ($attributeId <= 0 || $attributeValueId <= 0) {
+                    continue;
+                }
+
+                if (!array_key_exists($attributeId, $attributeNames)) {
+                    $attributeNames[$attributeId] = trim((string)$itemService->getAttributeName($attributeId));
+                }
+                if (!array_key_exists($attributeValueId, $valueNames)) {
+                    $valueNames[$attributeValueId] = trim((string)$itemService->getAttributeValueName($attributeValueId));
+                }
+
+                if ($attributeNames[$attributeId] === '' || $valueNames[$attributeValueId] === '') {
+                    continue;
+                }
+
+                $resolved[] = [
+                    'attributeId' => $attributeId,
+                    'attributeValueId' => $attributeValueId,
+                    'name' => $attributeNames[$attributeId],
+                    'value' => $valueNames[$attributeValueId]
+                ];
+            }
+
+            if (!empty($resolved)) {
+                $result[$variationId] = $resolved;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -468,7 +567,7 @@ class ProductOfferSchema
         array &$documents,
         array &$seenVariationIds
     ) {
-        if ($depth > 10 || count($documents) >= 50) {
+        if ($depth > 10 || count($documents) >= 120) {
             return;
         }
 
@@ -499,7 +598,7 @@ class ProductOfferSchema
                 $seenVariationIds
             );
 
-            if (count($documents) >= 50) {
+            if (count($documents) >= 120) {
                 break;
             }
         }
