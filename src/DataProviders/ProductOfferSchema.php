@@ -344,15 +344,17 @@ class ProductOfferSchema
             // Using the same search preset here keeps the server-rendered
             // ProductGroup in sync with the variants the shopper can select.
             $attributeMap = $this->loadVariationAttributeMap((int)$itemId);
-            $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
-            $variationIds = array_keys($variantMetaById);
+            // IMPORTANT: determine IDs from the raw map first. Attribute-name
+            // repository lookups are optional enrichment and must never be able
+            // to collapse the whole ProductGroup to zero variants.
+            $variationIds = $this->extractVariationIdsFromAttributeMap($attributeMap);
 
-            // Compatibility fallbacks for installations/items where the search
-            // preset returns no attribute map.
+            // Compatibility fallback matching IO's long-standing storefront
+            // service. This returns the same raw variationId/attributes shape
+            // used by the selector in Ceres 5.x.
             if (empty($variationIds)) {
                 $attributeMap = $itemService->getVariationAttributeMap((int)$itemId);
-                $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
-                $variationIds = array_keys($variantMetaById);
+                $variationIds = $this->extractVariationIdsFromAttributeMap($attributeMap);
             }
 
             if (empty($variationIds)) {
@@ -380,15 +382,27 @@ class ProductOfferSchema
             $loadedDocuments = [];
             $loadedSeen = [];
             foreach (array_chunk($variationIds, 20) as $variationIdChunk) {
-                $result = $itemService->getVariations($variationIdChunk);
-                $this->collectVariantDocuments(
-                    $result,
-                    (int)$itemId,
-                    0,
-                    $loadedDocuments,
-                    $loadedSeen
-                );
+                try {
+                    $result = $itemService->getVariations($variationIdChunk);
+                    $this->collectVariantDocuments(
+                        $result,
+                        (int)$itemId,
+                        0,
+                        $loadedDocuments,
+                        $loadedSeen
+                    );
+                } catch (\Throwable $e) {
+                    // Keep other chunks usable if a single storefront search
+                    // fails for one batch.
+                    continue;
+                }
             }
+
+            // Resolve human-readable attribute names only after the variation
+            // documents have been loaded. Failures here are non-fatal: hasVariant
+            // must still be emitted with Product/Offer data even if size/color
+            // labels cannot be enriched in a particular Plenty patch level.
+            $variantMetaById = $this->buildVariantMetaMap($attributeMap, $itemService);
 
             // Item shipping profiles are item-level relations. They were already
             // resolved once for the parent document, so reuse the exact same
@@ -587,6 +601,36 @@ class ProductOfferSchema
     }
 
     /**
+     * Extract variation IDs from the raw selector map without resolving any
+     * localized attribute labels. This intentionally has no repository
+     * dependencies so a failed attribute-name lookup can never suppress
+     * ProductGroup.hasVariant.
+     *
+     * @param mixed $attributeMap
+     * @return array<int>
+     */
+    private function extractVariationIdsFromAttributeMap($attributeMap)
+    {
+        $attributeMap = $this->toArray($attributeMap);
+        if (empty($attributeMap)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($attributeMap as $entry) {
+            $entry = $this->toArray($entry);
+            if (isset($entry['variationId']) && is_numeric($entry['variationId'])) {
+                $variationId = (int)$entry['variationId'];
+                if ($variationId > 0) {
+                    $ids[$variationId] = true;
+                }
+            }
+        }
+
+        return array_keys($ids);
+    }
+
+    /**
      * Resolve the same attribute/value information Ceres uses for its
      * variation selector and enrich it with localized names. ItemService caches
      * attribute and value name lookups internally, so repeated IDs are cheap.
@@ -629,10 +673,18 @@ class ProductOfferSchema
                 }
 
                 if (!array_key_exists($attributeId, $attributeNames)) {
-                    $attributeNames[$attributeId] = trim((string)$itemService->getAttributeName($attributeId));
+                    try {
+                        $attributeNames[$attributeId] = trim((string)$itemService->getAttributeName($attributeId));
+                    } catch (\Throwable $e) {
+                        $attributeNames[$attributeId] = '';
+                    }
                 }
                 if (!array_key_exists($attributeValueId, $valueNames)) {
-                    $valueNames[$attributeValueId] = trim((string)$itemService->getAttributeValueName($attributeValueId));
+                    try {
+                        $valueNames[$attributeValueId] = trim((string)$itemService->getAttributeValueName($attributeValueId));
+                    } catch (\Throwable $e) {
+                        $valueNames[$attributeValueId] = '';
+                    }
                 }
 
                 if ($attributeNames[$attributeId] === '' || $valueNames[$attributeValueId] === '') {

@@ -1,3 +1,6 @@
+## 5.0.49
+- ProductGroup variants: variation IDs are processed before optional attribute-name lookups. Attribute-name or individual variation-batch failures can no longer suppress `hasVariant` entirely.
+
 ## 5.0.48
 
 - ProductGroup variants are now discovered through the same `VariationAttributeMap` search preset used by the Ceres `/io/variations/map` endpoint.

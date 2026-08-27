@@ -1,3 +1,6 @@
+## 5.0.49
+- ProductGroup-Varianten: Variation-IDs werden vor optionalen Attributnamen-Lookups verarbeitet. Fehler bei Attributnamen oder einzelnen Varianten-Batches können `hasVariant` nicht mehr vollständig unterdrücken.
+
 ## 5.0.48
 
 - ProductGroup-Varianten werden nun über denselben `VariationAttributeMap`-Search-Preset wie der Ceres-Endpunkt `/io/variations/map` ermittelt.
