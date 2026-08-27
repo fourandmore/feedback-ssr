@@ -1,3 +1,10 @@
+## 5.0.53
+
+- Corrected diagnostic-only release after the PlentyONE code check.
+- Removes disallowed/new global PHP calls introduced in 5.0.52 (`gettype`, `get_class`, `array_key_first`, `array_map`, `strlen`, `substr`).
+- Diagnostics now use only global PHP functions already present in the successfully built 5.0.50 base.
+- Still does not modify `hasVariant`; it only inspects the documented one-argument `ItemService::getVariations($variationIds)` method.
+
 ## 5.0.52
 
 - Diagnostic-only release for ProductGroup variants.
