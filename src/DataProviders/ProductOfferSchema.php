@@ -5,6 +5,8 @@ namespace FeedbackGeoFM\DataProviders;
 use FeedbackGeoFM\Services\FeedbackService;
 use FeedbackGeoFM\Services\VideoPropertyResolver;
 use IO\Services\ItemService;
+use Plenty\Modules\Webshop\ItemSearch\SearchPresets\SingleItem;
+use Plenty\Modules\Webshop\ItemSearch\Services\ItemSearchService;
 use Plenty\Modules\Item\ItemShippingProfiles\Contracts\ItemShippingProfilesRepositoryContract;
 use Plenty\Plugin\ConfigRepository;
 use Plenty\Plugin\Templates\Twig;
@@ -226,7 +228,7 @@ class ProductOfferSchema
 
         $diagnosticScript = '';
         if (is_string($diagnosticJson) && $diagnosticJson !== '') {
-            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5056" type="application/json">'
+            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5057" type="application/json">'
                 . $diagnosticJson
                 . '</script>';
         }
@@ -350,7 +352,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.56',
+            'pluginVersion' => '5.0.57',
             'diagnosticOnly' => true,
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
@@ -362,29 +364,17 @@ class ProductOfferSchema
             'existingContainerDocumentsCount' => count($documents),
             'salableVariationIdsCount' => 0,
             'salableVariationIdsSample' => [],
-            'getVariationsCalled' => false,
-            'getVariationsInputCount' => 0,
-            'getVariationsInputSample' => [],
-            'getVariationsResultType' => null,
-            'getVariationsResultCount' => null,
-            'getVariationsTopLevelKeys' => [],
-            'getVariationsFirstKey' => null,
-            'getVariationsFirstValueType' => null,
-            'getVariationsFirstValueKeys' => [],
-            'getVariationsFirstValuePreview' => null,
-            'collectorDocumentsCount' => 0,
-            'collectorVariationIdSample' => [],
-            'singleVariationId' => null,
-            'getVariationCalled' => false,
-            'getVariationResultType' => null,
-            'getVariationResultCount' => null,
-            'getVariationTopLevelKeys' => [],
-            'getVariationFirstValueType' => null,
-            'getVariationFirstValueKeys' => [],
-            'getVariationFirstValuePreview' => null,
-            'getVariationCollectorDocumentsCount' => 0,
-            'getVariationCollectorVariationIdSample' => [],
-            'getVariationErrorMessage' => null,
+            'multiSearchCalled' => false,
+            'multiSearchInputCount' => 0,
+            'multiSearchInputSample' => [],
+            'multiSearchResultType' => null,
+            'multiSearchResultCount' => null,
+            'multiSearchTopLevelKeys' => [],
+            'multiSearchFirstResultType' => null,
+            'multiSearchFirstResultKeys' => [],
+            'multiSearchFirstResultPreview' => null,
+            'multiSearchCollectorDocumentsCount' => 0,
+            'multiSearchCollectorVariationIdSample' => [],
             'errorClass' => null,
             'errorMessage' => null
         ];
@@ -418,117 +408,71 @@ class ProductOfferSchema
             }
         ));
 
-        // Diagnostic request only: use a small sample with the documented
-        // one-argument ItemService::getVariations(array $variationIds) API.
-        // This deliberately avoids guessing limits or undocumented parameters.
+        // Diagnostic request only: use the first 10 confirmed salable context
+        // variation IDs. Each ID gets the same documented SingleItem search
+        // preset that IO's ItemService::getVariation() uses. ItemSearchService
+        // then executes those search factories together via getResults().
         $diagnosticVariationIds = array_slice($variationIds, 0, 10);
-        $diagnostics['getVariationsInputCount'] = count($diagnosticVariationIds);
-        $diagnostics['getVariationsInputSample'] = $diagnosticVariationIds;
+        $diagnostics['multiSearchInputCount'] = count($diagnosticVariationIds);
+        $diagnostics['multiSearchInputSample'] = $diagnosticVariationIds;
 
         if (empty($diagnosticVariationIds)) {
             return $documents;
         }
 
         try {
-            /** @var ItemService $itemService */
-            $itemService = pluginApp(ItemService::class);
-            $diagnostics['getVariationsCalled'] = true;
+            /** @var ItemSearchService $itemSearchService */
+            $itemSearchService = pluginApp(ItemSearchService::class);
+            $searches = [];
 
-            // Compare the documented single-variation endpoint against the
-            // documented batch endpoint. Only one request is made here.
-            $singleVariationId = null;
-            foreach ($diagnosticVariationIds as $candidateVariationId) {
-                $singleVariationId = (int)$candidateVariationId;
-                break;
+            foreach ($diagnosticVariationIds as $diagnosticVariationId) {
+                $diagnosticVariationId = (int)$diagnosticVariationId;
+                if ($diagnosticVariationId <= 0) {
+                    continue;
+                }
+
+                $searches[$diagnosticVariationId] = SingleItem::getSearchFactory([
+                    'variationId' => $diagnosticVariationId
+                ]);
             }
 
-            if ($singleVariationId > 0) {
-                $diagnostics['singleVariationId'] = $singleVariationId;
-                try {
-                    $diagnostics['getVariationCalled'] = true;
-                    $singleResult = $itemService->getVariation($singleVariationId);
-                    $diagnostics['getVariationResultType'] = $this->diagnosticTypeLabel($singleResult);
-                    if (is_array($singleResult)) {
-                        $diagnostics['getVariationResultCount'] = count($singleResult);
-                        $diagnostics['getVariationTopLevelKeys'] = array_slice(array_keys($singleResult), 0, 30);
-
-                        $singleFirstValue = null;
-                        foreach ($singleResult as $singleValue) {
-                            $singleFirstValue = $singleValue;
-                            break;
-                        }
-                        $singleFirstValueArray = $this->toArray($singleFirstValue);
-                        $diagnostics['getVariationFirstValueType'] = $this->diagnosticTypeLabel($singleFirstValue);
-                        $diagnostics['getVariationFirstValueKeys'] = is_array($singleFirstValueArray)
-                            ? array_slice(array_keys($singleFirstValueArray), 0, 50)
-                            : [];
-                        $diagnostics['getVariationFirstValuePreview'] = $this->diagnosticPreview($singleFirstValue);
-                    } else {
-                        $diagnostics['getVariationFirstValuePreview'] = $this->diagnosticPreview($singleResult);
-                    }
-
-                    $singleDocuments = [];
-                    $singleSeen = [];
-                    $this->collectVariantDocuments(
-                        $singleResult,
-                        (int)$itemId,
-                        0,
-                        $singleDocuments,
-                        $singleSeen
-                    );
-                    $diagnostics['getVariationCollectorDocumentsCount'] = count($singleDocuments);
-                    $singleCollectorVariationIds = [];
-                    foreach (array_keys($singleSeen) as $singleLoadedVariationId) {
-                        $singleCollectorVariationIds[] = (int)$singleLoadedVariationId;
-                        if (count($singleCollectorVariationIds) >= 10) {
-                            break;
-                        }
-                    }
-                    $diagnostics['getVariationCollectorVariationIdSample'] = $singleCollectorVariationIds;
-                } catch (\Throwable $singleException) {
-                    $diagnostics['getVariationErrorMessage'] = $singleException->getMessage();
-                }
+            if (empty($searches)) {
+                return $documents;
             }
 
-            $result = $itemService->getVariations($diagnosticVariationIds);
+            $diagnostics['multiSearchCalled'] = true;
+            $multiResults = $itemSearchService->getResults($searches);
+            $diagnostics['multiSearchResultType'] = $this->diagnosticTypeLabel($multiResults);
 
-            $diagnostics['getVariationsResultType'] = $this->diagnosticTypeLabel($result);
-            if (is_array($result)) {
-                $diagnostics['getVariationsResultCount'] = count($result);
-                $diagnostics['getVariationsTopLevelKeys'] = array_slice(array_keys($result), 0, 30);
+            if (is_array($multiResults)) {
+                $diagnostics['multiSearchResultCount'] = count($multiResults);
+                $diagnostics['multiSearchTopLevelKeys'] = array_slice(array_keys($multiResults), 0, 20);
 
-                if (!empty($result)) {
-                    $firstKey = null;
-                    $firstValue = null;
-                    foreach ($result as $resultKey => $resultValue) {
-                        $firstKey = $resultKey;
-                        $firstValue = $resultValue;
-                        break;
-                    }
-                    $firstValueArray = $this->toArray($firstValue);
-
-                    $diagnostics['getVariationsFirstKey'] = $firstKey;
-                    $diagnostics['getVariationsFirstValueType'] = $this->diagnosticTypeLabel($firstValue);
-                    $diagnostics['getVariationsFirstValueKeys'] = is_array($firstValueArray)
-                        ? array_slice(array_keys($firstValueArray), 0, 50)
-                        : [];
-                    $diagnostics['getVariationsFirstValuePreview'] = $this->diagnosticPreview($firstValue);
+                $firstResult = null;
+                foreach ($multiResults as $resultValue) {
+                    $firstResult = $resultValue;
+                    break;
                 }
-            } else {
-                $diagnostics['getVariationsFirstValuePreview'] = $this->diagnosticPreview($result);
+
+                $firstResultArray = $this->toArray($firstResult);
+                $diagnostics['multiSearchFirstResultType'] = $this->diagnosticTypeLabel($firstResult);
+                $diagnostics['multiSearchFirstResultKeys'] = is_array($firstResultArray)
+                    ? array_slice(array_keys($firstResultArray), 0, 30)
+                    : [];
+                $diagnostics['multiSearchFirstResultPreview'] = $this->diagnosticPreview($firstResult);
             }
 
             $loadedDocuments = [];
             $loadedSeen = [];
             $this->collectVariantDocuments(
-                $result,
+                $multiResults,
                 (int)$itemId,
                 0,
                 $loadedDocuments,
                 $loadedSeen
             );
 
-            $diagnostics['collectorDocumentsCount'] = count($loadedDocuments);
+            $diagnostics['multiSearchCollectorDocumentsCount'] = count($loadedDocuments);
             $collectorVariationIds = [];
             foreach (array_keys($loadedSeen) as $loadedVariationId) {
                 $collectorVariationIds[] = (int)$loadedVariationId;
@@ -536,10 +480,7 @@ class ProductOfferSchema
                     break;
                 }
             }
-            $diagnostics['collectorVariationIdSample'] = $collectorVariationIds;
-
-            // Diagnostic version: do not change ProductGroup.hasVariant yet.
-            // We first observe the exact documented API response in the live shop.
+            $diagnostics['multiSearchCollectorVariationIdSample'] = $collectorVariationIds;
         } catch (\Throwable $e) {
             $diagnostics['errorClass'] = 'Throwable';
             $diagnostics['errorMessage'] = $e->getMessage();

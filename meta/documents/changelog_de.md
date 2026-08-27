@@ -1,5 +1,8 @@
-## 5.0.56
-- Diagnose-ID eindeutig auf 5.0.56 gesetzt; Single-Variation-Diagnose unverändert.
+## 5.0.57
+- Reine Multi-Search-Diagnose auf Basis der offiziellen PlentyONE/IO-Schnittstellen.
+- Verwendet die bereits bestätigten `SingleItemContext`-Variations-IDs.
+- Erstellt pro Test-ID ein `SingleItem`-SearchPreset und führt die 10 Suchanfragen gemeinsam über `ItemSearchService::getResults()` aus.
+- Keine Änderung an `hasVariant`; dient ausschließlich zur Bestätigung des dokumentierten Batch-Wegs ohne `VariationList`-Filter.
 
 ## 5.0.55
 
