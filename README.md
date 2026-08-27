@@ -16,6 +16,17 @@ Das Plugin basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und erweite
 - bereinigte anonyme Autorenbezeichnungen,
 - verständliche Leerzustände bei Artikeln ohne Bewertungen.
 
+## Version 5.0.41
+
+Version 5.0.41 baut direkt auf dem in Ceres 5.0.81 geprüften Stand 5.0.40 auf. Der funktionierende `page-metadata`-Override, die Kategorie-Bewertungssterne und die serverseitige FAQ-Auflösung bleiben unverändert.
+
+- PlentyONE-Standardversandkosten bleiben die erste und verbindliche Quelle. Optional können je Plugin-Set Paket- und Speditionspreise als Fallback gepflegt werden; die Auswahl erfolgt über konfigurierte Speditionsprofile oder das Bruttogewicht.
+- Die Video-Einstellungen akzeptieren mehrere kommagetrennte Property-IDs. Ein `VideoObject` entsteht weiterhin nur mit einer validen YouTube-ID und einem validen Upload-Datum.
+- `ProductGroup.hasVariant` wird ergänzt, wenn PlentyONE echte Geschwistervarianten im Layout-Container mitliefert. Fehlen diese Dokumente, wird kein Varianten-Markup erfunden.
+- ProvenExpert-JSON-LD bleibt bewusst unangetastet.
+
+Die Versand-Fallbacks sind standardmäßig deaktiviert. Vor der Aktivierung müssen Paketpreis, Speditionspreis, Speditionsprofile, Gewichtsschwelle, Länder und Laufzeiten je Shop fachlich geprüft werden.
+
 ## Voraussetzungen
 
 - plentyShop LTS / Ceres

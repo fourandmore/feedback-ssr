@@ -96,6 +96,15 @@ class ProductSchemaBuilder
             if (!empty($variesBy)) {
                 $schema['variesBy'] = $variesBy;
             }
+
+            $hasVariants = $this->resolveHasVariants(
+                $schemaOptions,
+                $canonicalUrl,
+                $itemId
+            );
+            if (!empty($hasVariants)) {
+                $schema['hasVariant'] = $hasVariants;
+            }
         } else {
             $sku = $this->firstRaw($data, [
                 'variation.number',
@@ -376,6 +385,90 @@ class ProductSchemaBuilder
         }
 
         return $variesBy;
+    }
+
+    /**
+     * Build ProductGroup.hasVariant only from concrete PlentyONE item
+     * documents already supplied with the current page. When the payload does
+     * not contain sibling variations, the property is intentionally omitted.
+     *
+     * @param array $schemaOptions
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @return array
+     */
+    private function resolveHasVariants(array $schemaOptions, $canonicalUrl, $itemId)
+    {
+        $documents = $this->toArray($this->option(
+            $schemaOptions,
+            'schemaVariantDocuments',
+            []
+        ));
+        if (empty($documents) || (int)$itemId <= 0) {
+            return [];
+        }
+
+        $variants = [];
+        $seenVariationIds = [];
+        foreach ($documents as $document) {
+            $document = $this->toArray($document);
+            if (empty($document)
+                || (int)$this->value($document, 'item.id', 0) !== (int)$itemId
+                || $this->isVariationGroup($document)) {
+                continue;
+            }
+
+            $variationId = (int)$this->value($document, 'variation.id', 0);
+            if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
+                continue;
+            }
+
+            $isSalable = $this->value($document, 'filter.isSalable', null);
+            if ($isSalable !== null && !$this->toBool($isSalable)) {
+                continue;
+            }
+
+            $name = $this->firstText($document, [
+                'texts.name1',
+                'texts.name2',
+                'texts.name3',
+                'variation.name',
+                'variation.model'
+            ]);
+            if ($name === '') {
+                continue;
+            }
+
+            $variant = [
+                '@type' => 'Product',
+                'productID' => (string)$variationId,
+                'name' => $name
+            ];
+
+            $sku = $this->firstRaw($document, [
+                'variation.number',
+                'variation.externalId'
+            ]);
+            if ($sku !== '') {
+                $variant['sku'] = $sku;
+            }
+
+            $url = $this->firstRaw($document, [
+                'urls.canonical',
+                'url',
+                'texts.urlPath'
+            ]);
+            $url = $this->absoluteUrl($url, $canonicalUrl);
+            if ($url !== '') {
+                $variant['url'] = $url;
+                $variant['@id'] = rtrim($url, '/') . '#product-variation-' . $variationId;
+            }
+
+            $seenVariationIds[$variationId] = true;
+            $variants[] = $variant;
+        }
+
+        return $variants;
     }
 
     /**
@@ -719,9 +812,10 @@ class ProductSchemaBuilder
     }
 
     /**
-     * Add product-specific OfferShippingDetails. PlentyONE documents
-     * variation.defaultShippingCosts in the item document, so the amount stays
-     * product-specific instead of being hard-coded in the schema builder.
+     * Add product-specific OfferShippingDetails. PlentyONE's calculated
+     * default shipping costs always win. An optional merchant-controlled
+     * package/freight fallback can fill the gap when the page document omits
+     * calculated costs; it never activates unless explicitly enabled.
      *
      * @param array $data
      * @param string $currency
@@ -745,6 +839,11 @@ class ProductSchemaBuilder
             if ($shippingCost !== null && $shippingCost >= 0) {
                 break;
             }
+        }
+
+        if (($shippingCost === null || $shippingCost < 0)
+            && $this->optionBool($schemaOptions, 'schemaShippingFallbackEnabled', false)) {
+            $shippingCost = $this->resolveConfiguredShippingFallback($data, $schemaOptions);
         }
 
         if ($shippingCost === null || $shippingCost < 0) {
@@ -795,6 +894,144 @@ class ProductSchemaBuilder
                 ]
             ]
         ];
+    }
+
+    /**
+     * Resolve a configured package or freight amount. A configured shipping
+     * profile match takes precedence over the gross-weight threshold.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return float|null
+     */
+    private function resolveConfiguredShippingFallback(array $data, array $schemaOptions)
+    {
+        $freight = $this->matchesConfiguredFreightProfile($data, $schemaOptions);
+        if (!$freight) {
+            $thresholdKg = $this->numericValue($this->option(
+                $schemaOptions,
+                'schemaShippingFreightWeightThresholdKg',
+                31.5
+            ));
+            $weightKg = $this->resolveGrossWeightKg($data);
+            $freight = $thresholdKg !== null
+                && $thresholdKg > 0
+                && $weightKg !== null
+                && $weightKg >= $thresholdKg;
+        }
+
+        $priceKey = $freight
+            ? 'schemaShippingFreightPrice'
+            : 'schemaShippingPackagePrice';
+        $price = $this->numericValue($this->option($schemaOptions, $priceKey, ''));
+
+        return $price !== null && $price >= 0 ? $price : null;
+    }
+
+    /**
+     * @param array $data
+     * @param array $schemaOptions
+     * @return bool
+     */
+    private function matchesConfiguredFreightProfile(array $data, array $schemaOptions)
+    {
+        $configured = $this->parsePositiveIntegerList($this->option(
+            $schemaOptions,
+            'schemaShippingFreightProfileIds',
+            ''
+        ));
+        if (empty($configured)) {
+            return false;
+        }
+
+        $assigned = [];
+        foreach ([
+            'variation.shippingProfileId',
+            'variation.shippingProfileIds',
+            'variation.shippingProfiles',
+            'shippingProfileId',
+            'shippingProfileIds'
+        ] as $path) {
+            $this->collectPositiveIntegers(
+                $this->value($data, $path, null),
+                0,
+                $assigned
+            );
+        }
+
+        return !empty(array_intersect($configured, $assigned));
+    }
+
+    /**
+     * PlentyONE exposes gross variation weight in grams.
+     *
+     * @param array $data
+     * @return float|null
+     */
+    private function resolveGrossWeightKg(array $data)
+    {
+        foreach (['variation.weightG', 'variation.weightNetG'] as $path) {
+            $grams = $this->numericValue($this->value($data, $path, null));
+            if ($grams !== null && $grams >= 0) {
+                return $grams / 1000;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function parsePositiveIntegerList($value)
+    {
+        if (is_array($value)) {
+            $parts = $value;
+        } else {
+            $parts = preg_split('/[,;\s]+/', trim((string)$value));
+        }
+
+        $ids = [];
+        foreach ($parts as $part) {
+            if (!is_numeric($part) || (int)$part <= 0) {
+                continue;
+            }
+
+            $id = (int)$part;
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param mixed $value
+     * @param int $depth
+     * @param array $ids
+     * @return void
+     */
+    private function collectPositiveIntegers($value, $depth, array &$ids)
+    {
+        if ($depth > 5 || $value === null) {
+            return;
+        }
+
+        if (!is_array($value) && !is_object($value)) {
+            if (is_numeric($value) && (int)$value > 0) {
+                $id = (int)$value;
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+            return;
+        }
+
+        foreach ($this->toArray($value) as $child) {
+            $this->collectPositiveIntegers($child, $depth + 1, $ids);
+        }
     }
 
     /**

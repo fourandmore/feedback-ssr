@@ -228,6 +228,67 @@ if (!is_array($automaticManufacturerSchema)
     exit(1);
 }
 
+// Calculated PlentyONE costs remain authoritative. If they are absent, an
+// explicitly enabled merchant fallback selects parcel or freight without
+// inventing an amount inside the builder.
+$packageFallbackItemData = $itemData;
+unset($packageFallbackItemData['variation']['defaultShippingCosts']);
+$packageFallbackItemData['variation']['weightG'] = 10000;
+$fallbackOptions = array_merge($schemaOptions, [
+    'schemaShippingFallbackEnabled' => true,
+    'schemaShippingPackagePrice' => '8,50',
+    'schemaShippingFreightPrice' => '59.00',
+    'schemaShippingFreightWeightThresholdKg' => 31.5,
+    'schemaShippingFreightProfileIds' => '9,10',
+    'schemaVideoObject' => false
+]);
+
+$packageFallbackSchema = $builder->build(
+    $packageFallbackItemData,
+    'https://www.example.test/werkzeugkoffer_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($packageFallbackSchema)
+    || $packageFallbackSchema['offers']['shippingDetails']['shippingRate']['value'] !== 8.5) {
+    fwrite(STDERR, 'Configured parcel shipping fallback failed.' . PHP_EOL);
+    exit(1);
+}
+
+$freightWeightItemData = $packageFallbackItemData;
+$freightWeightItemData['variation']['weightG'] = 40000;
+$freightWeightSchema = $builder->build(
+    $freightWeightItemData,
+    'https://www.example.test/billardtisch_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($freightWeightSchema)
+    || $freightWeightSchema['offers']['shippingDetails']['shippingRate']['value'] !== 59.0) {
+    fwrite(STDERR, 'Configured freight fallback by gross weight failed.' . PHP_EOL);
+    exit(1);
+}
+
+$freightProfileItemData = $packageFallbackItemData;
+$freightProfileItemData['variation']['shippingProfileIds'] = [9];
+$freightProfileSchema = $builder->build(
+    $freightProfileItemData,
+    'https://www.example.test/sperrgut_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    $fallbackOptions
+);
+if (!is_array($freightProfileSchema)
+    || $freightProfileSchema['offers']['shippingDetails']['shippingRate']['value'] !== 59.0) {
+    fwrite(STDERR, 'Configured freight fallback by shipping profile failed.' . PHP_EOL);
+    exit(1);
+}
+
 $parentItemData = $itemData;
 $parentItemData['variation']['id'] = 7875;
 $parentItemData['variation']['number'] = '51000';
@@ -235,6 +296,12 @@ $parentItemData['filter']['isSalable'] = false;
 $parentItemData['filter']['hasChildren'] = true;
 $parentItemData['filter']['hasActiveChildren'] = true;
 $parentItemData['attributes'] = [];
+
+$secondVariantItemData = $itemData;
+$secondVariantItemData['variation']['id'] = 13047;
+$secondVariantItemData['variation']['number'] = '51000-900';
+$secondVariantItemData['texts']['name1'] = 'Mephisto Infrarotheizung 900 W';
+$secondVariantItemData['urls']['canonical'] = 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047';
 
 $productGroup = $builder->build(
     $parentItemData,
@@ -244,7 +311,12 @@ $productGroup = $builder->build(
     'Four & More GmbH',
     array_merge($schemaOptions, [
         'schemaVariesBy' => 'size,color',
-        'schemaVideoObject' => false
+        'schemaVideoObject' => false,
+        'schemaVariantDocuments' => [
+            $parentItemData,
+            $itemData,
+            $secondVariantItemData
+        ]
     ])
 );
 
@@ -253,7 +325,10 @@ if (!is_array($productGroup)
     || $productGroup['productGroupID'] !== '51000'
     || isset($productGroup['offers'])
     || isset($productGroup['sku'])
-    || count($productGroup['variesBy']) !== 2) {
+    || count($productGroup['variesBy']) !== 2
+    || count($productGroup['hasVariant']) !== 2
+    || $productGroup['hasVariant'][0]['productID'] !== '13046'
+    || $productGroup['hasVariant'][1]['@id'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047#product-variation-13047') {
     fwrite(STDERR, 'Non-salable parent variation must be a ProductGroup without Offer.' . PHP_EOL);
     exit(1);
 }

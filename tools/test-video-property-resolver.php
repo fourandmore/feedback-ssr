@@ -54,6 +54,26 @@ if (!is_array($urlOptions)
     exit(1);
 }
 
+$alternativePropertyData = [
+    'variationProperties' => [[
+        'properties' => [
+            ['id' => 210, 'values' => ['value' => 'AltVideo123']],
+            ['id' => 258, 'values' => ['value' => '2026-08-27']]
+        ]
+    ]]
+];
+$alternativeOptions = $resolver->resolve(
+    $alternativePropertyData,
+    '110, 210',
+    '158;258'
+);
+if (!is_array($alternativeOptions)
+    || $alternativeOptions['schemaVideoEmbedUrl'] !== 'https://www.youtube-nocookie.com/embed/AltVideo123'
+    || $alternativeOptions['schemaVideoUploadDate'] !== '2026-08-27') {
+    fwrite(STDERR, "Alternative property ID list resolution failed.\n");
+    exit(1);
+}
+
 $invalid = $resolver->resolve([
     'variationProperties' => [[
         'properties' => [

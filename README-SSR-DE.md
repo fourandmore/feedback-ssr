@@ -1,3 +1,11 @@
+# Version 5.0.41 – additive GEO-Ergänzungen auf Basis 5.0.40
+
+- Der geprüfte Ceres-5.0.81-Override aus 5.0.40 bleibt technisch unverändert; lediglich der Diagnose-Marker lautet nun `5.0.41`.
+- Konfigurierbare Paket-/Speditions-Fallbacks ergänzen `OfferShippingDetails`, wenn PlentyONE keine Standardversandkosten in das Artikeldokument schreibt.
+- Mehrere kommagetrennte Property-IDs für YouTube-ID und Upload-Datum werden unterstützt.
+- `ProductGroup.hasVariant` wird nur aus tatsächlich mitgelieferten Geschwisterdokumenten erzeugt.
+- Kategorie-Bewertungssterne, FAQ-Hauptvariantenauflösung, Ceres-Unterdrückung und ProvenExpert-Verhalten bleiben wie in 5.0.40.
+
 # Version 5.0.40 – Ceres 5.0.81 Product-Schema-Override
 
 - Die Unterdrückung des parallelen Ceres-`Product`-Schemas erfolgt jetzt über den von Ceres 5.0.81 tatsächlich verwendeten Partial-Key `page-metadata`.
@@ -192,7 +200,7 @@ Bis Version 5.0.23 standen diese Einstellungen im Widget **Feedback Product Offe
 - Rückgaberichtlinie aktivieren, Länder, Rückgabefrist und öffentliche Richtlinien-URL,
 - VideoObject aktivieren sowie Titel, Embed-URL, Thumbnail, Upload-Datum, Beschreibung und Dauer.
 
-Die Versandkosten selbst werden nicht im Widget fest eingetragen. Das Plugin verwendet ausschließlich die für die aktuelle Variante bereitgestellten `variation.defaultShippingCosts`. Fehlt dieser Wert, wird kein `shippingDetails`-Objekt ausgegeben.
+Die Versandkosten selbst werden nicht im Widget fest eingetragen. Das Plugin verwendet vorrangig die für die aktuelle Variante bereitgestellten `variation.defaultShippingCosts`. Seit Version 5.0.41 kann je Plugin-Set optional ein fachlich geprüfter Paket-/Speditions-Fallback aktiviert werden. Ohne PlentyONE-Kosten und ohne vollständigen aktiven Fallback wird kein `shippingDetails`-Objekt ausgegeben.
 
 **Wichtig:** Werden Paket- und Speditionsartikel über unterschiedliche ShopBuilder-Inhalte ausgespielt, müssen Lieferzeiten und Länder passend je Inhalt eingestellt werden. Das optionale VideoObject darf nur in einem Inhalt aktiviert werden, dessen Videodaten tatsächlich für alle damit ausgespielten Artikel gelten.
 

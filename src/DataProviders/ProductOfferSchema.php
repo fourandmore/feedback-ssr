@@ -62,6 +62,31 @@ class ProductOfferSchema
                 'schemaShippingCountries',
                 'DE'
             )),
+            'schemaShippingFallbackEnabled' => $this->configBool(
+                $config,
+                'schemaShippingFallbackEnabled',
+                false
+            ),
+            'schemaShippingPackagePrice' => trim((string)$this->configValueAllowEmpty(
+                $config,
+                'schemaShippingPackagePrice',
+                ''
+            )),
+            'schemaShippingFreightPrice' => trim((string)$this->configValueAllowEmpty(
+                $config,
+                'schemaShippingFreightPrice',
+                ''
+            )),
+            'schemaShippingFreightWeightThresholdKg' => max(0, (float)$this->configValue(
+                $config,
+                'schemaShippingFreightWeightThresholdKg',
+                31.5
+            )),
+            'schemaShippingFreightProfileIds' => trim((string)$this->configValueAllowEmpty(
+                $config,
+                'schemaShippingFreightProfileIds',
+                ''
+            )),
             'schemaHandlingTimeMin' => max(0, (int)$this->configValue(
                 $config,
                 'schemaHandlingTimeMin',
@@ -98,7 +123,11 @@ class ProductOfferSchema
                 'schemaReturnPolicyUrl',
                 ''
             )),
-            'schemaVideoObject' => false
+            'schemaVideoObject' => false,
+            // PlentyONE sometimes includes sibling item documents in the
+            // layout-container arguments. The builder may use only these real
+            // documents for ProductGroup.hasVariant; no variants are invented.
+            'schemaVariantDocuments' => $this->resolveVariantDocuments($args, $itemId)
         ];
 
         // Resolve the per-product YouTube video directly from the same PlentyONE
@@ -106,23 +135,23 @@ class ProductOfferSchema
         // match the Mephisto setup: property 110 = YouTube ID, property 158 =
         // upload date. Invalid or incomplete values simply produce no VideoObject.
         if ($this->configBool($config, 'schemaVideoFromProperties', true)) {
-            $youtubePropertyId = max(1, (int)$this->configValue(
+            $youtubePropertyIds = $this->configValue(
                 $config,
                 'schemaVideoYoutubePropertyId',
                 110
-            ));
-            $uploadDatePropertyId = max(1, (int)$this->configValue(
+            );
+            $uploadDatePropertyIds = $this->configValue(
                 $config,
                 'schemaVideoUploadDatePropertyId',
                 158
-            ));
+            );
 
             /** @var VideoPropertyResolver $videoResolver */
             $videoResolver = pluginApp(VideoPropertyResolver::class);
             $videoOptions = $videoResolver->resolve(
                 $data,
-                $youtubePropertyId,
-                $uploadDatePropertyId
+                $youtubePropertyIds,
+                $uploadDatePropertyIds
             );
 
             if (is_array($videoOptions)) {
@@ -214,6 +243,86 @@ class ProductOfferSchema
         }
 
         return [];
+    }
+
+    /**
+     * Collect concrete sibling variation documents already present in the
+     * layout-container payload. This remains deliberately local: the schema
+     * renderer must not trigger an additional variation search for every page.
+     *
+     * @param mixed $args
+     * @param int $itemId
+     * @return array
+     */
+    private function resolveVariantDocuments($args, $itemId)
+    {
+        if ((int)$itemId <= 0) {
+            return [];
+        }
+
+        $documents = [];
+        $seenVariationIds = [];
+        $this->collectVariantDocuments(
+            $args,
+            (int)$itemId,
+            0,
+            $documents,
+            $seenVariationIds
+        );
+
+        return $documents;
+    }
+
+    /**
+     * @param mixed $node
+     * @param int $itemId
+     * @param int $depth
+     * @param array $documents
+     * @param array $seenVariationIds
+     * @return void
+     */
+    private function collectVariantDocuments(
+        $node,
+        $itemId,
+        $depth,
+        array &$documents,
+        array &$seenVariationIds
+    ) {
+        if ($depth > 10 || count($documents) >= 50) {
+            return;
+        }
+
+        $node = $this->toArray($node);
+        if (empty($node)) {
+            return;
+        }
+
+        $nodeItemId = $this->resolveId($node, 'item', 'id');
+        $nodeVariationId = $this->resolveId($node, 'variation', 'id');
+        if ($nodeItemId === (int)$itemId
+            && $nodeVariationId > 0
+            && !isset($seenVariationIds[$nodeVariationId])) {
+            $seenVariationIds[$nodeVariationId] = true;
+            $documents[] = $node;
+        }
+
+        foreach ($node as $child) {
+            if (!is_array($child) && !is_object($child)) {
+                continue;
+            }
+
+            $this->collectVariantDocuments(
+                $child,
+                $itemId,
+                $depth + 1,
+                $documents,
+                $seenVariationIds
+            );
+
+            if (count($documents) >= 50) {
+                break;
+            }
+        }
     }
 
     /**

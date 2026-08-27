@@ -167,6 +167,38 @@
                     "defaultValue": "DE",
                     "label": "Config.schemaShippingCountries"
                 },
+                "schemaShippingFallbackEnabled": {
+                    "type": "checkBox",
+                    "required": false,
+                    "label": "Config.schemaShippingFallbackEnabled",
+                    "options": {
+                        "defaultValue": "false"
+                    }
+                },
+                "schemaShippingPackagePrice": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaShippingPackagePrice"
+                },
+                "schemaShippingFreightPrice": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaShippingFreightPrice"
+                },
+                "schemaShippingFreightWeightThresholdKg": {
+                    "type": "number",
+                    "required": false,
+                    "defaultValue": 31.5,
+                    "label": "Config.schemaShippingFreightWeightThresholdKg"
+                },
+                "schemaShippingFreightProfileIds": {
+                    "type": "text",
+                    "required": false,
+                    "defaultValue": "",
+                    "label": "Config.schemaShippingFreightProfileIds"
+                },
                 "schemaHandlingTimeMin": {
                     "type": "number",
                     "required": false,

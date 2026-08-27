@@ -14,25 +14,37 @@ class VideoPropertyResolver
 {
     /**
      * @param mixed $itemData
-     * @param int $youtubePropertyId
-     * @param int $uploadDatePropertyId
+     * @param mixed $youtubePropertyId One ID, an array, or a comma-separated list
+     * @param mixed $uploadDatePropertyId One ID, an array, or a comma-separated list
      * @return array|null
      */
     public function resolve($itemData, $youtubePropertyId = 110, $uploadDatePropertyId = 158)
     {
         $data = $this->toArray($itemData);
-        $youtubePropertyId = (int)$youtubePropertyId;
-        $uploadDatePropertyId = (int)$uploadDatePropertyId;
+        $youtubePropertyIds = $this->normalizePropertyIds($youtubePropertyId);
+        $uploadDatePropertyIds = $this->normalizePropertyIds($uploadDatePropertyId);
 
-        if (empty($data) || $youtubePropertyId <= 0 || $uploadDatePropertyId <= 0) {
+        if (empty($data) || empty($youtubePropertyIds) || empty($uploadDatePropertyIds)) {
             return null;
         }
 
-        $youtubeValue = $this->findPropertyValueRecursive($data, $youtubePropertyId, 0);
-        $uploadDateValue = $this->findPropertyValueRecursive($data, $uploadDatePropertyId, 0);
+        $youtubeId = '';
+        foreach ($youtubePropertyIds as $propertyId) {
+            $youtubeValue = $this->findPropertyValueRecursive($data, $propertyId, 0);
+            $youtubeId = $this->extractYoutubeId($youtubeValue);
+            if ($youtubeId !== '') {
+                break;
+            }
+        }
 
-        $youtubeId = $this->extractYoutubeId($youtubeValue);
-        $uploadDate = $this->normalizeUploadDate($uploadDateValue);
+        $uploadDate = '';
+        foreach ($uploadDatePropertyIds as $propertyId) {
+            $uploadDateValue = $this->findPropertyValueRecursive($data, $propertyId, 0);
+            $uploadDate = $this->normalizeUploadDate($uploadDateValue);
+            if ($uploadDate !== '') {
+                break;
+            }
+        }
 
         if ($youtubeId === '' || $uploadDate === '') {
             return null;
@@ -47,6 +59,33 @@ class VideoPropertyResolver
             'schemaVideoDescription' => '',
             'schemaVideoDuration' => ''
         ];
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function normalizePropertyIds($value)
+    {
+        if (is_array($value)) {
+            $parts = $value;
+        } else {
+            $parts = preg_split('/[,;\s]+/', trim((string)$value));
+        }
+
+        $ids = [];
+        foreach ($parts as $part) {
+            if (!is_numeric($part) || (int)$part <= 0) {
+                continue;
+            }
+
+            $id = (int)$part;
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
     }
 
     /**

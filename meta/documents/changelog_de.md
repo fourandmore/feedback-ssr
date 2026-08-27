@@ -1,3 +1,18 @@
+## Version 5.0.41 – GEO-Ergänzungen auf dem geprüften Stand 5.0.40
+
+- Der funktionierende Ceres-5.0.81-`page-metadata`-Override aus Version 5.0.40 bleibt erhalten.
+- Optionale, je Plugin-Set konfigurierbare Paket- und Speditionspreise ergänzen Versanddaten, wenn PlentyONE keine Standardversandkosten bereitstellt. PlentyONE-Daten haben weiterhin Vorrang.
+- Speditionsauswahl über konfigurierte Versandprofil-IDs oder eine Bruttogewichtsschwelle.
+- YouTube- und Upload-Datum-Einstellungen akzeptieren mehrere kommagetrennte Property-IDs.
+- `ProductGroup.hasVariant` wird ausschließlich aus echten, im Layout-Container vorhandenen Geschwistervarianten erzeugt.
+- FAQ, Kategorie-Bewertungssterne, Review-SSR und ProvenExpert-Ausgabe werden nicht verändert.
+
+## Version 5.0.40 – Ceres-5.0.81-Override
+
+- Der tatsächlich verwendete Partial-Key `page-metadata` wird über `IO.init.templates` und `IO.intl.init.templates` ersetzt.
+- Der Ceres-Product-/ProductGroup-Block wird serverseitig gezielt unterdrückt; andere Metadaten bleiben erhalten.
+- Der alte clientseitige Feedback-Product-Block bleibt entfernt.
+
 ## Version 5.0.39 – Ceres-Product-Schema gezielt unterdrückt
 
 - Die Unterdrückung des parallelen Ceres-Product-Schemas prüft nicht mehr den Seitentyp über `services.template.isItem()` oder Item-Kontextvariablen.
