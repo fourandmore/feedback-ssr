@@ -473,6 +473,18 @@ $secondVariantItemData['variation']['number'] = '51000-900';
 $secondVariantItemData['texts']['name1'] = 'Mephisto Infrarotheizung 900 W';
 $secondVariantItemData['urls']['canonical'] = 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047';
 
+// Real ProductGroup children expose the attributes declared by variesBy.
+$productGroupVariantA = $itemData;
+$productGroupVariantA['feedbackVariantAttributes'] = [
+    ['name' => 'Größe', 'value' => '600 W'],
+    ['name' => 'Tuchfarbe', 'value' => 'Grau']
+];
+$productGroupVariantB = $secondVariantItemData;
+$productGroupVariantB['feedbackVariantAttributes'] = [
+    ['name' => 'Größe', 'value' => '900 W'],
+    ['name' => 'Tuchfarbe', 'value' => 'Sand']
+];
+
 $productGroup = $builder->build(
     $parentItemData,
     'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_7875',
@@ -484,8 +496,8 @@ $productGroup = $builder->build(
         'schemaVideoObject' => false,
         'schemaVariantDocuments' => [
             $parentItemData,
-            $itemData,
-            $secondVariantItemData
+            $productGroupVariantA,
+            $productGroupVariantB
         ]
     ])
 );
@@ -518,6 +530,14 @@ $attributeVariantB['feedbackVariantAttributes'] = [
     ['name' => 'Größe', 'value' => '250 x 200 cm'],
     ['name' => 'Tuchfarbe', 'value' => 'Sand']
 ];
+
+// A purchasable default/main variation without any varying attributes must
+// not be emitted as ProductGroup.hasVariant when the group varies by size/color.
+$attributeDefaultVariant = $itemData;
+$attributeDefaultVariant['variation']['id'] = 13916;
+$attributeDefaultVariant['variation']['number'] = '51000-DEFAULT';
+unset($attributeDefaultVariant['feedbackVariantAttributes']);
+
 $attributeProductGroup = $builder->build(
     $parentItemData,
     'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_7875',
@@ -529,6 +549,7 @@ $attributeProductGroup = $builder->build(
         'schemaVideoObject' => false,
         'schemaVariantDocuments' => [
             $parentItemData,
+            $attributeDefaultVariant,
             $attributeVariantA,
             $attributeVariantB
         ]
@@ -538,6 +559,9 @@ $attributeProductGroup = $builder->build(
 if (!is_array($attributeProductGroup)
     || !in_array('https://schema.org/size', $attributeProductGroup['variesBy'], true)
     || !in_array('https://schema.org/color', $attributeProductGroup['variesBy'], true)
+    || count($attributeProductGroup['hasVariant']) !== 2
+    || $attributeProductGroup['hasVariant'][0]['productID'] === '13916'
+    || $attributeProductGroup['hasVariant'][1]['productID'] === '13916'
     || $attributeProductGroup['hasVariant'][0]['size'] !== '200 x 150 cm'
     || $attributeProductGroup['hasVariant'][0]['color'] !== 'Grau'
     || strpos($attributeProductGroup['hasVariant'][0]['name'], '200 x 150 cm') === false

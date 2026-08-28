@@ -531,6 +531,15 @@ class ProductSchemaBuilder
                 continue;
             }
 
+            // A Product nested below ProductGroup.hasVariant must actually
+            // expose every property declared by the parent in variesBy. This
+            // filters purchasable default/main variations that have no variant
+            // attributes of their own (for example neither size nor color),
+            // while keeping all concrete variants untouched.
+            if (!$this->variantMatchesVariesBy($variant, $parentVariesBy)) {
+                continue;
+            }
+
             unset($variant['@context']);
 
             // This Product is already nested below ProductGroup.hasVariant.
@@ -564,6 +573,36 @@ class ProductSchemaBuilder
         }
 
         return $variants;
+    }
+
+    /**
+     * Check that a nested Product exposes every concrete Schema.org property
+     * declared by ProductGroup.variesBy. Unknown/unsupported properties are
+     * ignored here because resolveVariesBy() only emits mapped properties.
+     *
+     * @param array $variant
+     * @param array $parentVariesBy
+     * @return bool
+     */
+    private function variantMatchesVariesBy(array $variant, array $parentVariesBy)
+    {
+        foreach ($parentVariesBy as $propertyUrl) {
+            $propertyUrl = trim((string)$propertyUrl);
+            if ($propertyUrl === '') {
+                continue;
+            }
+
+            $property = substr($propertyUrl, strrpos($propertyUrl, '/') + 1);
+            if ($property === '') {
+                continue;
+            }
+
+            if (!isset($variant[$property]) || trim((string)$variant[$property]) === '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
