@@ -39,7 +39,8 @@ class ProductSchemaBuilder
             'variation.model'
         ]);
 
-        $isVariationGroup = $this->isVariationGroup($data);
+        $isVariationGroup = $this->isVariationGroup($data)
+            || $this->toBool($this->option($schemaOptions, 'schemaForceProductGroup', false));
         $priceData = $this->resolvePrice($data);
         $currency = strtoupper(trim((string)$priceData['currency']));
         $price = $priceData['price'];
@@ -510,6 +511,7 @@ class ProductSchemaBuilder
 
             $childOptions = $schemaOptions;
             $childOptions['schemaVariantDocuments'] = [];
+            $childOptions['schemaForceProductGroup'] = false;
             $childOptions['schemaVideoObject'] = false;
             $childOptions['schemaParentGroupName'] = $parentName;
             $childOptions['schemaParentGroupDescription'] = $parentDescription;

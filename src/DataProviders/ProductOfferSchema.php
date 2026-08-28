@@ -66,6 +66,7 @@ class ProductOfferSchema
             $data,
             $itemId
         );
+        $forceProductGroup = $this->shouldForceProductGroupFromContext($data);
 
         $schemaOptions = [
             'schemaManufacturerName' => trim((string)$this->configValueAllowEmpty(
@@ -147,9 +148,12 @@ class ProductOfferSchema
                 ''
             )),
             'schemaVideoObject' => false,
-            // PlentyONE sometimes includes sibling item documents in the
-            // layout-container arguments. The builder may use only these real
-            // documents for ProductGroup.hasVariant; no variants are invented.
+            // PlentyONE sometimes resolves a concrete salable child even on
+            // the shared/base item URL. The documented Ceres variation context
+            // still exposes the sibling selector entries. If that context
+            // contains multiple salable variations, render the shared page as
+            // ProductGroup and use only real loaded variation documents.
+            'schemaForceProductGroup' => $forceProductGroup,
             'schemaVariantDocuments' => $variantDocuments
         ];
 
@@ -325,12 +329,13 @@ class ProductOfferSchema
             ? $this->toArray($data['feedbackGeoFMContextVariations'])
             : [];
 
-        if (!$this->isVariationGroupData($data) || (int)$itemId <= 0 || empty($contextVariations)) {
+        if ((int)$itemId <= 0 || empty($contextVariations)) {
             return $documents;
         }
 
         $variationIds = $this->extractSalableVariationIds($contextVariations);
-        if (empty($variationIds)) {
+        $isProductGroupContext = $this->isVariationGroupData($data) || count($variationIds) > 1;
+        if (!$isProductGroupContext || empty($variationIds)) {
             return $documents;
         }
 
@@ -586,6 +591,29 @@ class ProductOfferSchema
                 break;
             }
         }
+    }
+
+    /**
+     * Ceres may select a concrete salable child on a shared item URL even when
+     * the selector context represents a genuine multi-variation product. Use
+     * only the already injected documented variation context to decide whether
+     * the page should still be represented as ProductGroup.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function shouldForceProductGroupFromContext(array $data)
+    {
+        $contextVariations = isset($data['feedbackGeoFMContextVariations'])
+            ? $this->toArray($data['feedbackGeoFMContextVariations'])
+            : [];
+
+        if (empty($contextVariations)) {
+            return false;
+        }
+
+        $variationIds = $this->extractSalableVariationIds($contextVariations);
+        return count($variationIds) > 1;
     }
 
     /**
