@@ -530,6 +530,33 @@ class ProductSchemaBuilder
             }
 
             unset($variant['@context']);
+
+            // This Product is already nested below ProductGroup.hasVariant.
+            // Google documents hasVariant and isVariantOf as alternative ways
+            // to express the parent relationship. Keeping a full isVariantOf
+            // object here would repeat the complete parent description for
+            // every child and can make large variant groups several megabytes
+            // in size.
+            unset($variant['isVariantOf']);
+
+            // Ceres commonly supplies the same long item description to every
+            // variation. Keep a truthful, variant-specific description without
+            // duplicating the complete parent copy on every child.
+            if ($parentDescription !== ''
+                && isset($variant['description'])
+                && $variant['description'] === $parentDescription
+                && isset($variant['name'])
+                && trim((string)$variant['name']) !== '') {
+                $variant['description'] = (string)$variant['name'];
+            }
+
+            // One variant image is sufficient for Product.image. The parent
+            // ProductGroup still carries the complete item image set, so do not
+            // repeat the same gallery on every child variant.
+            if (isset($variant['image']) && is_array($variant['image']) && !empty($variant['image'])) {
+                $variant['image'] = $variant['image'][0];
+            }
+
             $seenVariationIds[$variationId] = true;
             $variants[] = $variant;
         }

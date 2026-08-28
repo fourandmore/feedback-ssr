@@ -542,10 +542,10 @@ if (!is_array($attributeProductGroup)
     || $attributeProductGroup['hasVariant'][0]['color'] !== 'Grau'
     || strpos($attributeProductGroup['hasVariant'][0]['name'], '200 x 150 cm') === false
     || strpos($attributeProductGroup['hasVariant'][0]['name'], 'Grau') === false
-    || empty($attributeProductGroup['hasVariant'][0]['isVariantOf']['name'])
-    || empty($attributeProductGroup['hasVariant'][0]['isVariantOf']['description'])
+    || isset($attributeProductGroup['hasVariant'][0]['isVariantOf'])
+    || empty($attributeProductGroup['hasVariant'][0]['description'])
     || empty($attributeProductGroup['hasVariant'][0]['offers']['price'])) {
-    fwrite(STDERR, 'ProductGroup variants must expose real size/color attributes, parent metadata and offers.' . PHP_EOL);
+    fwrite(STDERR, 'ProductGroup variants must expose real size/color attributes, compact nested metadata and offers.' . PHP_EOL);
     exit(1);
 }
 
