@@ -233,7 +233,7 @@ class ProductOfferSchema
 
         $diagnosticScript = '';
         if (is_string($diagnosticJson) && $diagnosticJson !== '') {
-            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5061" type="application/json">'
+            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5062" type="application/json">'
                 . $diagnosticJson
                 . '</script>';
         }
@@ -354,7 +354,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.61',
+            'pluginVersion' => '5.0.62',
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
             'contextVariationsCount' => count($contextVariations),

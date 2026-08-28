@@ -1050,10 +1050,16 @@ class ProductSchemaBuilder
         if ($preferVariationShipping) {
             $shippingCost = $this->resolvePlentyShippingCost($data);
             if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
+                $shippingCost = $this->resolveProfile54WeightShippingPrice($data);
+            }
+            if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
                 $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
             }
         } else {
             if ($fallbackEnabled) {
+                $shippingCost = $this->resolveProfile54WeightShippingPrice($data);
+            }
+            if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
                 $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
             }
             if ($shippingCost === null || $shippingCost < 0) {
@@ -1174,6 +1180,46 @@ class ProductSchemaBuilder
         $price = $this->numericValue($this->option($schemaOptions, $priceKey, ''));
 
         return $price !== null && $price >= 0 ? $price : null;
+    }
+
+    /**
+     * Markise shipping profile 54 uses three weight markers in PlentyONE to
+     * represent the actual storefront shipping tiers. This profile-specific
+     * rule is intentionally isolated so all other shipping profiles keep the
+     * existing configured fixed-price behaviour.
+     *
+     * Confirmed storefront values:
+     * 1,000 g   => 29.90 EUR
+     * 10,000 g  => 49.90 EUR
+     * 100,000 g => 99.00 EUR
+     *
+     * @param array $data
+     * @return float|null
+     */
+    private function resolveProfile54WeightShippingPrice(array $data)
+    {
+        $assigned = $this->resolveAssignedShippingProfileIds($data);
+        if (!in_array(54, $assigned, true)) {
+            return null;
+        }
+
+        $weightG = $this->numericValue($this->value($data, 'variation.weightG', null));
+        if ($weightG === null || $weightG < 0) {
+            return null;
+        }
+
+        $weightG = (int)$weightG;
+        if ($weightG === 1000) {
+            return 29.90;
+        }
+        if ($weightG === 10000) {
+            return 49.90;
+        }
+        if ($weightG === 100000) {
+            return 99.00;
+        }
+
+        return null;
     }
 
     /**
