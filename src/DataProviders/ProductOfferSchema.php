@@ -233,7 +233,7 @@ class ProductOfferSchema
 
         $diagnosticScript = '';
         if (is_string($diagnosticJson) && $diagnosticJson !== '') {
-            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5060" type="application/json">'
+            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5061" type="application/json">'
                 . $diagnosticJson
                 . '</script>';
         }
@@ -354,7 +354,7 @@ class ProductOfferSchema
             : [];
 
         $diagnostics = [
-            'pluginVersion' => '5.0.60',
+            'pluginVersion' => '5.0.61',
             'itemId' => (int)$itemId,
             'isVariationGroup' => $this->isVariationGroupData($data),
             'contextVariationsCount' => count($contextVariations),
@@ -366,6 +366,8 @@ class ProductOfferSchema
             'multiSearchCollectorDocumentsCount' => 0,
             'variantMetaCount' => 0,
             'schemaVariantDocumentsCount' => 0,
+            'shippingRawSamples' => [],
+            'itemShippingProfilesPreview' => [],
             'errorClass' => null,
             'errorMessage' => null
         ];
@@ -451,9 +453,31 @@ class ProductOfferSchema
                 ? $this->toArray($data['itemShippingProfiles'])
                 : [];
 
+            $diagnostics['itemShippingProfilesPreview'] = array_slice($itemShippingProfiles, 0, 10);
+
             foreach ($loadedDocuments as $loadedDocument) {
                 $loadedDocument = $this->toArray($loadedDocument);
                 $loadedVariationId = $this->resolveId($loadedDocument, 'variation', 'id');
+
+                $variationData = isset($loadedDocument['variation'])
+                    ? $this->toArray($loadedDocument['variation'])
+                    : [];
+                $rawDefaultShippingCosts = array_key_exists('defaultShippingCosts', $variationData)
+                    ? $variationData['defaultShippingCosts']
+                    : null;
+                $rawDefaultShippingCost = array_key_exists('defaultShippingCost', $variationData)
+                    ? $variationData['defaultShippingCost']
+                    : null;
+                $rawWeightG = array_key_exists('weightG', $variationData)
+                    ? $variationData['weightG']
+                    : null;
+
+                $diagnostics['shippingRawSamples'][] = [
+                    'variationId' => $loadedVariationId,
+                    'defaultShippingCosts' => $rawDefaultShippingCosts,
+                    'defaultShippingCost' => $rawDefaultShippingCost,
+                    'weightG' => $rawWeightG
+                ];
 
                 if ($loadedVariationId <= 0 || isset($seenVariationIds[$loadedVariationId])) {
                     continue;
