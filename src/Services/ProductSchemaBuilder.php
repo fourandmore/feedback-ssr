@@ -1204,6 +1204,27 @@ class ProductSchemaBuilder
 
         foreach ($configured as $profileId => $price) {
             if (in_array((int)$profileId, $assigned, true)) {
+                // Shipping profile 54 is used for the awning shipping tiers.
+                // Keep the existing profile resolution path and only replace
+                // its configured fallback price for the three weight markers
+                // that are actually used by these variations. This avoids an
+                // additional recursive shipping-profile scan during rendering.
+                if ((int)$profileId === 54) {
+                    $weightG = $this->numericValue($this->value($data, 'variation.weightG', null));
+                    if ($weightG !== null) {
+                        $weightG = (int)$weightG;
+                        if ($weightG === 1000) {
+                            return 29.90;
+                        }
+                        if ($weightG === 10000) {
+                            return 49.90;
+                        }
+                        if ($weightG === 100000) {
+                            return 99.00;
+                        }
+                    }
+                }
+
                 return $price;
             }
         }
