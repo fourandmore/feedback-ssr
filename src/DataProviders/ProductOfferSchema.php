@@ -61,12 +61,10 @@ class ProductOfferSchema
             'Four & More GmbH'
         ));
 
-        $variantDiagnostics = [];
         $variantDocuments = $this->resolveVariantDocumentsForSchema(
             $args,
             $data,
-            $itemId,
-            $variantDiagnostics
+            $itemId
         );
 
         $schemaOptions = [
@@ -203,11 +201,6 @@ class ProductOfferSchema
             return '';
         }
 
-        if (isset($initialData['productSchemaVariantDiagnostics'])
-            && is_array($initialData['productSchemaVariantDiagnostics'])) {
-            $variantDiagnostics['builder'] = $initialData['productSchemaVariantDiagnostics'];
-        }
-
         $json = json_encode(
             $initialData['jsonLd'],
             JSON_UNESCAPED_SLASHES
@@ -221,25 +214,7 @@ class ProductOfferSchema
             return '';
         }
 
-        $diagnosticJson = json_encode(
-            $variantDiagnostics,
-            JSON_UNESCAPED_SLASHES
-            | JSON_UNESCAPED_UNICODE
-            | JSON_HEX_TAG
-            | JSON_HEX_AMP
-            | JSON_HEX_APOS
-            | JSON_HEX_QUOT
-        );
-
-        $diagnosticScript = '';
-        if (is_string($diagnosticJson) && $diagnosticJson !== '') {
-            $diagnosticScript = '<script id="feedback-geofm-variant-diagnostics-5063" type="application/json">'
-                . $diagnosticJson
-                . '</script>';
-        }
-
-        return $diagnosticScript
-            . '<script id="feedback-product-offer-jsonld" type="application/ld+json">'
+        return '<script id="feedback-product-offer-jsonld" type="application/ld+json">'
             . $json
             . '</script>';
     }
@@ -343,42 +318,18 @@ class ProductOfferSchema
      * @param int $itemId
      * @return array
      */
-    private function resolveVariantDocumentsForSchema($args, array $data, $itemId, array &$diagnostics = [])
+    private function resolveVariantDocumentsForSchema($args, array $data, $itemId)
     {
         $documents = $this->resolveVariantDocuments($args, $itemId);
         $contextVariations = isset($data['feedbackGeoFMContextVariations'])
             ? $this->toArray($data['feedbackGeoFMContextVariations'])
             : [];
-        $contextAttributes = isset($data['feedbackGeoFMContextAttributes'])
-            ? $this->toArray($data['feedbackGeoFMContextAttributes'])
-            : [];
 
-        $diagnostics = [
-            'pluginVersion' => '5.0.63',
-            'itemId' => (int)$itemId,
-            'isVariationGroup' => $this->isVariationGroupData($data),
-            'contextVariationsCount' => count($contextVariations),
-            'contextAttributesCount' => count($contextAttributes),
-            'salableVariationIdsCount' => 0,
-            'multiSearchCalled' => false,
-            'multiSearchInputCount' => 0,
-            'multiSearchResultCount' => 0,
-            'multiSearchCollectorDocumentsCount' => 0,
-            'variantMetaCount' => 0,
-            'schemaVariantDocumentsCount' => 0,
-            'shippingRawSamples' => [],
-            'itemShippingProfilesPreview' => [],
-            'errorClass' => null,
-            'errorMessage' => null
-        ];
-
-        if (!$diagnostics['isVariationGroup'] || (int)$itemId <= 0 || empty($contextVariations)) {
+        if (!$this->isVariationGroupData($data) || (int)$itemId <= 0 || empty($contextVariations)) {
             return $documents;
         }
 
         $variationIds = $this->extractSalableVariationIds($contextVariations);
-        $diagnostics['salableVariationIdsCount'] = count($variationIds);
-
         if (empty($variationIds)) {
             return $documents;
         }
@@ -401,7 +352,6 @@ class ProductOfferSchema
         ));
 
         if (empty($variationIds)) {
-            $diagnostics['schemaVariantDocumentsCount'] = count($documents);
             return $documents;
         }
 
@@ -425,13 +375,7 @@ class ProductOfferSchema
                 return $documents;
             }
 
-            $diagnostics['multiSearchCalled'] = true;
-            $diagnostics['multiSearchInputCount'] = count($searches);
             $multiResults = $itemSearchService->getResults($searches);
-
-            if (is_array($multiResults)) {
-                $diagnostics['multiSearchResultCount'] = count($multiResults);
-            }
 
             $loadedDocuments = [];
             $loadedSeen = [];
@@ -442,42 +386,18 @@ class ProductOfferSchema
                 $loadedDocuments,
                 $loadedSeen
             );
-            $diagnostics['multiSearchCollectorDocumentsCount'] = count($loadedDocuments);
 
             /** @var ItemService $itemService */
             $itemService = pluginApp(ItemService::class);
             $variantMetaMap = $this->buildVariantMetaMap($contextVariations, $itemService);
-            $diagnostics['variantMetaCount'] = count($variantMetaMap);
 
             $itemShippingProfiles = isset($data['itemShippingProfiles'])
                 ? $this->toArray($data['itemShippingProfiles'])
                 : [];
 
-            $diagnostics['itemShippingProfilesPreview'] = array_slice($itemShippingProfiles, 0, 10);
-
             foreach ($loadedDocuments as $loadedDocument) {
                 $loadedDocument = $this->toArray($loadedDocument);
                 $loadedVariationId = $this->resolveId($loadedDocument, 'variation', 'id');
-
-                $variationData = isset($loadedDocument['variation'])
-                    ? $this->toArray($loadedDocument['variation'])
-                    : [];
-                $rawDefaultShippingCosts = array_key_exists('defaultShippingCosts', $variationData)
-                    ? $variationData['defaultShippingCosts']
-                    : null;
-                $rawDefaultShippingCost = array_key_exists('defaultShippingCost', $variationData)
-                    ? $variationData['defaultShippingCost']
-                    : null;
-                $rawWeightG = array_key_exists('weightG', $variationData)
-                    ? $variationData['weightG']
-                    : null;
-
-                $diagnostics['shippingRawSamples'][] = [
-                    'variationId' => $loadedVariationId,
-                    'defaultShippingCosts' => $rawDefaultShippingCosts,
-                    'defaultShippingCost' => $rawDefaultShippingCost,
-                    'weightG' => $rawWeightG
-                ];
 
                 if ($loadedVariationId <= 0 || isset($seenVariationIds[$loadedVariationId])) {
                     continue;
@@ -497,86 +417,10 @@ class ProductOfferSchema
                 $documents[] = $loadedDocument;
             }
         } catch (\Throwable $e) {
-            $diagnostics['errorClass'] = 'Throwable';
-            $diagnostics['errorMessage'] = $e->getMessage();
+            // Keep ProductGroup rendering resilient if variant loading fails.
         }
 
-        $diagnostics['schemaVariantDocumentsCount'] = count($documents);
         return $documents;
-    }
-
-    /**
-     * Return the keys of the first array/object entry without assuming a
-     * particular PlentyONE response shape.
-     *
-     * @param mixed $values
-     * @return array
-     */
-    private function firstArrayKeys($values)
-    {
-        $values = $this->toArray($values);
-        if (empty($values)) {
-            return [];
-        }
-
-        $firstValue = [];
-        foreach ($values as $value) {
-            $firstValue = $this->toArray($value);
-            break;
-        }
-        return empty($firstValue) ? [] : array_slice(array_keys($firstValue), 0, 50);
-    }
-
-    /**
-     * Return a diagnostic type label using only type checks already used by
-     * the successfully deployed 5.0.50 code base.
-     *
-     * @param mixed $value
-     * @return string
-     */
-    private function diagnosticTypeLabel($value)
-    {
-        if (is_array($value)) {
-            return 'array';
-        }
-        if (is_object($value)) {
-            return 'object';
-        }
-        if (is_string($value)) {
-            return 'string';
-        }
-        if (is_bool($value)) {
-            return 'bool';
-        }
-        if (is_numeric($value)) {
-            return 'numeric';
-        }
-        if ($value === null) {
-            return 'null';
-        }
-        return 'other';
-    }
-
-    /**
-     * Serialize only the first top-level fields of a diagnostic value.
-     * No string-length functions are used, so the code check sees only
-     * global PHP functions already present in the proven 5.0.50 base.
-     *
-     * @param mixed $value
-     * @return mixed
-     */
-    private function diagnosticPreview($value)
-    {
-        $arrayValue = $this->toArray($value);
-        if (!empty($arrayValue)) {
-            return array_slice($arrayValue, 0, 8, true);
-        }
-
-        if (is_string($value) || is_numeric($value) || is_bool($value) || $value === null) {
-            return $value;
-        }
-
-        return null;
     }
 
     /**

@@ -1,3 +1,9 @@
+## 5.0.64
+- Production release based on the live-verified 5.0.63 state.
+- Removes all temporary ProductGroup/shipping diagnostic scripts from the storefront.
+- Keeps the verified multi-search path for real `ProductGroup.hasVariant` products unchanged.
+- Shipping profile 54 uses the live-verified awning weight tiers: 1,000 g = EUR 29.90, 10,000 g = EUR 49.90, 100,000 g = EUR 99.00. Other shipping profiles remain unchanged.
+
 ## 5.0.57
 - Diagnostic multi-search based on the official PlentyONE/IO interfaces only.
 - Uses the already confirmed `SingleItemContext` variation IDs.

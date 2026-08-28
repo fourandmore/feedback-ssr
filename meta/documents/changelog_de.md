@@ -1,3 +1,9 @@
+## 5.0.64
+- Produktionsversion auf Basis des live bestätigten Stands 5.0.63.
+- Entfernt sämtliche temporären ProductGroup-/Versand-Diagnoseskripte aus der Storefront.
+- Behält den bestätigten Multi-Search für reale `ProductGroup.hasVariant`-Produkte unverändert bei.
+- Versandprofil 54 verwendet für die Markisen die live bestätigten Gewichtsstufen: 1.000 g = 29,90 €, 10.000 g = 49,90 €, 100.000 g = 99,00 €. Andere Versandprofile bleiben unverändert.
+
 ## 5.0.57
 - Reine Multi-Search-Diagnose auf Basis der offiziellen PlentyONE/IO-Schnittstellen.
 - Verwendet die bereits bestätigten `SingleItemContext`-Variations-IDs.
