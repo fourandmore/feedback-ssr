@@ -21,7 +21,7 @@
         <section class="feedback-container widget-inner {{ spacingPadding }}"
                 {% if inlinePadding | length > 0 %} style="{{ inlinePadding }}"{% endif %}>
             <div class="title">
-                {{ trans("Feedback::Feedback.customerReviews") }}
+                {{ trans("FeedbackGeoFM::Feedback.customerReviews") }}
                 <small class="feedback-average-count">(3)</small>
             </div>
             <div class="feedback-stars-average" aria-label="5 von 5 Sternen">
@@ -32,7 +32,7 @@
                 </div>
             </div>
             <hr>
-            <p class="text-muted mb-0">{{ trans("Feedback::Feedback.loadingFeedbacks") }}</p>
+            <p class="text-muted mb-0">{{ trans("FeedbackGeoFM::Feedback.loadingFeedbacks") }}</p>
         </section>
     </div>
 {% else %}
@@ -40,20 +40,20 @@
     {{ Twig.set("options", options | json_encode) }}
     {{ Twig.set("options", "options | merge(configOptions)") }}
 
-    {% if options.serverSideRendering or options.productOfferSchema or options.faqPropertySchema %}
-        {# Product/Offer schema, visible review SSR and property FAQ schema are independently configurable. #}
+    {% if options.serverSideRendering or options.faqPropertySchema %}
+        {# Product/Offer JSON-LD is emitted by the server-side DataProvider. #}
         {# Defaults prevent a missing item context from invalidating the content. #}
         {{ Twig.set("feedbackItemData", "item.documents[0].data | default({})") }}
         {{ Twig.set("feedbackItemId", "feedbackItemData.item.id | default(-1)") }}
         {{ Twig.set("feedbackVariationId", "feedbackItemData.variation.id | default(-1)") }}
-        {% if options.serverSideRendering or options.productOfferSchema %}
+        {% if options.serverSideRendering %}
             {{ Twig.set("feedbackInitialData", Twig.call("feedbackServices.feedback.getInitialData", [
                 Twig.var("feedbackItemId"),
                 Twig.var("feedbackVariationId"),
                 options.feedbacksPerPage,
                 Twig.var("feedbackItemData"),
-                options.productOfferSchema,
-                options.schemaSellerName,
+                false,
+                "",
                 Twig.var("options")
             ])) }}
         {% endif %}
@@ -67,10 +67,10 @@
         {% endif %}
     {% endif %}
 
-    <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('Feedback::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
+    <div data-feedback data-feedback-ssr-widget data-feedback-empty-state-text="{{ trans('FeedbackGeoFM::Feedback.noReviews') | e('html_attr') }}" class="widget widget-feedback widget-{{ appearance | default("primary") }}{% if customClass | length > 0 %} {{ customClass }}{% endif %}{% if spacingMargin | length > 0 %} {{ spacingMargin }}{% endif %}"
             {% if inlineMargin | length > 0 %} style="{{ inlineMargin }}"{% endif %}>
         {% if options.serverSideRendering %}
-            {{ Twig.include("Feedback::Widgets.FeedbackSsrContent", {
+            {{ Twig.include("FeedbackGeoFM::Widgets.FeedbackSsrContent", {
                 "initialData": "feedbackInitialData",
                 "timestampVisibility": options.timestampVisibility ? "true" : "false"
             }) }}
@@ -295,19 +295,12 @@
     })();
     </script2>
 
-    {% if options.serverSideRendering or options.productOfferSchema %}
-        {{ Twig.if("feedbackInitialData.jsonLd is not empty") }}
-            <script2 id="feedback-product-jsonld" type="application/ld+json">{{ Twig.print("feedbackInitialData.jsonLd | json_encode | raw") }}</script2>
-        {{ Twig.endif() }}
-    {% endif %}
-
     {% if options.faqPropertySchema %}
         <meta id="feedback-faq-property-status-{{ options.faqPropertyId }}"
               data-status="{{ Twig.print("feedbackFaqPropertyData.status | default('not-found')") }}"
               data-source="{{ Twig.print("feedbackFaqPropertyData.source | default('')") }}"
               data-variation-id="{{ Twig.print("feedbackFaqPropertyData.resolvedVariationId | default(feedbackVariationId)") }}">
-        {{ Twig.if("feedbackFaqPropertyData.jsonLd is not empty") }}
-            <script id="feedback-faq-property-jsonld-{{ options.faqPropertyId }}" type="application/ld+json">{{ Twig.print("feedbackFaqPropertyData.jsonLd | json_encode | raw") }}</script>
-        {{ Twig.endif() }}
+        {# FAQPage JSON-LD is rendered by the server-side layout-container data provider.
+           Keep only this diagnostic marker in the ShopBuilder widget. #}
     {% endif %}
 {% endif %}

@@ -13,7 +13,7 @@
         class="btn-sm btn-danger"
         data-toggle="tooltip"
         data-placement="top"
-        :data-original-title="$translate('Feedback::Feedback.moderationMessage')"
+        :data-original-title="$translate('FeedbackGeoFM::Feedback.moderationMessage')"
       >
         <i class="fa fa-eye-slash" />
       </span>
@@ -25,7 +25,7 @@
         class="btn btn-sm btn-danger"
         data-toggle="tooltip"
         data-placement="top"
-        :data-original-title="isReply ? $translate('Feedback::Feedback.editReply') : $translate('Feedback::Feedback.editReview')"
+        :data-original-title="isReply ? $translate('FeedbackGeoFM::Feedback.editReply') : $translate('FeedbackGeoFM::Feedback.editReview')"
         @click="editFeedback()"
       >
         <i class="fa fa-pencil" />
@@ -37,7 +37,7 @@
         class="btn btn-sm btn-danger"
         data-toggle="tooltip"
         data-placement="top"
-        :data-original-title="isReply ? $translate('Feedback::Feedback.deleteReply') : $translate('Feedback::Feedback.deleteReview')"
+        :data-original-title="isReply ? $translate('FeedbackGeoFM::Feedback.deleteReply') : $translate('FeedbackGeoFM::Feedback.deleteReview')"
         @click="showDeleteConfirmation()"
       >
         <i class="fa fa-trash-o" />
@@ -61,27 +61,27 @@
           v-model="editableFeedback.message"
           class="form-control"
           rows="3"
-          :placeholder="$translate('Feedback::Feedback.replyMessage')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.replyMessage')"
         />
       </div>
       <button
         class="btn btn-primary btn-appearance"
         @click="saveEditableFeedback()"
       >
-        {{ $translate("Feedback::Feedback.editReply") }}
+        {{ $translate("FeedbackGeoFM::Feedback.editReply") }}
       </button>
       <button
         class="btn btn-secondary feedback-edit-cancel"
         @click="editableFeedback = null"
       >
-        {{ $translate("Feedback::Feedback.cancel") }}
+        {{ $translate("FeedbackGeoFM::Feedback.cancel") }}
       </button>
     </div>
 
     <div v-if="!!editableFeedback && !isReply">
       <div class="stars">
         <fieldset>
-          <legend><span class="visually-hidden">{{ $translate("Feedback::Feedback.feedbackTextLegend") }}</span></legend>
+          <legend><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.feedbackTextLegend") }}</span></legend>
           <template v-for="i in [5,4,3,2,1]">
             <input
               :id="'star-' + _uid + '-' + i"
@@ -96,7 +96,7 @@
               :key="'stars_label_' + i"
               :class="'star star-' + i"
               :for="'star-' + _uid + '-' + i"
-            ><span class="visually-hidden">{{ $translate("Feedback::Feedback.feedbackAverageLabel", {"count": i }) }}</span></label>
+            ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.feedbackAverageLabel", {"count": i }) }}</span></label>
           </template>
         </fieldset>
       </div>
@@ -107,13 +107,13 @@
           type="text"
           class="form-control"
           :name="'title_' + _uid"
-          :placeholder="$translate('Feedback::Feedback.title')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.title')"
           required
         >
         <label
           class="position-absolute"
           :for="'label_title_' + _uid"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.title") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.title") }}</span></label>
       </div>
       <div class="form-group">
         <textarea
@@ -122,25 +122,25 @@
           class="form-control"
           :name="'message_' + _uid"
           rows="3"
-          :placeholder="$translate('Feedback::Feedback.title')"
+          :placeholder="$translate('FeedbackGeoFM::Feedback.title')"
         />
         <label
           class="position-absolute"
           :for="'label_message_' + _uid"
-        ><span class="visually-hidden">{{ $translate("Feedback::Feedback.title") }}</span></label>
+        ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.title") }}</span></label>
       </div>
 
       <button
         class="btn btn-primary btn-appearance"
         @click="saveEditableFeedback()"
       >
-        {{ $translate("Feedback::Feedback.editReview") }}
+        {{ $translate("FeedbackGeoFM::Feedback.editReview") }}
       </button>
       <button
         class="btn btn-secondary feedback-edit-cancel"
         @click="editableFeedback = null"
       >
-        {{ $translate("Feedback::Feedback.cancel") }}
+        {{ $translate("FeedbackGeoFM::Feedback.cancel") }}
       </button>
     </div>
   </div>

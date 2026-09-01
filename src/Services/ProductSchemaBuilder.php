@@ -1,9 +1,9 @@
 <?php
 
-namespace Feedback\Services;
+namespace FeedbackGeoFM\Services;
 
 /**
- * Builds a cache-safe Schema.org Product/Offer object from the current
+ * Builds a cache-safe Schema.org Product/ProductGroup/Offer object from the current
  * plentyShop item document. The class deliberately has no PlentyONE
  * dependencies so it can be tested independently.
  */
@@ -31,19 +31,22 @@ class ProductSchemaBuilder
             return null;
         }
 
-        $name = $this->firstText($data, [
-            'texts.name1',
-            'texts.name2',
-            'texts.name3',
-            'variation.name',
-            'variation.model'
-        ]);
+        $name = $this->resolveProductName($data, $schemaOptions);
 
+        $isVariationGroup = $this->isVariationGroup($data)
+            || $this->toBool($this->option($schemaOptions, 'schemaForceProductGroup', false));
         $priceData = $this->resolvePrice($data);
         $currency = strtoupper(trim((string)$priceData['currency']));
         $price = $priceData['price'];
 
-        if ($name === '' || $price === null || $price <= 0 || $currency === '') {
+        if ($name === '') {
+            return null;
+        }
+
+        // A non-salable parent variation is a product group, not a purchasable
+        // offer. Price and currency are therefore only mandatory for concrete
+        // products and variants.
+        if (!$isVariationGroup && ($price === null || $price <= 0 || $currency === '')) {
             return null;
         }
 
@@ -51,13 +54,17 @@ class ProductSchemaBuilder
         $variationId = (int)$this->value($data, 'variation.id', 0);
         $itemId = (int)$this->value($data, 'item.id', 0);
 
-        $productId = $canonicalUrl !== ''
-            ? rtrim($canonicalUrl, '/') . '#product'
-            : ($variationId > 0 ? 'variation-' . $variationId : 'item-' . $itemId);
+        $groupId = $this->productGroupId($canonicalUrl, $itemId);
+        $productId = $isVariationGroup
+            ? $groupId
+            : ($canonicalUrl !== ''
+                ? rtrim($canonicalUrl, '/')
+                    . ($variationId > 0 ? '#product-variation-' . $variationId : '#product')
+                : ($variationId > 0 ? 'variation-' . $variationId : 'item-' . $itemId));
 
         $schema = [
             '@context' => 'https://schema.org',
-            '@type' => 'Product',
+            '@type' => $isVariationGroup ? 'ProductGroup' : 'Product',
             '@id' => $productId,
             'name' => $name
         ];
@@ -75,16 +82,91 @@ class ProductSchemaBuilder
             $schema['description'] = $description;
         }
 
-        $sku = $this->firstRaw($data, [
-            'variation.number',
-            'variation.externalId'
-        ]);
-        if ($sku !== '') {
-            $schema['sku'] = $sku;
-        }
+        if ($isVariationGroup) {
+            if ($itemId > 0) {
+                $schema['productGroupID'] = (string)$itemId;
+            }
 
-        if ($itemId > 0) {
-            $schema['productID'] = (string)$itemId;
+            $variesBy = $this->resolveVariesBy($data, $schemaOptions);
+            if (!empty($variesBy)) {
+                $schema['variesBy'] = $variesBy;
+            }
+
+            $hasVariants = $this->resolveHasVariants(
+                $schemaOptions,
+                $canonicalUrl,
+                $itemId,
+                $sellerName,
+                $name,
+                $description,
+                isset($schema['variesBy']) ? $schema['variesBy'] : []
+            );
+            if (!empty($hasVariants)) {
+                $schema['hasVariant'] = $hasVariants;
+            }
+        } else {
+            $sku = $this->firstRaw($data, [
+                'variation.number',
+                'variation.externalId'
+            ]);
+            if ($sku !== '') {
+                $schema['sku'] = $sku;
+            }
+
+            if ($variationId > 0) {
+                $schema['productID'] = (string)$variationId;
+            } elseif ($itemId > 0) {
+                $schema['productID'] = (string)$itemId;
+            }
+
+            if ($this->belongsToVariationGroup($data) && $itemId > 0) {
+                $parentName = $this->cleanText($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupName',
+                    $name
+                ));
+                if ($parentName === '') {
+                    $parentName = $name;
+                }
+
+                $schema['isVariantOf'] = [
+                    '@type' => 'ProductGroup',
+                    '@id' => $groupId,
+                    'productGroupID' => (string)$itemId,
+                    'name' => $parentName
+                ];
+
+                $parentDescription = $this->cleanText($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupDescription',
+                    ''
+                ));
+                if ($parentDescription !== '') {
+                    $schema['isVariantOf']['description'] = $parentDescription;
+                }
+
+                $parentVariesBy = $this->toArray($this->option(
+                    $schemaOptions,
+                    'schemaParentGroupVariesBy',
+                    []
+                ));
+                $variesBy = !empty($parentVariesBy)
+                    ? $parentVariesBy
+                    : $this->resolveVariesBy($data, $schemaOptions);
+                if (!empty($variesBy)) {
+                    $schema['isVariantOf']['variesBy'] = $variesBy;
+                }
+            }
+
+            $variantProperties = $this->resolveVariantProperties($data);
+            foreach ($variantProperties as $property => $value) {
+                $schema[$property] = $value;
+            }
+
+            $variantLabel = $this->variantLabel($variantProperties);
+            if ($variantLabel !== '') {
+                $schema['name'] = $name . ' – ' . $variantLabel;
+            }
         }
 
         $model = $this->firstText($data, ['variation.model']);
@@ -105,6 +187,31 @@ class ProductSchemaBuilder
             ];
         }
 
+        // The EU responsible person is a separate GPSR role and must not be
+        // emitted as Product.manufacturer. An explicitly configured name wins
+        // because PlentyONE installations often use the manufacturer record's
+        // external name as the consumer-facing brand (for example Eclipse),
+        // while the legal manufacturer shown in the product-safety block can
+        // differ. Leaving the setting empty enables a safe data fallback.
+        $manufacturer = $this->cleanText($this->option(
+            $schemaOptions,
+            'schemaManufacturerName',
+            ''
+        ));
+        if ($manufacturer === '') {
+            $manufacturer = $this->firstText($data, [
+                'item.manufacturer.legalName',
+                'item.manufacturer.externalName',
+                'item.manufacturer.name'
+            ]);
+        }
+        if ($manufacturer !== '') {
+            $schema['manufacturer'] = [
+                '@type' => 'Organization',
+                'name' => $manufacturer
+            ];
+        }
+
         $category = $this->resolveCategory($data, $canonicalUrl);
         if ($category !== '') {
             $schema['category'] = $category;
@@ -115,51 +222,56 @@ class ProductSchemaBuilder
             $schema['image'] = $images;
         }
 
-        $barcode = $this->resolveBarcode($data);
-        if ($barcode !== null) {
-            $schema[$barcode['property']] = $barcode['value'];
+        if (!$isVariationGroup) {
+            $barcode = $this->resolveBarcode($data);
+            if ($barcode !== null) {
+                $schema[$barcode['property']] = $barcode['value'];
+            }
+
+            $offerIdSuffix = $variationId > 0 ? '-variation-' . $variationId : '';
+            $offer = [
+                '@type' => 'Offer',
+                '@id' => ($canonicalUrl !== '' ? rtrim($canonicalUrl, '/') : $productId)
+                    . '#offer'
+                    . $offerIdSuffix,
+                'price' => number_format((float)$price, 2, '.', ''),
+                'priceCurrency' => $currency
+            ];
+
+            $availability = $this->resolveAvailability($data);
+            if ($availability !== null) {
+                $offer['availability'] = $availability;
+            }
+
+            $itemCondition = $this->resolveItemCondition($data);
+            if ($itemCondition !== null) {
+                $offer['itemCondition'] = $itemCondition;
+            }
+
+            if ($canonicalUrl !== '') {
+                $offer['url'] = $canonicalUrl;
+            }
+
+            $seller = $this->buildSellerOrganization(
+                $sellerName,
+                $canonicalUrl,
+                $schemaOptions
+            );
+            if ($seller !== null) {
+                $offer['seller'] = $seller;
+            }
+
+            $shippingDetails = $this->resolveShippingDetails(
+                $data,
+                $currency,
+                $schemaOptions
+            );
+            if ($shippingDetails !== null) {
+                $offer['shippingDetails'] = $shippingDetails;
+            }
+
+            $schema['offers'] = $offer;
         }
-
-        $offer = [
-            '@type' => 'Offer',
-            '@id' => ($canonicalUrl !== '' ? rtrim($canonicalUrl, '/') : $productId) . '#offer',
-            'price' => number_format((float)$price, 2, '.', ''),
-            'priceCurrency' => $currency
-        ];
-
-        $availability = $this->resolveAvailability($data);
-        if ($availability !== null) {
-            $offer['availability'] = $availability;
-        }
-
-        $itemCondition = $this->resolveItemCondition($data);
-        if ($itemCondition !== null) {
-            $offer['itemCondition'] = $itemCondition;
-        }
-
-        if ($canonicalUrl !== '') {
-            $offer['url'] = $canonicalUrl;
-        }
-
-        $seller = $this->buildSellerOrganization(
-            $sellerName,
-            $canonicalUrl,
-            $schemaOptions
-        );
-        if ($seller !== null) {
-            $offer['seller'] = $seller;
-        }
-
-        $shippingDetails = $this->resolveShippingDetails(
-            $data,
-            $currency,
-            $schemaOptions
-        );
-        if ($shippingDetails !== null) {
-            $offer['shippingDetails'] = $shippingDetails;
-        }
-
-        $schema['offers'] = $offer;
 
         $ratingCount = isset($counts['ratingsCountTotal']) ? (int)$counts['ratingsCountTotal'] : 0;
         $ratingValue = isset($counts['averageValue']) ? (float)$counts['averageValue'] : 0.0;
@@ -191,6 +303,419 @@ class ProductSchemaBuilder
         }
 
         return $schema;
+    }
+
+    /**
+     * A PlentyONE parent variation can carry a display price while not being
+     * purchasable itself. It must be represented as ProductGroup and must not
+     * receive an Offer copied from that display price.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function isVariationGroup(array $data)
+    {
+        $hasChildren = $this->toBool($this->value($data, 'filter.hasChildren', false))
+            || $this->toBool($this->value($data, 'filter.hasActiveChildren', false));
+        $isSalable = $this->value($data, 'filter.isSalable', null);
+
+        return $hasChildren && $isSalable !== null && !$this->toBool($isSalable);
+    }
+
+    /**
+     * Use an item-stable identifier shared by every variation URL.
+     *
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @return string
+     */
+    private function productGroupId($canonicalUrl, $itemId)
+    {
+        $origin = $this->originUrl($canonicalUrl);
+        if ($origin !== '' && $itemId > 0) {
+            return rtrim($origin, '/') . '/#product-group-' . $itemId;
+        }
+
+        return 'product-group-' . $itemId;
+    }
+
+    /**
+     * Detect concrete variants without inventing a relationship for ordinary
+     * single-variation products.
+     *
+     * @param array $data
+     * @return bool
+     */
+    private function belongsToVariationGroup(array $data)
+    {
+        if ($this->isVariationGroup($data)) {
+            return false;
+        }
+
+        $salableVariationCount = (int)$this->value($data, 'item.salableVariationCount', 0);
+        if ($salableVariationCount > 1) {
+            return true;
+        }
+
+        $attributes = $this->value($data, 'attributes', []);
+        $groupedAttributes = $this->value($data, 'groupedAttributes', []);
+        $feedbackVariantAttributes = $this->value($data, 'feedbackVariantAttributes', []);
+
+        return !empty($this->toArray($attributes))
+            || !empty($this->toArray($groupedAttributes))
+            || !empty($this->toArray($feedbackVariantAttributes));
+    }
+
+    /**
+     * Resolve the variant dimensions that can be stated truthfully from the
+     * current item document or from an explicit global configuration.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return array
+     */
+    private function resolveVariesBy(array $data, array $schemaOptions)
+    {
+        $names = [];
+        $configured = $this->option($schemaOptions, 'schemaVariesBy', '');
+
+        if (is_array($configured)) {
+            $configuredParts = $configured;
+        } else {
+            $configuredParts = preg_split('/[,;]+/', (string)$configured);
+        }
+
+        foreach ($configuredParts as $configuredPart) {
+            $configuredPart = trim((string)$configuredPart);
+            if ($configuredPart !== '') {
+                $names[] = $configuredPart;
+            }
+        }
+
+        foreach (['attributes', 'groupedAttributes', 'variation.attributes', 'feedbackVariantAttributes'] as $path) {
+            $entries = $this->toArray($this->value($data, $path, []));
+            foreach ($entries as $entry) {
+                $entry = $this->toArray($entry);
+                if (empty($entry)) {
+                    continue;
+                }
+
+                $attributeName = $this->firstText($entry, [
+                    'attribute.names.name',
+                    'attribute.name',
+                    'attributeName',
+                    'names.name',
+                    'name'
+                ]);
+                if ($attributeName !== '') {
+                    $names[] = $attributeName;
+                }
+            }
+        }
+
+        // ProductGroup parents often have no attributes themselves. In that
+        // case derive variesBy from the real child variation metadata prepared
+        // by the server-side data provider.
+        foreach ($this->toArray($this->option($schemaOptions, 'schemaVariantDocuments', [])) as $document) {
+            $document = $this->toArray($document);
+            foreach ($this->toArray($this->value($document, 'feedbackVariantAttributes', [])) as $entry) {
+                $entry = $this->toArray($entry);
+                $attributeName = $this->firstText($entry, ['name', 'attributeName']);
+                if ($attributeName !== '') {
+                    $names[] = $attributeName;
+                }
+            }
+        }
+
+        $variesBy = [];
+        foreach ($names as $name) {
+            $property = $this->mapVariantProperty($name);
+            if ($property !== '' && !in_array($property, $variesBy, true)) {
+                $variesBy[] = $property;
+            }
+        }
+
+        return $variesBy;
+    }
+
+    /**
+     * Build ProductGroup.hasVariant only from concrete PlentyONE item
+     * documents already supplied with the current page. When the payload does
+     * not contain sibling variations, the property is intentionally omitted.
+     *
+     * @param array $schemaOptions
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @return array
+     */
+    private function resolveHasVariants(
+        array $schemaOptions,
+        $canonicalUrl,
+        $itemId,
+        $sellerName = '',
+        $parentName = '',
+        $parentDescription = '',
+        array $parentVariesBy = []
+    ) {
+        $documents = $this->toArray($this->option(
+            $schemaOptions,
+            'schemaVariantDocuments',
+            []
+        ));
+
+        if (empty($documents) || (int)$itemId <= 0) {
+            return [];
+        }
+
+        $variants = [];
+        $seenVariationIds = [];
+        foreach ($documents as $document) {
+            $document = $this->toArray($document);
+            if (empty($document)) {
+                continue;
+            }
+
+            if ((int)$this->value($document, 'item.id', 0) !== (int)$itemId) {
+                continue;
+            }
+
+            if ($this->isVariationGroup($document)) {
+                continue;
+            }
+
+            $variationId = (int)$this->value($document, 'variation.id', 0);
+            if ($variationId <= 0 || isset($seenVariationIds[$variationId])) {
+                continue;
+            }
+
+            $isSalable = $this->value($document, 'filter.isSalable', null);
+            if ($isSalable !== null && !$this->toBool($isSalable)) {
+                continue;
+            }
+
+            $url = $this->resolveVariantUrl(
+                $document,
+                $canonicalUrl,
+                $itemId,
+                $variationId
+            );
+
+            $childOptions = $schemaOptions;
+            $childOptions['schemaVariantDocuments'] = [];
+            $childOptions['schemaForceProductGroup'] = false;
+            $childOptions['schemaVideoObject'] = false;
+            $childOptions['schemaParentGroupName'] = $parentName;
+            $childOptions['schemaParentGroupDescription'] = $parentDescription;
+            $childOptions['schemaParentGroupVariesBy'] = $parentVariesBy;
+            $childOptions['schemaPreferVariationShippingCosts'] = true;
+
+            $variant = $this->build(
+                $document,
+                $url,
+                [],
+                [],
+                $sellerName,
+                $childOptions
+            );
+
+            if (!is_array($variant) || ($variant['@type'] ?? '') !== 'Product') {
+                continue;
+            }
+
+            // Google Product snippets require every nested Product to expose
+            // at least one commercial/review signal: offers, review or
+            // aggregateRating. ProductSchemaBuilder normally guarantees an
+            // Offer for salable variants; keep this defensive gate so a
+            // partial PlentyONE child document can never leak an invalid
+            // hasVariant Product into the ProductGroup.
+            if (!$this->hasProductSnippetSignal($variant)) {
+                continue;
+            }
+
+            // A Product nested below ProductGroup.hasVariant must actually
+            // expose every property declared by the parent in variesBy. This
+            // filters purchasable default/main variations that have no variant
+            // attributes of their own (for example neither size nor color),
+            // while keeping all concrete variants untouched.
+            if (!$this->variantMatchesVariesBy($variant, $parentVariesBy)) {
+                continue;
+            }
+
+            unset($variant['@context']);
+
+            // This Product is already nested below ProductGroup.hasVariant.
+            // Google documents hasVariant and isVariantOf as alternative ways
+            // to express the parent relationship. Keeping a full isVariantOf
+            // object here would repeat the complete parent description for
+            // every child and can make large variant groups several megabytes
+            // in size.
+            unset($variant['isVariantOf']);
+
+            // Ceres commonly supplies the same long item description to every
+            // variation. Keep a truthful, variant-specific description without
+            // duplicating the complete parent copy on every child.
+            if ($parentDescription !== ''
+                && isset($variant['description'])
+                && $variant['description'] === $parentDescription
+                && isset($variant['name'])
+                && trim((string)$variant['name']) !== '') {
+                $variant['description'] = (string)$variant['name'];
+            }
+
+            // One variant image is sufficient for Product.image. The parent
+            // ProductGroup still carries the complete item image set, so do not
+            // repeat the same gallery on every child variant.
+            if (isset($variant['image']) && is_array($variant['image']) && !empty($variant['image'])) {
+                $variant['image'] = $variant['image'][0];
+            }
+
+            $seenVariationIds[$variationId] = true;
+            $variants[] = $variant;
+        }
+
+        return $variants;
+    }
+
+    /**
+     * Check that a nested Product exposes every concrete Schema.org property
+     * declared by ProductGroup.variesBy. Unknown/unsupported properties are
+     * ignored here because resolveVariesBy() only emits mapped properties.
+     *
+     * @param array $variant
+     * @param array $parentVariesBy
+     * @return bool
+     */
+    private function variantMatchesVariesBy(array $variant, array $parentVariesBy)
+    {
+        foreach ($parentVariesBy as $propertyUrl) {
+            $propertyUrl = trim((string)$propertyUrl);
+            if ($propertyUrl === '') {
+                continue;
+            }
+
+            $property = substr($propertyUrl, strrpos($propertyUrl, '/') + 1);
+            if ($property === '') {
+                continue;
+            }
+
+            if (!isset($variant[$property]) || trim((string)$variant[$property]) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Convert localized PlentyONE variation attributes to the Schema.org
+     * properties Google understands for product variants.
+     *
+     * @param array $data
+     * @return array
+     */
+    private function resolveVariantProperties(array $data)
+    {
+        $values = [];
+        foreach ($this->toArray($this->value($data, 'feedbackVariantAttributes', [])) as $entry) {
+            $entry = $this->toArray($entry);
+            $name = $this->firstText($entry, ['name', 'attributeName']);
+            $value = $this->firstText($entry, ['value', 'attributeValueName']);
+            if ($name === '' || $value === '') {
+                continue;
+            }
+
+            $propertyUrl = $this->mapVariantProperty($name);
+            if ($propertyUrl === '') {
+                continue;
+            }
+
+            $property = substr($propertyUrl, strrpos($propertyUrl, '/') + 1);
+            if (!isset($values[$property])) {
+                $values[$property] = [];
+            }
+            if (!in_array($value, $values[$property], true)) {
+                $values[$property][] = $value;
+            }
+        }
+
+        $result = [];
+        foreach ($values as $property => $propertyValues) {
+            if (empty($propertyValues)) {
+                continue;
+            }
+
+            if ($property === 'size' && count($propertyValues) > 1) {
+                $result[$property] = implode(' × ', $propertyValues);
+            } else {
+                $result[$property] = implode(' / ', $propertyValues);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Build a concise variant suffix for Product.name. Google requires a name
+     * on each Product; including the real varying values also makes sibling
+     * variants unambiguous without inventing marketing text.
+     *
+     * @param array $variantProperties
+     * @return string
+     */
+    private function variantLabel(array $variantProperties)
+    {
+        $parts = [];
+        foreach (['size', 'color', 'material', 'pattern'] as $property) {
+            if (isset($variantProperties[$property]) && trim((string)$variantProperties[$property]) !== '') {
+                $parts[] = trim((string)$variantProperties[$property]);
+            }
+        }
+
+        return implode(' – ', $parts);
+    }
+
+    /**
+     * @param string $name
+     * @return string
+     */
+    private function mapVariantProperty($name)
+    {
+        $name = str_replace(
+            ['Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß'],
+            ['Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue', 'ss'],
+            $this->cleanText($name)
+        );
+        $name = strtolower($name);
+
+        if (strpos($name, 'http://schema.org/') === 0
+            || strpos($name, 'https://schema.org/') === 0) {
+            return preg_replace('/^http:\/\//', 'https://', $name);
+        }
+
+        if (in_array($name, ['color', 'colour', 'farbe', 'tuchfarbe'], true)
+            || strpos($name, 'farbe') !== false) {
+            return 'https://schema.org/color';
+        }
+
+        if (in_array($name, ['size', 'groesse', 'breite', 'ausfall', 'mass'], true)
+            || strpos($name, 'groess') !== false
+            || strpos($name, 'breite') !== false
+            || strpos($name, 'ausfall') !== false) {
+            return 'https://schema.org/size';
+        }
+
+        if (in_array($name, ['material', 'stoff', 'gewebe'], true)
+            || strpos($name, 'material') !== false) {
+            return 'https://schema.org/material';
+        }
+
+        if (in_array($name, ['pattern', 'muster', 'dessin'], true)
+            || strpos($name, 'muster') !== false
+            || strpos($name, 'dessin') !== false) {
+            return 'https://schema.org/pattern';
+        }
+
+        return '';
     }
 
     /**
@@ -490,9 +1015,10 @@ class ProductSchemaBuilder
     }
 
     /**
-     * Add product-specific OfferShippingDetails. PlentyONE documents
-     * variation.defaultShippingCosts in the item document, so the amount stays
-     * product-specific instead of being hard-coded in the schema builder.
+     * Add product-specific OfferShippingDetails. PlentyONE's calculated
+     * default shipping costs always win. An optional merchant-controlled
+     * package/freight fallback can fill the gap when the page document omits
+     * calculated costs; it never activates unless explicitly enabled.
      *
      * @param array $data
      * @param string $currency
@@ -506,16 +1032,41 @@ class ProductSchemaBuilder
         }
 
         $shippingCost = null;
-        foreach ([
-            'variation.defaultShippingCosts',
-            'variation.defaultShippingCost',
-            'shipping.defaultShippingCosts',
-            'shipping.costs'
-        ] as $path) {
-            $shippingCost = $this->numericValue($this->value($data, $path, null));
-            if ($shippingCost !== null && $shippingCost >= 0) {
-                break;
+        $fallbackEnabled = $this->optionBool(
+            $schemaOptions,
+            'schemaShippingFallbackEnabled',
+            false
+        );
+
+        $preferVariationShipping = $this->optionBool(
+            $schemaOptions,
+            'schemaPreferVariationShippingCosts',
+            false
+        );
+
+        // For concrete child variants of a ProductGroup, PlentyONE's
+        // variation.defaultShippingCosts is the variant-specific calculated
+        // value and must win over an item-level shipping-profile fallback.
+        // Standalone products keep the merchant-controlled profile price first;
+        // this preserves corrections for items whose item document exposes a
+        // generic parcel default (for example 6.90) despite a different fixed
+        // shipping-profile price.
+        if ($preferVariationShipping) {
+            $shippingCost = $this->resolvePlentyShippingCost($data);
+            if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
+                $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
             }
+        } else {
+            if ($fallbackEnabled) {
+                $shippingCost = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+            }
+            if ($shippingCost === null || $shippingCost < 0) {
+                $shippingCost = $this->resolvePlentyShippingCost($data);
+            }
+        }
+
+        if (($shippingCost === null || $shippingCost < 0) && $fallbackEnabled) {
+            $shippingCost = $this->resolveConfiguredShippingFallback($data, $schemaOptions);
         }
 
         if ($shippingCost === null || $shippingCost < 0) {
@@ -566,6 +1117,341 @@ class ProductSchemaBuilder
                 ]
             ]
         ];
+    }
+
+    /**
+     * Resolve PlentyONE's calculated shipping amount from the current concrete
+     * variation/item document.
+     *
+     * @param array $data
+     * @return float|null
+     */
+    private function resolvePlentyShippingCost(array $data)
+    {
+        foreach ([
+            'variation.defaultShippingCosts',
+            'variation.defaultShippingCost',
+            'shipping.defaultShippingCosts',
+            'shipping.costs'
+        ] as $path) {
+            $shippingCost = $this->numericValue($this->value($data, $path, null));
+            if ($shippingCost !== null && $shippingCost >= 0) {
+                return $shippingCost;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve a configured package or freight amount. A configured shipping
+     * profile match takes precedence over the gross-weight threshold.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return float|null
+     */
+    private function resolveConfiguredShippingFallback(array $data, array $schemaOptions)
+    {
+        $profilePrice = $this->resolveConfiguredShippingProfilePrice($data, $schemaOptions);
+        if ($profilePrice !== null) {
+            return $profilePrice;
+        }
+
+        $freight = $this->matchesConfiguredFreightProfile($data, $schemaOptions);
+        if (!$freight) {
+            $thresholdKg = $this->numericValue($this->option(
+                $schemaOptions,
+                'schemaShippingFreightWeightThresholdKg',
+                31.5
+            ));
+            $weightKg = $this->resolveGrossWeightKg($data);
+            $freight = $thresholdKg !== null
+                && $thresholdKg > 0
+                && $weightKg !== null
+                && $weightKg >= $thresholdKg;
+        }
+
+        $priceKey = $freight
+            ? 'schemaShippingFreightPrice'
+            : 'schemaShippingPackagePrice';
+        $price = $this->numericValue($this->option($schemaOptions, $priceKey, ''));
+
+        return $price !== null && $price >= 0 ? $price : null;
+    }
+
+    /**
+     * Resolve an exact fallback price for the variation's assigned shipping
+     * profile. Format: "6=6,90; 9=59,00". Semicolons or line breaks separate
+     * mappings so decimal commas remain unambiguous. If several profiles are
+     * assigned, the first matching profile in the configured mapping wins.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return float|null
+     */
+    private function resolveConfiguredShippingProfilePrice(array $data, array $schemaOptions)
+    {
+        $configured = $this->parseShippingProfilePriceMap($this->option(
+            $schemaOptions,
+            'schemaShippingProfilePrices',
+            ''
+        ));
+        if (empty($configured)) {
+            return null;
+        }
+
+        $assigned = $this->resolveAssignedShippingProfileIds($data);
+        if (empty($assigned)) {
+            return null;
+        }
+
+        foreach ($configured as $profileId => $price) {
+            if (in_array((int)$profileId, $assigned, true)) {
+                // Shipping profile 54 is used for the awning shipping tiers.
+                // Keep the existing profile resolution path and only replace
+                // its configured fallback price for the three weight markers
+                // that are actually used by these variations. This avoids an
+                // additional recursive shipping-profile scan during rendering.
+                if ((int)$profileId === 54) {
+                    $weightG = $this->numericValue($this->value($data, 'variation.weightG', null));
+                    if ($weightG !== null) {
+                        $weightG = (int)$weightG;
+                        if ($weightG === 1000) {
+                            return 29.90;
+                        }
+                        if ($weightG === 10000) {
+                            return 49.90;
+                        }
+                        if ($weightG === 100000) {
+                            return 99.00;
+                        }
+                    }
+                }
+
+                return $price;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array $data
+     * @param array $schemaOptions
+     * @return bool
+     */
+    private function matchesConfiguredFreightProfile(array $data, array $schemaOptions)
+    {
+        $configured = $this->parsePositiveIntegerList($this->option(
+            $schemaOptions,
+            'schemaShippingFreightProfileIds',
+            ''
+        ));
+        if (empty($configured)) {
+            return false;
+        }
+
+        $assigned = $this->resolveAssignedShippingProfileIds($data);
+
+        return !empty(array_intersect($configured, $assigned));
+    }
+
+    /**
+     * Collect shipping profile IDs from the common plentyShop item-document
+     * shapes. The recursive collector keeps compatibility with profile arrays
+     * and nested objects used by different Ceres/IO payloads.
+     *
+     * @param array $data
+     * @return array
+     */
+    private function resolveAssignedShippingProfileIds(array $data)
+    {
+        $assigned = [];
+        foreach ([
+            'variation.shippingProfileId',
+            'variation.shippingProfileIds',
+            'variation.shippingProfiles',
+            'variation.itemShippingProfiles',
+            'shippingProfileId',
+            'shippingProfileIds',
+            'shippingProfiles',
+            'itemShippingProfiles',
+            'item.shippingProfiles',
+            'item.itemShippingProfiles'
+        ] as $path) {
+            $this->collectShippingProfileIds(
+                $this->value($data, $path, null),
+                0,
+                $assigned
+            );
+        }
+
+        return $assigned;
+    }
+
+    /**
+     * Collect shipping profile IDs without treating unrelated numeric fields
+     * inside a profile relation as profile IDs. PlentyONE relations normally
+     * expose profileId; id/shippingProfileId are supported as compatible
+     * alternative shapes.
+     *
+     * @param mixed $value
+     * @param int $depth
+     * @param array $ids
+     * @return void
+     */
+    private function collectShippingProfileIds($value, $depth, array &$ids)
+    {
+        if ($depth > 5 || $value === null) {
+            return;
+        }
+
+        if (!is_array($value) && !is_object($value)) {
+            if (is_numeric($value) && (int)$value > 0) {
+                $id = (int)$value;
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+            return;
+        }
+
+        $array = $this->toArray($value);
+        foreach (['profileId', 'shippingProfileId'] as $key) {
+            if (isset($array[$key]) && is_numeric($array[$key]) && (int)$array[$key] > 0) {
+                $id = (int)$array[$key];
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+                return;
+            }
+        }
+
+        // Some payloads expose a bare profile model where `id` itself is the
+        // shipping profile ID. Use it only for associative profile objects,
+        // not for arbitrary nested relation metadata.
+        if (isset($array['id']) && is_numeric($array['id']) && (int)$array['id'] > 0
+            && (isset($array['name']) || isset($array['backendName']) || isset($array['isParcelServicePreset']))) {
+            $id = (int)$array['id'];
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+            return;
+        }
+
+        foreach ($array as $child) {
+            $this->collectShippingProfileIds($child, $depth + 1, $ids);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function parseShippingProfilePriceMap($value)
+    {
+        if (is_array($value)) {
+            $entries = $value;
+        } else {
+            $entries = preg_split('/[;\r\n]+/', trim((string)$value));
+        }
+
+        $map = [];
+        foreach ($entries as $entry) {
+            if (is_array($entry) || is_object($entry)) {
+                $entry = $this->toArray($entry);
+                $profileId = isset($entry['profileId']) ? (int)$entry['profileId'] : 0;
+                $price = isset($entry['price']) ? $this->numericValue($entry['price']) : null;
+            } else {
+                $parts = preg_split('/\s*[=:]\s*/', trim((string)$entry), 2);
+                if (count($parts) !== 2 || !is_numeric($parts[0])) {
+                    continue;
+                }
+                $profileId = (int)$parts[0];
+                $price = $this->numericValue($parts[1]);
+            }
+
+            if ($profileId <= 0 || $price === null || $price < 0) {
+                continue;
+            }
+
+            $map[$profileId] = $price;
+        }
+
+        return $map;
+    }
+
+    /**
+     * PlentyONE exposes gross variation weight in grams.
+     *
+     * @param array $data
+     * @return float|null
+     */
+    private function resolveGrossWeightKg(array $data)
+    {
+        foreach (['variation.weightG', 'variation.weightNetG'] as $path) {
+            $grams = $this->numericValue($this->value($data, $path, null));
+            if ($grams !== null && $grams >= 0) {
+                return $grams / 1000;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param mixed $value
+     * @return array
+     */
+    private function parsePositiveIntegerList($value)
+    {
+        if (is_array($value)) {
+            $parts = $value;
+        } else {
+            $parts = preg_split('/[,;\s]+/', trim((string)$value));
+        }
+
+        $ids = [];
+        foreach ($parts as $part) {
+            if (!is_numeric($part) || (int)$part <= 0) {
+                continue;
+            }
+
+            $id = (int)$part;
+            if (!in_array($id, $ids, true)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param mixed $value
+     * @param int $depth
+     * @param array $ids
+     * @return void
+     */
+    private function collectPositiveIntegers($value, $depth, array &$ids)
+    {
+        if ($depth > 5 || $value === null) {
+            return;
+        }
+
+        if (!is_array($value) && !is_object($value)) {
+            if (is_numeric($value) && (int)$value > 0) {
+                $id = (int)$value;
+                if (!in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+            return;
+        }
+
+        foreach ($this->toArray($value) as $child) {
+            $this->collectPositiveIntegers($child, $depth + 1, $ids);
+        }
     }
 
     /**
@@ -751,6 +1637,66 @@ class ProductSchemaBuilder
         }
 
         return null;
+    }
+
+    /**
+     * Resolve a stable Schema.org Product/ProductGroup name from the PlentyONE
+     * item document. Ceres/IO payloads are not completely uniform across item
+     * contexts, so use all known textual locations before falling back to a
+     * concrete variation identifier. This guarantees that an otherwise valid
+     * Product or ProductGroup is never emitted without Schema.org `name`.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return string
+     */
+    private function resolveProductName(array $data, array $schemaOptions = [])
+    {
+        $name = $this->firstText($data, [
+            'texts.name1',
+            'texts.name2',
+            'texts.name3',
+            'texts.name',
+            'item.texts.name1',
+            'item.texts.name2',
+            'item.texts.name3',
+            'item.texts.name',
+            'variation.name',
+            'variation.itemName',
+            'variation.model',
+            'item.name'
+        ]);
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        // Nested variants can safely inherit the already resolved parent name.
+        // Add a concrete variation number where possible so sibling products
+        // stay unambiguous even if an IO child document omits its text block.
+        $parentName = $this->cleanText($this->option(
+            $schemaOptions,
+            'schemaParentGroupName',
+            ''
+        ));
+        $variationNumber = $this->firstRaw($data, [
+            'variation.number',
+            'variation.externalId'
+        ]);
+
+        if ($parentName !== '') {
+            return $variationNumber !== ''
+                ? $parentName . ' – ' . $variationNumber
+                : $parentName;
+        }
+
+        // A PlentyONE variation number is a factual product identifier and is
+        // preferable to emitting invalid Product markup without any name.
+        if ($variationNumber !== '') {
+            return $variationNumber;
+        }
+
+        return '';
     }
 
     /**
@@ -958,6 +1904,145 @@ class ProductSchemaBuilder
         }
 
         return (is_string($scheme) && $scheme !== '' ? $scheme : 'https') . '://' . $host;
+    }
+
+    /**
+     * Resolve the public URL for a nested PlentyONE variation.
+     *
+     * PlentyONE's SingleItem result may expose only texts.urlPath for sibling
+     * variations. On shops that use the standard Ceres/Plenty route suffix
+     * `_ITEMID_VARIATIONID`, that path points to the shared slug and would be
+     * a 404 or would fail to preselect the requested variation. Prefer a real
+     * child canonical URL when present; otherwise derive the child suffix only
+     * when the current canonical URL proves that this storefront uses the
+     * standard Plenty route format. Custom URL schemes therefore remain
+     * untouched.
+     *
+     * @param array $document
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @param int $variationId
+     * @return string
+     */
+    private function resolveVariantUrl(array $document, $canonicalUrl, $itemId, $variationId)
+    {
+        $url = $this->firstRaw($document, [
+            'urls.canonical',
+            'url',
+            'texts.urlPath'
+        ]);
+        $url = $this->absoluteUrl($url, $canonicalUrl);
+        if ($url === '') {
+            $url = trim((string)$canonicalUrl);
+        }
+
+        if ($url === '' || (int)$itemId <= 0 || (int)$variationId <= 0) {
+            return $url;
+        }
+
+        $canonicalPath = parse_url((string)$canonicalUrl, PHP_URL_PATH);
+        if (!is_string($canonicalPath) || $canonicalPath === '') {
+            return $url;
+        }
+
+        $itemPattern = (string)(int)$itemId;
+        if (!preg_match('/_' . $itemPattern . '_\\d+\\/?$/', $canonicalPath)) {
+            // Four & More, Mephisto and Billiard Royal currently use the Plenty
+            // suffix. Other/custom storefront routes are deliberately left as
+            // supplied by PlentyONE for backwards compatibility.
+            return $url;
+        }
+
+        $parts = parse_url($url);
+        if (!is_array($parts) || !isset($parts['path'])) {
+            return $url;
+        }
+
+        $path = (string)$parts['path'];
+        $targetSuffix = '_' . (int)$itemId . '_' . (int)$variationId;
+        if (preg_match('/' . $targetSuffix . '\\/?$/', $path)) {
+            return $url;
+        }
+
+        // Replace another variation suffix of the same item when PlentyONE
+        // returned the active page URL; otherwise append the suffix to the
+        // shared urlPath/slug supplied for the sibling document.
+        $basePath = preg_replace(
+            '/_' . $itemPattern . '_\\d+\\/?$/',
+            '',
+            rtrim($path, '/')
+        );
+        if (!is_string($basePath) || $basePath === '') {
+            return $url;
+        }
+
+        $parts['path'] = rtrim($basePath, '/') . $targetSuffix;
+        return $this->buildUrlFromParts($parts);
+    }
+
+    /**
+     * A nested Product must have at least one of the signals required by
+     * Google's Product snippet eligibility rules.
+     *
+     * @param array $variant
+     * @return bool
+     */
+    private function hasProductSnippetSignal(array $variant)
+    {
+        if (isset($variant['offers']) && is_array($variant['offers']) && !empty($variant['offers'])) {
+            return true;
+        }
+
+        if (isset($variant['review']) && !empty($variant['review'])) {
+            return true;
+        }
+
+        return isset($variant['aggregateRating'])
+            && is_array($variant['aggregateRating'])
+            && !empty($variant['aggregateRating']);
+    }
+
+    /**
+     * Rebuild a URL after changing only its path component.
+     *
+     * @param array $parts
+     * @return string
+     */
+    private function buildUrlFromParts(array $parts)
+    {
+        $url = '';
+
+        if (isset($parts['scheme']) && $parts['scheme'] !== '') {
+            $url .= $parts['scheme'] . '://';
+        } elseif (isset($parts['host']) && $parts['host'] !== '') {
+            $url .= '//';
+        }
+
+        if (isset($parts['user']) && $parts['user'] !== '') {
+            $url .= $parts['user'];
+            if (isset($parts['pass']) && $parts['pass'] !== '') {
+                $url .= ':' . $parts['pass'];
+            }
+            $url .= '@';
+        }
+
+        if (isset($parts['host']) && $parts['host'] !== '') {
+            $url .= $parts['host'];
+        }
+        if (isset($parts['port']) && (int)$parts['port'] > 0) {
+            $url .= ':' . (int)$parts['port'];
+        }
+
+        $url .= isset($parts['path']) ? (string)$parts['path'] : '';
+
+        if (isset($parts['query']) && $parts['query'] !== '') {
+            $url .= '?' . $parts['query'];
+        }
+        if (isset($parts['fragment']) && $parts['fragment'] !== '') {
+            $url .= '#' . $parts['fragment'];
+        }
+
+        return $url;
     }
 
     /**

@@ -500,12 +500,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           _self.titleMissing = false;
           _self.ratingMissing = false;
           $(_self.$refs.orderItemFeedbackModal).modal('hide');
-          window.CeresNotification.success(_self.$translate('Feedback::Feedback.notificationSuccess')).closeAfter(3000);
+          window.CeresNotification.success(_self.$translate('FeedbackGeoFM::Feedback.notificationSuccess')).closeAfter(3000);
         },
         error: function error(jqXHR, textStatus, errorThrown) {
           console.error(errorThrown);
           _self.isLoading = false;
-          window.CeresNotification.error(_self.$translate('Feedback::Feedback.notificationFailure')).closeAfter(3000);
+          window.CeresNotification.error(_self.$translate('FeedbackGeoFM::Feedback.notificationFailure')).closeAfter(3000);
         }
       });
     }
@@ -1104,7 +1104,7 @@ var render = function() {
       _c("div", { staticClass: "title" }, [
         _vm._v(
           "\n    " +
-            _vm._s(_vm.$translate("Feedback::Feedback.orderItemTitle")) +
+            _vm._s(_vm.$translate("FeedbackGeoFM::Feedback.orderItemTitle")) +
             "\n  "
         )
       ]),
@@ -1125,7 +1125,7 @@ var render = function() {
           )
         : _c("div", { staticClass: "w-100 text-center" }, [
             _c("p", [
-              _vm._v(_vm._s(_vm.$translate("Feedback::Feedback.loadingItems")))
+              _vm._v(_vm._s(_vm.$translate("FeedbackGeoFM::Feedback.loadingItems")))
             ])
           ]),
       _vm._v(" "),
@@ -1208,7 +1208,7 @@ var render = function() {
               },
               [
                 _vm._v(
-                  _vm._s(_vm.$translate("Feedback::Feedback.customerReviews"))
+                  _vm._s(_vm.$translate("FeedbackGeoFM::Feedback.customerReviews"))
                 )
               ]
             ),
@@ -1233,7 +1233,7 @@ var render = function() {
                       _c("span", { staticClass: "d-none" }, [
                         _vm._v(
                           _vm._s(
-                            _vm.$translate("Feedback::Feedback.customerReviews")
+                            _vm.$translate("FeedbackGeoFM::Feedback.customerReviews")
                           )
                         )
                       ])
@@ -1374,7 +1374,7 @@ var render = function() {
                         name: "author",
                         disabled: _vm.isRated || _vm.limitReached,
                         placeholder: _vm.$translate(
-                          "Feedback::Feedback.authorName"
+                          "FeedbackGeoFM::Feedback.authorName"
                         )
                       },
                       domProps: { value: _vm.feedback.authorName },
@@ -1434,7 +1434,7 @@ var render = function() {
                         _c("span", { staticClass: "visually-hidden" }, [
                           _vm._v(
                             _vm._s(
-                              _vm.$translate("Feedback::Feedback.honeypotLabel")
+                              _vm.$translate("FeedbackGeoFM::Feedback.honeypotLabel")
                             )
                           )
                         ])
@@ -1457,11 +1457,11 @@ var render = function() {
                   class: { "is-invalid": _vm.titleMissing },
                   attrs: {
                     id: "title",
-                    "aria-label": _vm.$translate("Feedback::Feedback.title"),
+                    "aria-label": _vm.$translate("FeedbackGeoFM::Feedback.title"),
                     type: "text",
                     name: "title",
                     disabled: _vm.isRated || _vm.limitReached,
-                    placeholder: _vm.$translate("Feedback::Feedback.title")
+                    placeholder: _vm.$translate("FeedbackGeoFM::Feedback.title")
                   },
                   domProps: { value: _vm.feedback.title },
                   on: {
@@ -1478,7 +1478,7 @@ var render = function() {
                   _vm._v(
                     "\n              " +
                       _vm._s(
-                        _vm.$translate("Feedback::Feedback.titleRequired")
+                        _vm.$translate("FeedbackGeoFM::Feedback.titleRequired")
                       ) +
                       "\n            "
                   )
@@ -1499,13 +1499,13 @@ var render = function() {
                   attrs: {
                     id: "message",
                     "aria-label": _vm.$translate(
-                      "Feedback::Feedback.reviewMessage"
+                      "FeedbackGeoFM::Feedback.reviewMessage"
                     ),
                     name: "message",
                     rows: _vm.rows,
                     disabled: _vm.isRated || _vm.limitReached,
                     placeholder: _vm.$translate(
-                      "Feedback::Feedback.reviewMessage"
+                      "FeedbackGeoFM::Feedback.reviewMessage"
                     )
                   },
                   domProps: { value: _vm.feedback.message },
@@ -1544,7 +1544,7 @@ var render = function() {
                     _vm._v(
                       "\n          " +
                         _vm._s(
-                          _vm.$translate("Feedback::Feedback.submitReview")
+                          _vm.$translate("FeedbackGeoFM::Feedback.submitReview")
                         ) +
                         "\n        "
                     )
@@ -1556,7 +1556,7 @@ var render = function() {
                     "\n          " +
                       _vm._s(
                         _vm.$translate(
-                          "Feedback::Feedback.maximumNumberOfFeedbacksReached"
+                          "FeedbackGeoFM::Feedback.maximumNumberOfFeedbacksReached"
                         )
                       ) +
                       "\n        "
@@ -1565,7 +1565,7 @@ var render = function() {
               : _c("div", { staticClass: "w-100 text-center" }, [
                   _vm._v(
                     "\n          " +
-                      _vm._s(_vm.$translate("Feedback::Feedback.thankYou")) +
+                      _vm._s(_vm.$translate("FeedbackGeoFM::Feedback.thankYou")) +
                       "\n        "
                   )
                 ])

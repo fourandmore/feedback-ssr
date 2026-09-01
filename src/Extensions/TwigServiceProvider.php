@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Extensions;
+namespace FeedbackGeoFM\Extensions;
 
 use Plenty\Plugin\Templates\Extensions\Twig_Extension;
 

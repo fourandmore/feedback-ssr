@@ -1,6 +1,6 @@
 <?php
 
-namespace Feedback\Widgets;
+namespace FeedbackGeoFM\Widgets;
 
 use Ceres\Widgets\Helper\BaseWidget;
 use Ceres\Widgets\Helper\Factories\Settings\CustomClassSettingFactory;
@@ -13,11 +13,11 @@ use Plenty\Modules\ShopBuilder\Factories\WidgetSettingsFactory;
 
 class FaqSchemaWidget extends BaseWidget
 {
-    protected $template = "Feedback::Widgets.FaqSchemaWidget";
+    protected $template = "FeedbackGeoFM::Widgets.FaqSchemaWidget";
 
     public function getData()
     {
-        return WidgetDataFactory::make("Feedback::FaqSchemaWidget")
+        return WidgetDataFactory::make("FeedbackGeoFM::FaqSchemaWidget")
             ->withLabel("Widget.faqSchemaLabel")
             ->withPreviewImageUrl("/images/faq-schema.svg")
             ->withType(WidgetTypes::ITEM)

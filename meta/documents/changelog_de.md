@@ -1,3 +1,221 @@
+## 5.0.64
+- Produktionsversion auf Basis des live bestätigten Stands 5.0.63.
+- Entfernt sämtliche temporären ProductGroup-/Versand-Diagnoseskripte aus der Storefront.
+- Behält den bestätigten Multi-Search für reale `ProductGroup.hasVariant`-Produkte unverändert bei.
+- Versandprofil 54 verwendet für die Markisen die live bestätigten Gewichtsstufen: 1.000 g = 29,90 €, 10.000 g = 49,90 €, 100.000 g = 99,00 €. Andere Versandprofile bleiben unverändert.
+
+## 5.0.57
+- Reine Multi-Search-Diagnose auf Basis der offiziellen PlentyONE/IO-Schnittstellen.
+- Verwendet die bereits bestätigten `SingleItemContext`-Variations-IDs.
+- Erstellt pro Test-ID ein `SingleItem`-SearchPreset und führt die 10 Suchanfragen gemeinsam über `ItemSearchService::getResults()` aus.
+- Keine Änderung an `hasVariant`; dient ausschließlich zur Bestätigung des dokumentierten Batch-Wegs ohne `VariationList`-Filter.
+
+## 5.0.55
+
+- Diagnose: vergleicht den dokumentierten Einzelabruf `ItemService::getVariation($variationId)` mit `getVariations($variationIds)` für genau eine bestätigte kaufbare Variante.
+- Keine Änderung am ProductGroup-/hasVariant-Mapping.
+
+## 5.0.54
+
+- Korrigierte reine Diagnoseversion nach PlentyONE-Codecheck.
+- Entfernt nicht erlaubte bzw. neu eingeführte globale PHP-Aufrufe aus 5.0.52 (`forbidden diagnostic type helper`, `get_class`, `array_key_first`, `array_map`, `strlen`, `substr`).
+- Die Diagnose verwendet nur globale PHP-Funktionen, die bereits in der erfolgreich gebauten 5.0.50-Basis vorhanden waren.
+- Weiterhin keine Änderung an `hasVariant`; es wird ausschließlich die dokumentierte Ein-Parameter-Methode `ItemService::getVariations($variationIds)` untersucht.
+
+## 5.0.52
+
+- Reine Diagnoseversion für ProductGroup-Varianten.
+- Verwendet ausschließlich den dokumentierten `SingleItemContext` und `ItemService::getVariations($variationIds)` mit einem Parameter.
+- Gibt die reale Rückgabestruktur als `#feedback-geofm-variant-diagnostics` (`application/json`) aus.
+- Verändert `hasVariant` in dieser Diagnoseversion bewusst nicht.
+
+## 5.0.50
+- ProductGroup-Varianten basieren nun auf dem dokumentierten `Ceres\Contexts\SingleItemContext`. Der Context wird über den offiziellen Event `IO.ctx.item`/`IO.intl.ctx.item` erweitert.
+- Die bereits von Ceres geladenen `$variations`-Daten werden in das an `SingleItem.BeforeAddToBasket` übergebene Artikeldokument weitergereicht.
+- Vollständige Variantendokumente werden ausschließlich über die dokumentierte IO-Methode `ItemService::getVariations(array $variationIds)` geladen.
+- Die experimentellen Varianten-Suchpfade aus 5.0.47–5.0.49 wurden entfernt.
+- Diagnose-Marker auf `5.0.50` aktualisiert.
+
+## 5.0.49
+- ProductGroup-Varianten: Variation-IDs werden vor optionalen Attributnamen-Lookups verarbeitet. Fehler bei Attributnamen oder einzelnen Varianten-Batches können `hasVariant` nicht mehr vollständig unterdrücken.
+
+## 5.0.48
+
+- ProductGroup-Varianten werden nun über denselben `VariationAttributeMap`-Search-Preset wie der Ceres-Endpunkt `/io/variations/map` ermittelt.
+- Der ältere `ItemService::getVariationAttributeMap()`-Weg bleibt nur noch als Fallback erhalten.
+- `afterKey`-Pagination wird defensiv verarbeitet, damit große Variantenartikel nicht nach der ersten Ergebnisseite abgeschnitten werden.
+- `getVariationList()` dient als letzter ID-Fallback für Artikel ohne Variantenattribute.
+
+## 5.0.47
+
+- ProductGroup-Varianten werden jetzt über die Ceres-nahe `ItemService::getVariationAttributeMap()` ermittelt. Dadurch funktionieren auch Artikel, deren Varianten trotz fehlendem physischen Lagerbestand im Shop kaufbar sind.
+- Variantendetails werden in 20er-Batches geladen, damit große ProductGroups vollständig verarbeitet werden.
+- Reale Variantenattribute werden als Schema.org `size`, `color`, `material` bzw. `pattern` ausgegeben und `variesBy` daraus automatisch abgeleitet.
+- Varianten erhalten eindeutige Namen aus Produktname plus realen Attributwerten.
+- `isVariantOf` enthält jetzt zusätzlich den vollständigen Parent-Namen, die Parent-Beschreibung und `variesBy`.
+- Artikel-Versandprofile werden für alle Varianten wiederverwendet und nicht pro Variante erneut abgefragt.
+
+## Version 5.0.46 – ProductGroup-Varianten vollständig auszeichnen
+
+- ProductGroup-Seiten laden aktive und verkaufbare Varianten serverseitig über `IO\Services\ItemService`.
+- `hasVariant` enthält nun echte `Product`-Objekte mit SKU, Preis, Verfügbarkeit, Offer und `shippingDetails`.
+- Der bestehende Versandprofil-Fallback wird auf jede geladene Variante angewendet.
+
+## Version 5.0.45 – Versandprofile serverseitig auflösen
+
+- Lädt die am Artikel verknüpften Versandprofile über `ItemShippingProfilesRepositoryContract::findByItemId($itemId)`.
+- Profilgenaue Versandpreise funktionieren damit auch dann, wenn Ceres 5.0.81 die Versandprofil-Relation im Artikeldokument nicht ausliefert.
+- Repository-Fehler bleiben nicht-fatal; vorhandene Plenty-Standardkosten und Fallbacks funktionieren weiter.
+
+## Version 5.0.44 – Ceres-ItemShippingProfiles unterstützt
+
+- Die Versandprofil-Erkennung wertet nun `variation.itemShippingProfiles`, `itemShippingProfiles` und `item.itemShippingProfiles` aus.
+- Das entspricht dem PlentyONE/Ceres-Variation-Datensatz, in dem die verknüpften Artikel-Versandprofile als `itemShippingProfiles` bereitgestellt werden.
+- Dadurch greifen konfigurierte Profilpreise wie `57=19,90` auch dann, wenn `variation.defaultShippingCosts` einen generischen Paketwert wie 6,90 € enthält.
+
+## Version 5.0.43 – Profilpreis vor Plenty-Standardkosten
+
+- Ein explizit konfigurierter Versandprofilpreis hat nun Vorrang vor `variation.defaultShippingCosts`.
+- Damit können Artikel korrigiert werden, bei denen PlentyONE im Artikeldokument einen generischen Paketwert liefert, obwohl das zugewiesene Versandprofil einen anderen festen Preis hat.
+- Gibt es keinen passenden Profilpreis, bleibt `defaultShippingCosts` die nächste Quelle; erst danach greifen Paket-/Speditions-Fallbacks.
+
+## Version 5.0.42 – Versandkosten-Fallback je Versandprofil
+
+- Neue Konfiguration für exakte Zuordnung `Versandprofil-ID = Versandpreis`, z. B. `6=6,90; 9=59,00; 12=89,00`.
+- PlentyONE-Standardversandkosten behalten immer Vorrang.
+- Fehlen PlentyONE-Kosten, hat ein passender profilgenauer Preis Vorrang vor der bisherigen Paket-/Speditionslogik.
+- Ist für das Artikelprofil kein eigener Preis hinterlegt, bleibt der bestehende Paket-/Speditions-Fallback inklusive Gewichtsschwelle unverändert aktiv.
+- Mehrere Zuordnungen werden mit Semikolon oder Zeilenumbruch getrennt; dadurch sind deutsche Dezimalkommas eindeutig möglich.
+- Die Profil-Erkennung berücksichtigt nun zusätzlich das von PlentyONE dokumentierte top-level `shippingProfiles`-Array und dessen `profileId`.
+
+## Version 5.0.41 – GEO-Ergänzungen auf dem geprüften Stand 5.0.40
+
+- Der funktionierende Ceres-5.0.81-`page-metadata`-Override aus Version 5.0.40 bleibt erhalten.
+- Optionale, je Plugin-Set konfigurierbare Paket- und Speditionspreise ergänzen Versanddaten, wenn PlentyONE keine Standardversandkosten bereitstellt. PlentyONE-Daten haben weiterhin Vorrang.
+- Speditionsauswahl über konfigurierte Versandprofil-IDs oder eine Bruttogewichtsschwelle.
+- YouTube- und Upload-Datum-Einstellungen akzeptieren mehrere kommagetrennte Property-IDs.
+- `ProductGroup.hasVariant` wird ausschließlich aus echten, im Layout-Container vorhandenen Geschwistervarianten erzeugt.
+- FAQ, Kategorie-Bewertungssterne, Review-SSR und ProvenExpert-Ausgabe werden nicht verändert.
+
+## Version 5.0.40 – Ceres-5.0.81-Override
+
+- Der tatsächlich verwendete Partial-Key `page-metadata` wird über `IO.init.templates` und `IO.intl.init.templates` ersetzt.
+- Der Ceres-Product-/ProductGroup-Block wird serverseitig gezielt unterdrückt; andere Metadaten bleiben erhalten.
+- Der alte clientseitige Feedback-Product-Block bleibt entfernt.
+
+## Version 5.0.39 – Ceres-Product-Schema gezielt unterdrückt
+
+- Die Unterdrückung des parallelen Ceres-Product-Schemas prüft nicht mehr den Seitentyp über `services.template.isItem()` oder Item-Kontextvariablen.
+- Stattdessen wird der von Ceres an `PageMetadata.twig` übergebene `schemaOrg`-Block direkt ausgewertet.
+- Enthält der Block `@type: Product` oder `ProductGroup`, wird ausschließlich dieser Ceres-JSON-LD-Block nicht ausgegeben.
+- `WebSite`- und andere Ceres-Metadaten bleiben unverändert erhalten.
+- Das serverseitige `feedback-product-offer-jsonld` von FeedbackGeoFM bleibt das maßgebliche Produktschema. ProvenExpert oder andere externe JSON-LD-Blöcke werden nicht verändert.
+
+## 5.0.36
+
+- VideoObject wird automatisch serverseitig aus den konfigurierten Eigenschaften erzeugt; Standard 110 = YouTube-ID und 158 = Upload-Datum.
+- Das VideoObject wird als `Product.subjectOf` in den bestehenden `feedback-product-offer-jsonld`-Block integriert.
+- Ceres-Product-Unterdrückung auf Artikelseiten und in Plugin-Set-Previews robuster gemacht; keine String-`"1"`-Abhängigkeit mehr.
+- Neue Konfiguration für automatische Video-Ausgabe sowie die beiden Property-IDs.
+
+## 5.0.35
+
+- Die Ceres-Metadaten-Partiale wird nun über die offizielle PlentyONE-Methode `overrideTemplate()` ersetzt.
+- Noch nicht gespeicherte neue Konfigurationswerte verwenden zuverlässig den vorgesehenen Standardwert `true`.
+- Ein ausdrücklich deaktivierter Schalter wird weiterhin berücksichtigt.
+- Die Product-Unterdrückung funktioniert dadurch auch in Plugin-Set-Previews, ohne FAQ, Bewertungen, Kategoriesterne oder übrige Metadaten zu verändern.
+
+## 5.0.34
+
+- Neue, standardmäßig aktive Konfiguration zum serverseitigen Deaktivieren des parallelen Ceres-Product-Schemas auf Artikelseiten.
+- Die Abschaltung greift nur, wenn das Product/ProductGroup/Offer-Schema von FeedbackGeoFM aktiviert ist.
+- FAQPage, BreadcrumbList, Bewertungen, Kategoriesterne, Meta-Tags und das WebSite-Schema auf anderen Seitentypen bleiben erhalten.
+
+## 5.0.33
+
+- Product-, ProductGroup-, Offer- und Review-Texte werden als transportfeste JSON-Unicode-Escapes ausgegeben; nach dem Parsen bleibt der korrekte Unicode-Text erhalten.
+- Der alte clientseitige Review-Product-Block wird unterdrückt, sobald `feedback-product-offer-jsonld` serverseitig vorhanden ist.
+- Die FAQ-Property-ID ist je Plugin-Set konfigurierbar; Standard und ungültiger-Wert-Fallback bleiben `151`.
+- Die gemeinsame Konfiguration für Four More, Billiard Royal und Mephisto wird dokumentiert.
+- Die notwendige Kategorie-Verknüpfung `Feedback category ratings` → `Ceres::CategoryItem.BeforePrices` ist ausdrücklich dokumentiert.
+
+## 5.0.32
+
+- Die konfigurierte Herstellerangabe ist jetzt je Plugin-Set verbindlich und überschreibt die uneindeutigen PlentyONE-Herstellerfelder.
+- Der EU-Verantwortliche `responsibleName` wird nicht mehr als `Product.manufacturer` ausgegeben.
+- Bei leerer Konfiguration nutzt die automatische Auflösung `legalName`, `externalName` oder `name`, niemals `responsibleName`.
+- Brand, Hersteller und Offer-Verkäufer bleiben getrennte Schema.org-Rollen; FAQ- und übrige Product-/Offer-Funktionen bleiben unverändert.
+
+## 5.0.31
+
+- Das serverseitige FAQPage-JSON-LD gibt Nicht-ASCII-Zeichen nun als standardkonforme JSON-Unicode-Escapes aus.
+- Dadurch bleiben Umlaute, `ß`, Gradzeichen und typografische Zeichen auch dann korrekt, wenn der Plenty-/Twig-Ausgabeweg literal ausgegebenes UTF-8 nachträglich verändert.
+- `JSON.parse()` und Suchmaschinen erhalten weiterhin die vollständigen ursprünglichen Unicode-Texte.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
+## 5.0.30
+
+- Doppelt HTML-kodierte FAQ-Texte aus Eigenschaft 151 werden vor der Schema-Erzeugung vollständig dekodiert.
+- Typische UTF-8-/Latin-1-Fehlkodierungen bei Umlauten, `ß`, Sonderzeichen und typografischen Zeichen werden gezielt repariert.
+- Bereits korrektes UTF-8 bleibt unverändert; Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
+## 5.0.29
+
+- Eigenschaft 151 wird über `ItemSearchService` und das `SingleItem`-Preset gezielt aus dem vollständigen Artikeldokument der Hauptvariante geladen.
+- Der Abruf entspricht dem offiziellen IO-`ItemService` und verwendet keine veraltete `ItemDataLayer`-Schnittstelle.
+- Kindvarianten-Dokumente bleiben ausgeschlossen; die bisherigen Hauptvarianten-Repositories dienen nur noch als Fallbacks.
+- Der Diagnosepfad für den neuen Abruf lautet `main-variation-item-document`.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
+## 5.0.28
+
+- Zusätzlicher serverseitiger FAQ-Fallback über den Hauptartikel mit geladener `properties`-Relation.
+- Erfasst auch Item-Properties/Merkmale, die im ShopBuilder-Artikeldokument vorhanden sind, aber nicht über das Variation-Property-Repository geliefert werden.
+- Hauptvarianten-ID und Ausschluss von Kindvariantenwerten bleiben erhalten.
+- Der Diagnosepfad heißt `main-item-repository`.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
+## 5.0.27
+
+- FAQPage-JSON-LD liest Eigenschaft 151 auf allen Artikelseiten ausschließlich von der Hauptvariante.
+- Deaktivierte Property-Vererbung auf Kindvarianten beeinflusst das FAQ-Schema nicht mehr.
+- Fehlt die Hauptvarianten-ID im Layout-Container, wird sie serverseitig über das Varianten-Repository ermittelt.
+- Werte der aktuellen Kindvariante und das aktuelle ShopBuilder-Artikeldokument werden für Property 151 bewusst nicht verwendet.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert.
+
+## 5.0.26
+
+- FAQPage-JSON-LD wird auf kaufbaren Kindvarianten nun auch dann ausgegeben, wenn Eigenschaft 151 von der Hauptvariation geerbt wird.
+- Die FAQ-Auflösung berücksichtigt dazu `propertyVariationId`, `mainVariationId` und `parentVariationId` aus direkten und verschachtelten plentyShop-Artikeldaten.
+- Product-/ProductGroup-/Offer-Ausgabe bleibt unverändert: nicht kaufbare Hauptvarianten erhalten `ProductGroup`, kaufbare Varianten `Product` mit `Offer` und `isVariantOf`.
+
+## 5.0.25
+
+- Veraltete Standardzuordnung `Ceres::SingleItem.BeforePrice` für Product- und FAQ-DataProvider durch `Ceres::SingleItem.BeforeAddToBasket` ersetzt.
+- Containerargumente werden nun aus direkten Artikeldaten, `documents[0].data`, `item.documents[0].data` und Objektargumenten aufgelöst.
+
+## 5.0.24
+
+- Product/ProductGroup/Offer-JSON-LD in einen echten serverseitigen Layout-Container/DataProvider verschoben; keine Product-Ausgabe mehr als `<script2>` aus dem ShopBuilder-Widget.
+- Nicht kaufbare Hauptvarianten mit Untervarianten werden als `ProductGroup` ohne `Offer` ausgegeben.
+- Konkrete Varianten erhalten `Product`, variantenspezifische `productID`/Offer-IDs und eine artikelstabile `isVariantOf`-/`productGroupID`-Verknüpfung.
+- Marken-, Hersteller- und Verkäuferrollen getrennt; `manufacturer.responsibleName` wird bevorzugt verwendet.
+- Globale Plugin-Konfiguration für Product/Offer, Variantenmerkmale, Versand und Rückgabe ergänzt. Versanddetails sind bis zur fachlichen Prüfung standardmäßig deaktiviert.
+
+## 5.0.22
+
+- FAQPage aus Property 151 wird über einen serverseitigen Layout-Container/DataProvider als echtes, gefülltes JSON-LD ausgegeben.
+
+- Leeren FAQ-`<script>`-Block aus dem ShopBuilder-Widget entfernt; Diagnosemarker bleibt erhalten.
+
+## 5.0.21
+
+- Technischer Plugin-Name von `Feedback` auf `FeedbackGeoFM` geändert.
+- PHP-Namespace vollständig von `Feedback\...` auf `FeedbackGeoFM\...` umgestellt.
+- Twig-Template-, Übersetzungs-, `plugin_path()`-, SSR-Entry- und DataProvider-Verweise auf `FeedbackGeoFM` umgestellt.
+- Plugin-Konfigurationspräfix auf `FeedbackGeoFM` umgestellt.
+- PlentyONE-Core-Namespaces `Plenty\Modules\Feedback\...` bewusst unverändert gelassen.
+
 # 5.0.20
 
 - Platzhalter-Autoren wie „Unbekannt“, „Unknown“ und „Gast“ werden im sichtbaren SSR-Bereich und im Review-JSON-LD als „Anonymer Käufer“ bzw. „Anonymous buyer“ ausgegeben.

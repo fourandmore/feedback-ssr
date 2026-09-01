@@ -17,7 +17,7 @@
       class="btn btn-default btn-block feedback-loadmore"
       @click="onLoadMoreClicked()"
     >
-      {{ $translate("Feedback::Feedback.loadMore") }}
+      {{ $translate("FeedbackGeoFM::Feedback.loadMore") }}
     </a>
   </div>
 </template>

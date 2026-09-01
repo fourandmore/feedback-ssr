@@ -2,6 +2,24 @@
 
 Zeige Kundenrezensionen im Webshop an und antworte auf Feedback. Das Feedback-Plugin erfordert den plentyShop LTS ShopBuilder.
 
+## Strukturierte Produktdaten je Plugin-Set konfigurieren
+
+Unter **Plugins » Plugin-Set-Übersicht » FeedbackGeoFM » Konfiguration » Strukturierte Produktdaten** werden Verkäufer und Hersteller für jedes Plugin-Set separat gepflegt. Die Herstellerangabe ist verbindlich; ein leeres Feld aktiviert die automatische Auflösung aus `legalName`, `externalName` oder `name`. `responsibleName` bezeichnet den EU-Verantwortlichen und wird nicht als `Product.manufacturer` verwendet.
+
+Empfohlene Herstellerwerte: Four More `Four & More GmbH`, Billiard Royal `Billiard-Royal`, Mephisto Tools `Mephisto`. Der Offer-Verkäufer kann separat `Four & More GmbH` bleiben.
+
+Die Option **Ceres-Product-Schema auf Artikelseiten deaktivieren** verhindert einen zweiten, von Ceres erzeugten Product-Knoten. Sie ist standardmäßig aktiv und greift nur zusammen mit **Product/ProductGroup/Offer JSON-LD serverseitig ausgeben**. Stelle sicher, dass der DataProvider **Product/ProductGroup/Offer JSON-LD serverseitig** im Einzelartikel-Layout eingebunden ist.
+
+### Profilgenaue Versandkosten in Version 5.0.42
+
+Im Feld **„Versandprofil-spezifische Fallbackpreise“** können mehrere Zuordnungen eingetragen werden, zum Beispiel `6=6,90; 9=59,00; 12=89,00`. Die Zahl links ist die PlentyONE-Versandprofil-ID, rechts steht der Versandpreis. Ein Semikolon oder Zeilenumbruch trennt die Zuordnungen. PlentyONE-Standardversandkosten haben weiterhin Vorrang.
+
+### Versand und Video in Version 5.0.41
+
+Aktiviere den Versand-Fallback erst, nachdem Paket- und Speditionspreis für das jeweilige Plugin-Set geprüft wurden. PlentyONE-Standardversandkosten haben immer Vorrang. Fehlen sie, wählt das Plugin den Speditionspreis bei einer passenden Versandprofil-ID oder ab der konfigurierten Bruttogewichtsschwelle; andernfalls den Paketpreis. Ein leeres Preisfeld erzeugt keine Versandangabe.
+
+Für Produktvideos können in den beiden Property-Feldern mehrere IDs kommagetrennt hinterlegt werden. Die erste valide Kombination aus YouTube-ID und Upload-Datum wird verwendet. Ohne beide Werte wird kein `VideoObject` ausgegeben.
+
 ## Kundenrezensionen einrichten
 
 Bevor Kundenrezensionen im Webshop angezeigt werden, musst du Einstellungen in deinem PlentyONE Backend und im ShopBuilder vornehmen.

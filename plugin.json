@@ -1,12 +1,12 @@
 {
-    "version": "5.0.20",
-    "name": "Feedback",
+    "version": "5.0.70",
+    "name": "FeedbackGeoFM",
     "marketplaceName": {
         "de": "Feedback Product Offer GEO F&M",
         "en": "Feedback Product Offer GEO F&M"
     },
-    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, Offer-, Review-, FAQPage-, Versand-, Rückgabe- und optionale VideoObject-JSON-LD-Daten.",
-    "namespace": "Feedback",
+    "description": "Feedback Product Offer GEO F&M, entwickelt und gepflegt von Four & More GmbH. Die Erweiterung basiert auf dem ursprünglichen PlentyONE-Feedback-Plugin und ergänzt serverseitige Bewertungen sowie Product-, ProductGroup-, Offer-, Review-, FAQPage-, VideoObject-, Versand- und Rückgabe-JSON-LD-Daten. Das parallele Ceres-Product-Schema kann gezielt deaktiviert werden.",
+    "namespace": "FeedbackGeoFM",
     "author": "Four & More GmbH",
     "type": "general",
     "require": {
@@ -17,13 +17,13 @@
         "php": ">=7.3 <8.1"
     },
     "isClosedSource": false,
-    "serviceProvider": "Feedback\\Providers\\FeedbackServiceProvider",
+    "serviceProvider": "FeedbackGeoFM\\Providers\\FeedbackServiceProvider",
     "runOnBuild": [],
     "license": "AGPL-3.0",
     "price": 0.0,
     "shortDescription": {
-        "de": "Feedback Product Offer GEO F&M mit SSR sowie Product-, Offer-, Review-, FAQPage-, Versand- und Rückgabe-Schema.",
-        "en": "Feedback Product Offer GEO F&M with SSR and Product, Offer, Review, FAQPage, shipping and return schema."
+        "de": "Feedback Product Offer GEO F&M mit SSR sowie Product-, ProductGroup-, Offer-, Review-, FAQPage-, Versand- und Rückgabe-Schema.",
+        "en": "Feedback Product Offer GEO F&M with SSR and Product, ProductGroup, Offer, Review, FAQPage, shipping and return schema."
     },
     "authorIcon": "icon_author_xs.png",
     "pluginIcon": "icon_plugin_xs.png",
@@ -48,10 +48,22 @@
     "containers": [],
     "dataProviders": [
         {
-            "key": "Feedback\\DataProviders\\FeedbackCategoryRatings",
+            "key": "FeedbackGeoFM\\DataProviders\\FeedbackCategoryRatings",
             "name": "Feedback category ratings",
             "description": "Feedback category ratings",
             "defaultLayoutContainer": "Ceres::CategoryItem.BeforePrices"
+        },
+        {
+            "key": "FeedbackGeoFM\\DataProviders\\FaqPropertySchema",
+            "name": "FAQPage JSON-LD serverseitig (konfigurierbare Property)",
+            "description": "Gibt FAQPage JSON-LD aus der konfigurierten Eigenschaft des gezielt geladenen Hauptvarianten-Artikeldokuments direkt serverseitig aus.",
+            "defaultLayoutContainer": "Ceres::SingleItem.BeforeAddToBasket"
+        },
+        {
+            "key": "FeedbackGeoFM\\DataProviders\\ProductOfferSchema",
+            "name": "Product/ProductGroup/Offer JSON-LD serverseitig",
+            "description": "Gibt ein valides Product- oder ProductGroup-Schema mit variantenspezifischem Offer direkt im initialen HTML aus.",
+            "defaultLayoutContainer": "Ceres::SingleItem.BeforeAddToBasket"
         }
     ],
     "dependencies": {},

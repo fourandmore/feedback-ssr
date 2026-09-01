@@ -1,7 +1,7 @@
 {
-  "name": "four-more-feedback-product-offer-geo",
+  "name": "four-more-feedback-geo-fm",
   "license": "AGPL-3.0",
-  "version": "5.0.20",
+  "version": "5.0.46",
   "engines": {
     "node": "16"
   },
@@ -65,5 +65,5 @@
     "vuex": "^3.3.0"
   },
   "author": "Four & More GmbH",
-  "description": "Server-rendered customer feedback and Product, Offer, Review, FAQPage, shipping, return and optional VideoObject JSON-LD for plentyShop LTS."
+  "description": "Server-rendered customer feedback and Product, ProductGroup, Offer, Review, FAQPage, shipping and return JSON-LD for plentyShop LTS."
 }

@@ -17,7 +17,7 @@
           <span
             :id="'feedbackConfirmDeleteLabel-' + _uid"
             class="modal-title h3"
-          >{{ $translate("Feedback::Feedback.customerReviews") }}</span>
+          >{{ $translate("FeedbackGeoFM::Feedback.customerReviews") }}</span>
           <button
             type="button"
             class="close"
@@ -38,7 +38,7 @@
             <fieldset>
               <div class="stars">
                 <legend>
-                  <span class="d-none">{{ $translate("Feedback::Feedback.customerReviews") }}</span>
+                  <span class="d-none">{{ $translate("FeedbackGeoFM::Feedback.customerReviews") }}</span>
                 </legend>
                 <template v-for="starId in starIds">
                   <input
@@ -98,7 +98,7 @@
                 class="form-control"
                 name="author"
                 :disabled="isRated || limitReached"
-                :placeholder="$translate('Feedback::Feedback.authorName')"
+                :placeholder="$translate('FeedbackGeoFM::Feedback.authorName')"
               >
 
               <input
@@ -113,24 +113,24 @@
               ><label
                 class="position-absolute"
                 for="feedback-textfield"
-              ><span class="visually-hidden">{{ $translate("Feedback::Feedback.honeypotLabel") }}</span></label>
+              ><span class="visually-hidden">{{ $translate("FeedbackGeoFM::Feedback.honeypotLabel") }}</span></label>
             </div>
 
             <div class="form-group">
               <input
                 id="title"
                 v-model="feedback.title"
-                :aria-label="$translate('Feedback::Feedback.title')"
+                :aria-label="$translate('FeedbackGeoFM::Feedback.title')"
                 type="text"
                 class="form-control"
                 :class="{'is-invalid': titleMissing}"
                 name="title"
                 :disabled="isRated || limitReached"
-                :placeholder="$translate('Feedback::Feedback.title')"
+                :placeholder="$translate('FeedbackGeoFM::Feedback.title')"
               >
 
               <div class="invalid-feedback">
-                {{ $translate("Feedback::Feedback.titleRequired") }}
+                {{ $translate("FeedbackGeoFM::Feedback.titleRequired") }}
               </div>
             </div>
 
@@ -138,12 +138,12 @@
               <textarea
                 id="message"
                 v-model="feedback.message"
-                :aria-label="$translate('Feedback::Feedback.reviewMessage')"
+                :aria-label="$translate('FeedbackGeoFM::Feedback.reviewMessage')"
                 class="form-control"
                 name="message"
                 :rows="rows"
                 :disabled="isRated || limitReached"
-                :placeholder="$translate('Feedback::Feedback.reviewMessage')"
+                :placeholder="$translate('FeedbackGeoFM::Feedback.reviewMessage')"
               />
             </div>
           </div>
@@ -156,19 +156,19 @@
             :disabled="isRated || (showEmptyRatings && feedback.ratingValue === 0)"
             @click="createFeedback()"
           >
-            {{ $translate("Feedback::Feedback.submitReview") }}
+            {{ $translate("FeedbackGeoFM::Feedback.submitReview") }}
           </button>
           <div
             v-else-if="limitReached"
             class="w-100 text-center"
           >
-            {{ $translate("Feedback::Feedback.maximumNumberOfFeedbacksReached") }}
+            {{ $translate("FeedbackGeoFM::Feedback.maximumNumberOfFeedbacksReached") }}
           </div>
           <div
             v-else
             class="w-100 text-center"
           >
-            {{ $translate("Feedback::Feedback.thankYou") }}
+            {{ $translate("FeedbackGeoFM::Feedback.thankYou") }}
           </div>
         </div>
       </div>
@@ -311,12 +311,12 @@ export default {
           _self.ratingMissing = false
 
           $(_self.$refs.orderItemFeedbackModal).modal('hide')
-          window.CeresNotification.success(_self.$translate('Feedback::Feedback.notificationSuccess')).closeAfter(3000)
+          window.CeresNotification.success(_self.$translate('FeedbackGeoFM::Feedback.notificationSuccess')).closeAfter(3000)
         },
         error: function (jqXHR, textStatus, errorThrown) {
           console.error(errorThrown)
           _self.isLoading = false
-          window.CeresNotification.error(_self.$translate('Feedback::Feedback.notificationFailure')).closeAfter(3000)
+          window.CeresNotification.error(_self.$translate('FeedbackGeoFM::Feedback.notificationFailure')).closeAfter(3000)
         }
       })
     }
