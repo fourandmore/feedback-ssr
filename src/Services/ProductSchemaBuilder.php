@@ -1945,7 +1945,7 @@ class ProductSchemaBuilder
             return $url;
         }
 
-        $itemPattern = preg_quote((string)(int)$itemId, '/');
+        $itemPattern = (string)(int)$itemId;
         if (!preg_match('/_' . $itemPattern . '_\\d+\\/?$/', $canonicalPath)) {
             // Four & More, Mephisto and Billiard Royal currently use the Plenty
             // suffix. Other/custom storefront routes are deliberately left as
@@ -1960,7 +1960,7 @@ class ProductSchemaBuilder
 
         $path = (string)$parts['path'];
         $targetSuffix = '_' . (int)$itemId . '_' . (int)$variationId;
-        if (preg_match('/' . preg_quote($targetSuffix, '/') . '\\/?$/', $path)) {
+        if (preg_match('/' . $targetSuffix . '\\/?$/', $path)) {
             return $url;
         }
 

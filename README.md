@@ -1,4 +1,11 @@
-# FeedbackGeoFM 5.0.69 – Varianten-URLs + Google hasVariant-Absicherung
+# FeedbackGeoFM 5.0.70 – PlentyONE Deployment-Hotfix
+
+## Version 5.0.70 – PlentyONE Deployment-Hotfix
+
+- Entfernt die in PlentyONE-Plugins nicht erlaubte PHP-Funktion `preg_quote()` aus der Varianten-URL-Logik.
+- Artikel- und Varianten-IDs werden bereits auf Integer normalisiert; die Regex-Muster bleiben dadurch funktional identisch und sicher.
+- Alle Funktionen aus 5.0.69 bleiben unverändert: konkrete Varianten-URLs, `hasVariant`-Absicherung, `name`-Fallbacks sowie Four-More-/Mephisto-/Billiard-Royal-Kompatibilität.
+
 
 - Basis ist Version 5.0.68; bestehende Four-More-, Mephisto- und Billiard-Royal-Logik bleibt unverändert.
 - `hasVariant` verwendet eine vorhandene echte Varianten-Canonical-URL weiterhin unverändert.
