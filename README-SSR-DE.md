@@ -1,3 +1,11 @@
+# FeedbackGeoFM 5.0.68 – `name` für Product/ProductGroup abgesichert
+
+- Basis ist unverändert Version 5.0.67.
+- `ProductSchemaBuilder` löst den Produktnamen jetzt über zusätzliche PlentyONE/Ceres-Feldpfade auf (`texts.name`, `item.texts.*`, `variation.itemName`, `item.name`).
+- Fehlen Text- und Modellfelder in einem Variantendokument, wird als letzter sachlicher Fallback die konkrete Variantennummer verwendet; verschachtelte Varianten können zusätzlich den bereits aufgelösten ProductGroup-Namen übernehmen.
+- `ProductGroup` und alle erzeugten `hasVariant`-Produkte werden in den Tests explizit auf ein nicht leeres `name` geprüft.
+- Auch das rückwärtskompatible Review-only-`Product` erhält jetzt immer ein `name`-Feld.
+
 # FeedbackGeoFM 5.0.50 – Varianten über den offiziellen Ceres SingleItemContext
 
 Version 5.0.50 verwendet für ProductGroup-Varianten ausschließlich dokumentierte Ceres-/IO-Schnittstellen: `SingleItemContext::$variations` als bereits geladene Variantenbasis und `ItemService::getVariations()` für die vollständigen Variantendokumente. Die experimentellen Varianten-Suchpfade der Versionen 5.0.47 bis 5.0.49 sind entfernt.

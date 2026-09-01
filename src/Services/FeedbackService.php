@@ -495,10 +495,13 @@ class FeedbackService
         } elseif (!empty($schemaReviews)) {
             // Backwards-compatible review-only schema if Product/Offer output
             // was explicitly disabled in the widget settings.
+            $reviewSchemaName = $this->resolveReviewSchemaProductName($itemData, $variationId);
+
             $initialData['jsonLd'] = [
                 '@context' => 'https://schema.org',
                 '@type' => 'Product',
                 '@id' => (string)$variationId,
+                'name' => $reviewSchemaName,
                 'aggregateRating' => [
                     '@type' => 'AggregateRating',
                     'ratingValue' => (float)$counts['averageValue'],
@@ -511,6 +514,67 @@ class FeedbackService
         }
 
         return $initialData;
+    }
+
+    /**
+     * Resolve a name for the backwards-compatible review-only Product schema.
+     * The main Product/ProductGroup output uses ProductSchemaBuilder; this
+     * helper prevents the legacy fallback from ever reintroducing a Product
+     * object without the required name field.
+     *
+     * @param mixed $itemData
+     * @param int $variationId
+     * @return string
+     */
+    private function resolveReviewSchemaProductName($itemData, $variationId)
+    {
+        if (is_object($itemData)) {
+            $encoded = json_encode($itemData);
+            $itemData = $encoded !== false ? json_decode($encoded, true) : [];
+        }
+
+        if (!is_array($itemData)) {
+            $itemData = [];
+        }
+
+        $paths = [
+            ['texts', 'name1'],
+            ['texts', 'name2'],
+            ['texts', 'name3'],
+            ['texts', 'name'],
+            ['item', 'texts', 'name1'],
+            ['item', 'texts', 'name2'],
+            ['item', 'texts', 'name3'],
+            ['item', 'texts', 'name'],
+            ['variation', 'name'],
+            ['variation', 'itemName'],
+            ['variation', 'model'],
+            ['item', 'name'],
+            ['variation', 'number'],
+            ['variation', 'externalId']
+        ];
+
+        foreach ($paths as $path) {
+            $value = $itemData;
+            foreach ($path as $segment) {
+                if (!is_array($value) || !array_key_exists($segment, $value)) {
+                    $value = null;
+                    break;
+                }
+                $value = $value[$segment];
+            }
+
+            if (!is_array($value) && !is_object($value) && $value !== null) {
+                $text = html_entity_decode(strip_tags((string)$value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $text = preg_replace('/\s+/u', ' ', $text);
+                $text = trim((string)$text);
+                if ($text !== '') {
+                    return $text;
+                }
+            }
+        }
+
+        return (int)$variationId > 0 ? (string)$variationId : 'Product';
     }
 
     /**

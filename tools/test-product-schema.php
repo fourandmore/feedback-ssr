@@ -504,11 +504,15 @@ $productGroup = $builder->build(
 
 if (!is_array($productGroup)
     || $productGroup['@type'] !== 'ProductGroup'
+    || empty($productGroup['name'])
+    || $productGroup['name'] !== 'Mephisto Infrarotheizung 600 W'
     || $productGroup['productGroupID'] !== '51000'
     || isset($productGroup['offers'])
     || isset($productGroup['sku'])
     || count($productGroup['variesBy']) !== 2
     || count($productGroup['hasVariant']) !== 2
+    || empty($productGroup['hasVariant'][0]['name'])
+    || empty($productGroup['hasVariant'][1]['name'])
     || $productGroup['hasVariant'][0]['productID'] !== '13046'
     || $productGroup['hasVariant'][0]['sku'] !== '51000-600'
     || $productGroup['hasVariant'][0]['offers']['price'] !== '129.90'
@@ -570,6 +574,29 @@ if (!is_array($attributeProductGroup)
     || empty($attributeProductGroup['hasVariant'][0]['description'])
     || empty($attributeProductGroup['hasVariant'][0]['offers']['price'])) {
     fwrite(STDERR, 'ProductGroup variants must expose real size/color attributes, compact nested metadata and offers.' . PHP_EOL);
+    exit(1);
+}
+
+// Name fallback: some IO variation documents omit the texts block. The
+// Product must still expose a factual name instead of invalid JSON-LD.
+$nameFallbackItemData = $itemData;
+unset($nameFallbackItemData['texts']);
+unset($nameFallbackItemData['variation']['name']);
+unset($nameFallbackItemData['variation']['itemName']);
+unset($nameFallbackItemData['variation']['model']);
+$nameFallbackSchema = $builder->build(
+    $nameFallbackItemData,
+    'https://www.example.test/name-fallback_51000_13046',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, ['schemaVideoObject' => false])
+);
+
+if (!is_array($nameFallbackSchema)
+    || empty($nameFallbackSchema['name'])
+    || $nameFallbackSchema['name'] !== '51000-600') {
+    fwrite(STDERR, 'Product name fallback must use the concrete variation number when PlentyONE omits text/model fields.' . PHP_EOL);
     exit(1);
 }
 

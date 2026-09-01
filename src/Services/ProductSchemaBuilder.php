@@ -31,13 +31,7 @@ class ProductSchemaBuilder
             return null;
         }
 
-        $name = $this->firstText($data, [
-            'texts.name1',
-            'texts.name2',
-            'texts.name3',
-            'variation.name',
-            'variation.model'
-        ]);
+        $name = $this->resolveProductName($data, $schemaOptions);
 
         $isVariationGroup = $this->isVariationGroup($data)
             || $this->toBool($this->option($schemaOptions, 'schemaForceProductGroup', false));
@@ -1636,6 +1630,66 @@ class ProductSchemaBuilder
         }
 
         return null;
+    }
+
+    /**
+     * Resolve a stable Schema.org Product/ProductGroup name from the PlentyONE
+     * item document. Ceres/IO payloads are not completely uniform across item
+     * contexts, so use all known textual locations before falling back to a
+     * concrete variation identifier. This guarantees that an otherwise valid
+     * Product or ProductGroup is never emitted without Schema.org `name`.
+     *
+     * @param array $data
+     * @param array $schemaOptions
+     * @return string
+     */
+    private function resolveProductName(array $data, array $schemaOptions = [])
+    {
+        $name = $this->firstText($data, [
+            'texts.name1',
+            'texts.name2',
+            'texts.name3',
+            'texts.name',
+            'item.texts.name1',
+            'item.texts.name2',
+            'item.texts.name3',
+            'item.texts.name',
+            'variation.name',
+            'variation.itemName',
+            'variation.model',
+            'item.name'
+        ]);
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        // Nested variants can safely inherit the already resolved parent name.
+        // Add a concrete variation number where possible so sibling products
+        // stay unambiguous even if an IO child document omits its text block.
+        $parentName = $this->cleanText($this->option(
+            $schemaOptions,
+            'schemaParentGroupName',
+            ''
+        ));
+        $variationNumber = $this->firstRaw($data, [
+            'variation.number',
+            'variation.externalId'
+        ]);
+
+        if ($parentName !== '') {
+            return $variationNumber !== ''
+                ? $parentName . ' – ' . $variationNumber
+                : $parentName;
+        }
+
+        // A PlentyONE variation number is a factual product identifier and is
+        // preferable to emitting invalid Product markup without any name.
+        if ($variationNumber !== '') {
+            return $variationNumber;
+        }
+
+        return '';
     }
 
     /**
