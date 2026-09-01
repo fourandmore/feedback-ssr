@@ -493,15 +493,12 @@ class ProductSchemaBuilder
                 continue;
             }
 
-            $url = $this->firstRaw($document, [
-                'urls.canonical',
-                'url',
-                'texts.urlPath'
-            ]);
-            $url = $this->absoluteUrl($url, $canonicalUrl);
-            if ($url === '') {
-                $url = $canonicalUrl;
-            }
+            $url = $this->resolveVariantUrl(
+                $document,
+                $canonicalUrl,
+                $itemId,
+                $variationId
+            );
 
             $childOptions = $schemaOptions;
             $childOptions['schemaVariantDocuments'] = [];
@@ -522,6 +519,16 @@ class ProductSchemaBuilder
             );
 
             if (!is_array($variant) || ($variant['@type'] ?? '') !== 'Product') {
+                continue;
+            }
+
+            // Google Product snippets require every nested Product to expose
+            // at least one commercial/review signal: offers, review or
+            // aggregateRating. ProductSchemaBuilder normally guarantees an
+            // Offer for salable variants; keep this defensive gate so a
+            // partial PlentyONE child document can never leak an invalid
+            // hasVariant Product into the ProductGroup.
+            if (!$this->hasProductSnippetSignal($variant)) {
                 continue;
             }
 
@@ -1897,6 +1904,145 @@ class ProductSchemaBuilder
         }
 
         return (is_string($scheme) && $scheme !== '' ? $scheme : 'https') . '://' . $host;
+    }
+
+    /**
+     * Resolve the public URL for a nested PlentyONE variation.
+     *
+     * PlentyONE's SingleItem result may expose only texts.urlPath for sibling
+     * variations. On shops that use the standard Ceres/Plenty route suffix
+     * `_ITEMID_VARIATIONID`, that path points to the shared slug and would be
+     * a 404 or would fail to preselect the requested variation. Prefer a real
+     * child canonical URL when present; otherwise derive the child suffix only
+     * when the current canonical URL proves that this storefront uses the
+     * standard Plenty route format. Custom URL schemes therefore remain
+     * untouched.
+     *
+     * @param array $document
+     * @param string $canonicalUrl
+     * @param int $itemId
+     * @param int $variationId
+     * @return string
+     */
+    private function resolveVariantUrl(array $document, $canonicalUrl, $itemId, $variationId)
+    {
+        $url = $this->firstRaw($document, [
+            'urls.canonical',
+            'url',
+            'texts.urlPath'
+        ]);
+        $url = $this->absoluteUrl($url, $canonicalUrl);
+        if ($url === '') {
+            $url = trim((string)$canonicalUrl);
+        }
+
+        if ($url === '' || (int)$itemId <= 0 || (int)$variationId <= 0) {
+            return $url;
+        }
+
+        $canonicalPath = parse_url((string)$canonicalUrl, PHP_URL_PATH);
+        if (!is_string($canonicalPath) || $canonicalPath === '') {
+            return $url;
+        }
+
+        $itemPattern = preg_quote((string)(int)$itemId, '/');
+        if (!preg_match('/_' . $itemPattern . '_\\d+\\/?$/', $canonicalPath)) {
+            // Four & More, Mephisto and Billiard Royal currently use the Plenty
+            // suffix. Other/custom storefront routes are deliberately left as
+            // supplied by PlentyONE for backwards compatibility.
+            return $url;
+        }
+
+        $parts = parse_url($url);
+        if (!is_array($parts) || !isset($parts['path'])) {
+            return $url;
+        }
+
+        $path = (string)$parts['path'];
+        $targetSuffix = '_' . (int)$itemId . '_' . (int)$variationId;
+        if (preg_match('/' . preg_quote($targetSuffix, '/') . '\\/?$/', $path)) {
+            return $url;
+        }
+
+        // Replace another variation suffix of the same item when PlentyONE
+        // returned the active page URL; otherwise append the suffix to the
+        // shared urlPath/slug supplied for the sibling document.
+        $basePath = preg_replace(
+            '/_' . $itemPattern . '_\\d+\\/?$/',
+            '',
+            rtrim($path, '/')
+        );
+        if (!is_string($basePath) || $basePath === '') {
+            return $url;
+        }
+
+        $parts['path'] = rtrim($basePath, '/') . $targetSuffix;
+        return $this->buildUrlFromParts($parts);
+    }
+
+    /**
+     * A nested Product must have at least one of the signals required by
+     * Google's Product snippet eligibility rules.
+     *
+     * @param array $variant
+     * @return bool
+     */
+    private function hasProductSnippetSignal(array $variant)
+    {
+        if (isset($variant['offers']) && is_array($variant['offers']) && !empty($variant['offers'])) {
+            return true;
+        }
+
+        if (isset($variant['review']) && !empty($variant['review'])) {
+            return true;
+        }
+
+        return isset($variant['aggregateRating'])
+            && is_array($variant['aggregateRating'])
+            && !empty($variant['aggregateRating']);
+    }
+
+    /**
+     * Rebuild a URL after changing only its path component.
+     *
+     * @param array $parts
+     * @return string
+     */
+    private function buildUrlFromParts(array $parts)
+    {
+        $url = '';
+
+        if (isset($parts['scheme']) && $parts['scheme'] !== '') {
+            $url .= $parts['scheme'] . '://';
+        } elseif (isset($parts['host']) && $parts['host'] !== '') {
+            $url .= '//';
+        }
+
+        if (isset($parts['user']) && $parts['user'] !== '') {
+            $url .= $parts['user'];
+            if (isset($parts['pass']) && $parts['pass'] !== '') {
+                $url .= ':' . $parts['pass'];
+            }
+            $url .= '@';
+        }
+
+        if (isset($parts['host']) && $parts['host'] !== '') {
+            $url .= $parts['host'];
+        }
+        if (isset($parts['port']) && (int)$parts['port'] > 0) {
+            $url .= ':' . (int)$parts['port'];
+        }
+
+        $url .= isset($parts['path']) ? (string)$parts['path'] : '';
+
+        if (isset($parts['query']) && $parts['query'] !== '') {
+            $url .= '?' . $parts['query'];
+        }
+        if (isset($parts['fragment']) && $parts['fragment'] !== '') {
+            $url .= '#' . $parts['fragment'];
+        }
+
+        return $url;
     }
 
     /**

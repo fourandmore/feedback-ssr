@@ -1,3 +1,12 @@
+# FeedbackGeoFM 5.0.69 – Varianten-URLs + Google hasVariant-Absicherung
+
+- Basis ist Version 5.0.68; bestehende Four-More-, Mephisto- und Billiard-Royal-Logik bleibt unverändert.
+- `hasVariant` verwendet eine vorhandene echte Varianten-Canonical-URL weiterhin unverändert.
+- Liefert PlentyONE für Geschwister nur den gemeinsamen `texts.urlPath`, wird die konkrete `_ITEMID_VARIATIONID`-URL ausschließlich dann ergänzt, wenn die aktuelle Canonical-URL nachweislich dieses Plenty/Ceres-Routenformat verwendet. Custom-URL-Schemata bleiben unangetastet.
+- `Product.@id`, `Product.url` und `Product.offers.url` der verschachtelten Varianten zeigen dadurch auf dieselbe direkt aufrufbare Variante.
+- Defensive Google-Absicherung: Ein verschachteltes `hasVariant`-`Product` wird nur ausgegeben, wenn mindestens `offers`, `review` oder `aggregateRating` vorhanden ist. Regulär verkaufbare Varianten besitzen weiterhin ihr `Offer`; Bewertungen werden nicht künstlich auf Varianten kopiert.
+- Versandkostenprofile, Versand-Fallbacks, FAQ, VideoObject, Hersteller/Brand, Ratings und Ceres-Schema-Unterdrückung wurden nicht verändert.
+
 # FeedbackGeoFM 5.0.68 – `name` für Product/ProductGroup abgesichert
 
 - Basis ist unverändert Version 5.0.67.

@@ -517,12 +517,99 @@ if (!is_array($productGroup)
     || $productGroup['hasVariant'][0]['sku'] !== '51000-600'
     || $productGroup['hasVariant'][0]['offers']['price'] !== '129.90'
     || $productGroup['hasVariant'][0]['offers']['shippingDetails']['shippingRate']['value'] !== 6.9
+    || $productGroup['hasVariant'][0]['url'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13046'
+    || $productGroup['hasVariant'][0]['offers']['url'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13046'
+    || $productGroup['hasVariant'][0]['@id'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13046#product-variation-13046'
     || $productGroup['hasVariant'][1]['@id'] !== 'https://www.example.test/infrarotheizungen/mephisto-infrarotheizung_51000_13047#product-variation-13047'
     || $productGroup['hasVariant'][1]['offers']['price'] !== '129.90') {
     fwrite(STDERR, 'Non-salable parent variation must be a ProductGroup with complete salable child Products and no parent Offer.' . PHP_EOL);
     exit(1);
 }
 
+// Billiard Royal-style sibling documents can contain only the shared
+// texts.urlPath without Plenty's _ITEMID_VARIATIONID suffix. When the active
+// canonical URL proves that this storefront uses the standard Plenty route,
+// every nested Product and Offer must point to the concrete child variation.
+$billiardParent = $itemData;
+$billiardParent['item']['id'] = 10100;
+$billiardParent['variation']['id'] = 8974;
+$billiardParent['variation']['number'] = '10100';
+$billiardParent['texts']['name1'] = 'Billardtisch Adonis 8 ft.';
+$billiardParent['filter']['isSalable'] = true;
+$billiardParent['filter']['hasChildren'] = true;
+$billiardParent['filter']['hasActiveChildren'] = true;
+$billiardParent['attributes'] = [['attributeName' => 'Tuchfarbe']];
+
+$billiardVariantA = $itemData;
+$billiardVariantA['item']['id'] = 10100;
+$billiardVariantA['variation']['id'] = 7646;
+$billiardVariantA['variation']['number'] = '10101';
+$billiardVariantA['texts']['name1'] = 'Billardtisch Adonis 8 ft.';
+$billiardVariantA['texts']['urlPath'] = '/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft';
+$billiardVariantA['feedbackVariantAttributes'] = [
+    ['name' => 'Tuchfarbe', 'value' => 'Yellow Green']
+];
+unset($billiardVariantA['urls']);
+
+$billiardVariantB = $billiardVariantA;
+$billiardVariantB['variation']['id'] = 7647;
+$billiardVariantB['variation']['number'] = '10102';
+$billiardVariantB['feedbackVariantAttributes'] = [
+    ['name' => 'Tuchfarbe', 'value' => 'Beige']
+];
+
+$billiardGroup = $builder->build(
+    $billiardParent,
+    'https://www.billiard-royal.test/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft_10100_8974',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaForceProductGroup' => true,
+        'schemaVariesBy' => 'color',
+        'schemaVideoObject' => false,
+        'schemaVariantDocuments' => [$billiardVariantA, $billiardVariantB]
+    ])
+);
+
+if (!is_array($billiardGroup)
+    || count($billiardGroup['hasVariant']) !== 2
+    || $billiardGroup['hasVariant'][0]['url'] !== 'https://www.billiard-royal.test/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft_10100_7646'
+    || $billiardGroup['hasVariant'][0]['offers']['url'] !== 'https://www.billiard-royal.test/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft_10100_7646'
+    || $billiardGroup['hasVariant'][0]['@id'] !== 'https://www.billiard-royal.test/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft_10100_7646#product-variation-7646'
+    || $billiardGroup['hasVariant'][1]['url'] !== 'https://www.billiard-royal.test/billard/billardtische/pool-billardtische/pool-billardtisch-modell-adonis-8-ft_10100_7647'
+    || !isset($billiardGroup['hasVariant'][0]['offers'])
+    || !isset($billiardGroup['hasVariant'][1]['offers'])) {
+    fwrite(STDERR, 'Shared Plenty urlPath must be expanded to concrete variant URLs and every nested Product must keep an Offer.' . PHP_EOL);
+    exit(1);
+}
+
+// Compatibility guard for storefronts with custom/non-Plenty URL schemes:
+// do not invent _ITEMID_VARIATIONID suffixes unless the active canonical URL
+// itself uses that route format.
+$customVariant = $billiardVariantA;
+$customVariant['texts']['urlPath'] = '/products/adonis?variant=7646';
+$customGroup = $builder->build(
+    $billiardParent,
+    'https://custom.example.test/products/adonis?variant=8974',
+    [],
+    [],
+    'Four & More GmbH',
+    array_merge($schemaOptions, [
+        'schemaForceProductGroup' => true,
+        'schemaVariesBy' => 'color',
+        'schemaVideoObject' => false,
+        'schemaVariantDocuments' => [$customVariant]
+    ])
+);
+
+if (!is_array($customGroup)
+    || count($customGroup['hasVariant']) !== 1
+    || $customGroup['hasVariant'][0]['url'] !== 'https://custom.example.test/products/adonis?variant=7646'
+    || $customGroup['hasVariant'][0]['offers']['url'] !== 'https://custom.example.test/products/adonis?variant=7646') {
+    fwrite(STDERR, 'Custom storefront variant URLs must remain untouched.' . PHP_EOL);
+    exit(1);
+}
 
 $attributeVariantA = $itemData;
 $attributeVariantA['feedbackVariantAttributes'] = [
